@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLX-Whisper Audio Transcription</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MLX-Whisper Audio Transcription</h1>
+            <p>Загрузите аудиофайл для транскрибации</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <h2>Загрузка аудиофайла</h2>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="audioFile">Выберите аудиофайл:</label>
+                        <input type="file" id="audioFile" name="file" accept=".wav,.mp3,.m4a,.flac,.aac,.ogg,.wma,.webm,.mp4" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="language">Язык:</label>
+                        <select id="language" name="language">
+                            <option value="" selected>Автоопределение</option>
+                            <option value="ru">Русский</option>
+                            <option value="en">English</option>
+                            <option value="de">Deutsch</option>
+                            <option value="fr">Français</option>
+                            <option value="es">Español</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="task">Задача:</label>
+                        <select id="task" name="task">
+                            <option value="transcribe">Транскрибация</option>
+                            <option value="translate">Перевод на английский</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="model">Модель:</label>
+                        <select id="model" name="model">
+                            <option value="tiny">Tiny</option>
+                            <option value="base">Base</option>
+                            <option value="small">Small</option>
+                            <option value="medium">Medium</option>
+                            <option value="turbo" selected>Turbo</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="number" id="noSpeechThreshold" name="no_speech_threshold" value="0.3" step="0.01" min="0" max="1">
+                        Порог отсутствия речи
+                    </div>
+
+                    <div class="form-group">
+                        <input type="number" id="hallucinationSilenceThreshold" name="hallucination_silence_threshold" value="0.45" step="0.01" min="0" max="1">
+                        Порог галлюцинаций/тишины
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="wordTimestamps" name="word_timestamps" value="true">
+                            Включить word-level timestamps
+                        </label>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="conditionOnPreviousText" name="condition_on_previous_text" value="true" checked>
+                            Использовать предыдущий текст для контекста
+                        </label>
+                    </div>
+
+                    <button type="submit">Транскрибировать</button>
+                </form>
+            </div>
+
+            <div class="result-section">
+                <h2>Результат</h2>
+                <div id="result" class="result-content">
+                    <p>Загрузите файл и нажмите "Транскрибировать", чтобы увидеть результат.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>MLX-Whisper REST API - Транскрибация аудио с использованием оптимизированной модели Apple ML</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.innerHTML = '<p>Обработка файла... Пожалуйста, подождите.</p>';
+                
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Display the text result with proper model name
+                    let modelName = data.model || 'Неизвестная модель';
+                    // Map model codes to readable names for display
+                    const modelNames = {
+                        'tiny': 'Tiny',
+                        'base': 'Base', 
+                        'small': 'Small',
+                        'medium': 'Medium',
+                        'large': 'Large',
+                        'turbo': 'Turbo'
+                    };
+                    const readableModelName = modelNames[modelName] || modelName;
+                    
+                    // Get the original filename from the form input
+                    const originalFilename = document.getElementById('audioFile').files[0].name;
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result-box">
+                            <h3>Распознанный текст:</h3>
+                            <div class="text-content">
+                                <p>${data.text}</p>
+                            </div>
+                            <div class="result-details">
+                                <p><strong>Файл:</strong> ${originalFilename}</p>
+                                <p><strong>Язык:</strong> ${data.language}</p>
+                                <p><strong>Модель:</strong> ${readableModelName}</p>
+                                <p><strong>Порог отсутствия речи:</strong> ${data.no_speech_threshold}</p>
+                                <p><strong>Порог галлюцинаций/тишины:</strong> ${data.hallucination_silence_threshold}</p>
+                                <p><strong>ID задания:</strong> ${data.job_id}</p>
+                            </div>
+                            <button id="downloadBtn" onclick="downloadText()">Скачать</button>
+                        </div>
+                    `;
+                    
+                    // Сохраняем данные в глобальной переменной для использования в функции downloadText
+                    window.downloadData = {
+                        text: data.text,
+                        language: data.language,
+                        model: modelName,
+                        segments: data.segments || [],
+                        originalFilename: originalFilename  // Added this missing property
+                    };
+                } else {
+                    resultDiv.innerHTML = `<p class="error">Ошибка: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">Ошибка соединения: ${error.message}</p>`;
+            }
+        });
+
+        function downloadText() {
+            if (window.downloadData) {
+                let textContent = window.downloadData.text;
+                
+                // If segments are available, include them in the download
+                if (window.downloadData.segments && window.downloadData.segments.length > 0) {
+                    textContent += '\n\n--- Сегменты с временным кодом ---\n';
+                    window.downloadData.segments.forEach(segment => {
+                        textContent += `[${formatTime(segment.start)} - ${formatTime(segment.end)}] ${segment.text}\n`;
+                    });
+                }
+                
+                const blob = new Blob([textContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Use the original filename but change extension to .txt
+                let fileName = 'transcription.txt';
+                if (window.downloadData.originalFilename) {
+                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
+                    fileName = `${baseName}.txt`;
+                }
+                
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                console.error('downloadData is not defined');
+                alert('Ошибка: данные для скачивания не найдены');
+            }
+        }
+        
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+        }
+    </script>
+</body>
+</html>
