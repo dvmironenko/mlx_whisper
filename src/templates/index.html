@@ -141,6 +141,7 @@
                                 <p><strong>Порог отсутствия речи:</strong> ${data.no_speech_threshold}</p>
                                 <p><strong>Порог галлюцинаций/тишины:</strong> ${data.hallucination_silence_threshold}</p>
                                 <p><strong>ID задания:</strong> ${data.job_id}</p>
+                                <p><strong>Время выполнения:</strong> ${data.duration ? data.duration.toFixed(2) + ' секунд' : 'Неизвестно'}</p>
                             </div>
                             <button id="downloadBtn" onclick="downloadText()">Скачать</button>
                         </div>
