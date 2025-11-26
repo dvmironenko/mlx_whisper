@@ -1,3 +1,4 @@
+# Удаляем ненужный импорт и добавляем необходимые для работы с файлами
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
