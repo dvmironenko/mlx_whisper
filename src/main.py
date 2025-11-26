@@ -516,4 +516,4 @@ async def transcribe_audio(
 if __name__ == "__main__":
     import uvicorn
     print("Запуск MLX-Whisper REST API на http://localhost:8801")
-    uvicorn.run("src.main:app", host="0.0.0.0", port=8801, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8801, reload=True)
