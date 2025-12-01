@@ -24,9 +24,8 @@
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/your-username/mlx-whisper-api.git
-cd mlx-whisper-api
-```
+git clone https://github.com/your-username/mlx-whisper.git
+cd mlx-whisper```
 
 2. Создайте и активируйте виртуальное окружение:
 ```bash
