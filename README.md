@@ -1,5 +1,7 @@
 # MLX-Whisper REST API
 
+[Документация](docs/technical_specification.md)
+
 ## Обзор проекта
 
 Это высокопроизводительный веб-сервис для транскрибации и перевода аудио с использованием оптимизированной модели Whisper от Apple (MLX-Whisper). Сервис предоставляет как веб-интерфейс, так и REST API для преобразования речи в текст с поддержкой нескольких языков и гибких параметров обработки.
@@ -25,7 +27,8 @@
 1. Клонируйте репозиторий:
 ```bash
 git clone https://github.com/your-username/mlx-whisper.git
-cd mlx-whisper```
+cd mlx-whisper
+```
 
 2. Создайте и активируйте виртуальное окружение:
 ```bash
@@ -70,8 +73,10 @@ curl -X POST "http://localhost:8801/transcribe" \
 ## Структура проекта
 
 ```
-mlx-whisper-api/
-├── models/                 # Модели MLX-Whisper (config.json, weights.npz)
+mlx_whisper/
+├── docs/                   # Documentation directory
+│   └── technical_specification.md  # Technical specification document
+├── models/                 # MLX-Whisper model files (config.json, weights.npz)
 │   ├── whisper-tiny/
 │   ├── whisper-base/ 
 │   ├── whisper-small/
@@ -79,18 +84,17 @@ mlx-whisper-api/
 │   ├── whisper-turbo/
 │   └── whisper-large/
 ├── src/
-│   ├── main.py             # Реализация FastAPI сервера
-│   ├── requirements.txt    # Зависимости Python
+│   ├── main.py             # FastAPI application and transcription logic
+│   ├── requirements.txt    # Python dependencies
 │   ├── static/
-│   │   └── style.css       # Стили веб-интерфейса
+│   │   └── style.css       # Web interface styling
 │   └── templates/
-│       └── index.html      # HTML шаблон веб-интерфейса
-├── tests/                  # Тестовые аудиофайлы
+│       └── index.html      # HTML template for web interface
+├── tests/                  # Test audio files
 │   ├── test.wav
 │   └── 2_5258335770527167268.ogg
-├── uploads/                # Хранилище временных файлов (создается автоматически)
-├── README.md               # Документация проекта
-└── .DS_Store
+├── uploads/                # Temporary file storage directory (created automatically)
+└── README.md               # Project documentation
 ```
 
 ## Рабочий процесс разработки
