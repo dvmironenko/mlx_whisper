@@ -143,7 +143,11 @@
                                 <p><strong>ID задания:</strong> ${data.job_id}</p>
                                 <p><strong>Время выполнения:</strong> ${data.duration ? data.duration.toFixed(2) + ' секунд' : 'Неизвестно'}</p>
                             </div>
-                            <button id="downloadBtn" onclick="downloadText()">Скачать</button>
+                            <div class="download-buttons">
+                                <button onclick="downloadMainText()">Скачать основной текст</button>
+                                ${data.word_timestamps ? '<button onclick="downloadSegments()">Скачать сегменты</button>' : ''}
+                                <button onclick="downloadText()">Скачать все</button>
+                            </div>
                         </div>
                     `;
                     
@@ -163,10 +167,65 @@
             }
         });
 
+        function downloadMainText() {
+            if (window.downloadData) {
+                const blob = new Blob([window.downloadData.text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Use the original filename but change extension to .txt
+                let fileName = 'transcription.txt';
+                if (window.downloadData.originalFilename) {
+                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
+                    fileName = `${baseName}.txt`;
+                }
+
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                console.error('downloadData is not defined');
+                alert('Ошибка: данные для скачивания не найдены');
+            }
+        }
+
+        function downloadSegments() {
+            if (window.downloadData && window.downloadData.segments && window.downloadData.segments.length > 0) {
+                let segmentsContent = '--- Сегменты с временным кодом ---\n';
+                window.downloadData.segments.forEach(segment => {
+                    segmentsContent += `[${formatTime(segment.start)} - ${formatTime(segment.end)}] ${segment.text}\n`;
+                });
+
+                const blob = new Blob([segmentsContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Use the original filename but change extension to _segments.txt
+                let fileName = 'transcription_segments.txt';
+                if (window.downloadData.originalFilename) {
+                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
+                    fileName = `${baseName}_segments.txt`;
+                }
+
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                console.error('No segments data available');
+                alert('Ошибка: данные о сегментах отсутствуют');
+            }
+        }
+
         function downloadText() {
             if (window.downloadData) {
                 let textContent = window.downloadData.text;
-                
+
                 // If segments are available, include them in the download
                 if (window.downloadData.segments && window.downloadData.segments.length > 0) {
                     textContent += '\n\n--- Сегменты с временным кодом ---\n';
@@ -174,19 +233,19 @@
                         textContent += `[${formatTime(segment.start)} - ${formatTime(segment.end)}] ${segment.text}\n`;
                     });
                 }
-                
+
                 const blob = new Blob([textContent], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                
+
                 // Use the original filename but change extension to .txt
                 let fileName = 'transcription.txt';
                 if (window.downloadData.originalFilename) {
                     const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
                     fileName = `${baseName}.txt`;
                 }
-                
+
                 a.download = fileName;
                 document.body.appendChild(a);
                 a.click();

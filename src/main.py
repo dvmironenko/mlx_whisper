@@ -447,6 +447,28 @@ async def process_transcription(
             for i in range(0, len(text_content), CHUNK_SIZE):
                 f.write(text_content[i : i + CHUNK_SIZE])
 
+        # Create separate segments file if word timestamps are enabled
+        if result.get("word_timestamps", False):
+            segments_filename = f"{job_id}_{os.path.splitext(file.filename)[0]}_segments.txt"
+            segments_text_path = os.path.join(UPLOADS_DIR, segments_filename)
+
+            # Create segments file with formatted timing data
+            segments_content = []
+            if "segments" in result and result["segments"]:
+                for segment in result["segments"]:
+                    start = segment.get("start", 0)
+                    end = segment.get("end", 0)
+                    text = segment.get("text", "")
+                    segments_content.append(f"[{start:.2f} - {end:.2f}] {text}")
+
+            # Write segments in chunks to optimize memory usage for large results
+            if segments_content:
+                with open(segments_text_path, "w", encoding="utf-8") as f:
+                    for segment_line in segments_content:
+                        # Write in chunks to handle large segment outputs efficiently
+                        for i in range(0, len(segment_line), CHUNK_SIZE):
+                            f.write(segment_line[i : i + CHUNK_SIZE])
+
         # Delete the uploaded audio file after successful transcription
         if tmp_file_path and os.path.exists(tmp_file_path):
             os.remove(tmp_file_path)

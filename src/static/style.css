@@ -170,15 +170,28 @@ footer {
     font-size: 14px;
 }
 
+.download-buttons {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.download-buttons button {
+    flex: 1;
+    min-width: 120px;
+    margin: 0;
+}
+
 @media (max-width: 600px) {
     .container {
         padding: 10px;
     }
-    
+
     header h1 {
         font-size: 24px;
     }
-    
+
     .upload-section, .result-section {
         padding: 15px;
     }

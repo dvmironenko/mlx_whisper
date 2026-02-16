@@ -13,6 +13,7 @@
 - Поддержка различных аудиоформатов (WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4)
 - Поддержка нескольких размеров моделей (tiny, base, small, medium, turbo, large) для баланса между производительностью и точностью
 - Временные метки слов и контекстно-осознанная обработка
+- Раздельный возврат основного текста и информации о сегментах при включенных временных метках
 
 ## Начало работы
 
@@ -78,7 +79,7 @@ mlx_whisper/
 │   └── technical_specification.md  # Technical specification document
 ├── models/                 # MLX-Whisper model files (config.json, weights.npz)
 │   ├── whisper-tiny/
-│   ├── whisper-base/ 
+│   ├── whisper-base/
 │   ├── whisper-small/
 │   ├── whisper-medium/
 │   ├── whisper-turbo/
@@ -94,6 +95,7 @@ mlx_whisper/
 │   ├── test.wav
 │   └── 2_5258335770527167268.ogg
 ├── uploads/                # Temporary file storage directory (created automatically)
+├── .gitignore              # Git ignore rules
 └── README.md               # Project documentation
 ```
 
@@ -166,6 +168,12 @@ curl -X POST "http://localhost:8801/transcribe" \
   -F "condition_on_previous_text=true"
 ```
 
+При включенных временных метках (word_timestamps=true) API создает два отдельных текстовых файла:
+1. Основной файл с транскрибированным текстом
+2. Файл с информацией о сегментах в формате "[start - end] text"
+
+Эти файлы доступны для скачивания через веб-интерфейс или API.
+
 ### Добавление новых моделей
 1. Создайте новую директорию в `models/` (например, `models/whisper-custom`)
 2. Загрузите файлы модели (`config.json` и `weights.npz`) в эту директорию
@@ -173,7 +181,7 @@ curl -X POST "http://localhost:8801/transcribe" \
 ```python
 "SUPPORTED_MODELS": {
     "tiny": "models/whisper-tiny",
-    "base": "models/whisper-base", 
+    "base": "models/whisper-base",
     "small": "models/whisper-small",
     "medium": "models/whisper-medium",
     "turbo": "models/whisper-turbo",
