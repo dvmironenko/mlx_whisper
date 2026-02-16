@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /Users/dvmironenko/dev/mlx_whisper/uploads/*segments.txt)",
+      "Bash(python -m uvicorn:*)",
+      "Bash(curl:*)",
+      "Bash(lsof -i :8801)",
+      "Bash(python:*)",
+      "Bash(git add README.md src/main.py src/static/style.css src/templates/index.html)",
+      "Bash(git commit:*)",
+      "Bash(git add .)"
+    ]
+  }
+}
