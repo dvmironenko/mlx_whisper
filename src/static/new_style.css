@@ -352,6 +352,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border-color);
     transition: var(--transition);
+    max-width: 100%; /* Ограничиваем ширину, чтобы не выходить за пределы контейнера */
 }
 
 .result-section:hover {
@@ -360,6 +361,13 @@ body {
 
 .result-content {
     min-height: 200px;
+}
+
+/* Текстовый контент в результат */
+.text-content {
+    max-width: 100%; /* Ограничиваем ширину текстового контента */
+    width: 100%; /* Устанавливаем полную ширину внутри контейнера */
+    box-sizing: border-box; /* Учитываем padding в расчетах ширины */
 }
 
 /* Пустое состояние */
