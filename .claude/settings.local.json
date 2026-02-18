@@ -10,7 +10,30 @@
       "Bash(git commit:*)",
       "Bash(git add .)",
       "Bash(git reset --soft HEAD~1)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(pip install:*)",
+      "Bash(.venv/bin/pip:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(.venv/bin/python3.12 -m pytest tests/test.py -v)",
+      "Bash(.venv/bin/python3.12 -m pytest:*)",
+      "Bash(__NEW_LINE_5b8fc3f0f45d5879__ echo \"\")",
+      "Bash(__NEW_LINE_e688fe8377c62402__ echo \"\")",
+      "Bash(pkill:*)",
+      "Bash(__NEW_LINE_2c3ccb30e259ab68__ echo \"\")",
+      "Bash(echo \"=== Структура проекта ===\" find /Users/dvmironenko/dev/mlx_whisper -maxdepth 3 -type f \\\\\\( -name \"*.py\" -o -name \"*.yml\" -o -name \".env.example\" \\\\\\))",
+      "Bash(__NEW_LINE_e8f744f235b72c02__ echo \"\")",
+      "Bash(.venv/bin/python3.12 src/main.py)",
+      "mcp__plugin_serena_serena__list_dir",
+      "mcp__plugin_serena_serena__activate_project",
+      "mcp__plugin_serena_serena__read_file",
+      "mcp__plugin_serena_serena__execute_shell_command",
+      "mcp__plugin_serena_serena__create_text_file",
+      "Bash(python3 tests/test_transcribe_detailed.py)",
+      "Bash(python3:*)",
+      "Bash(playwright install chromium)",
+      "Bash(kill:*)",
+      "Bash(jq)"
     ]
   }
 }

@@ -61,6 +61,9 @@ curl -X POST "http://localhost:8801/transcribe" \
 
 # Using the web interface
 # Visit http://localhost:8801 in your browser
+
+# Run unit tests
+pytest tests/ -v
 ```
 
 ## Code Structure

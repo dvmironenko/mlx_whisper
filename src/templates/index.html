@@ -104,7 +104,7 @@
             try {
                 resultDiv.innerHTML = '<p>Обработка файла... Пожалуйста, подождите.</p>';
                 
-                const response = await fetch('/transcribe', {
+                const response = await fetch('/api/v1/transcribe', {
                     method: 'POST',
                     body: formData
                 });
