@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLX-Whisper Audio Transcription</title>
+    <link rel="stylesheet" href="/static/new_style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <i class="fas fa-microphone-alt"></i> MLX-Whisper
+                </h1>
+                <p class="app-subtitle">Продвинутая транскрипция аудио с использованием оптимизированной модели Apple ML</p>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="upload-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-upload"></i> Загрузка аудиофайла</h2>
+                    <div class="section-description">
+                        <p>Выберите аудиофайл для транскрибации или перетащите его в область загрузки</p>
+                    </div>
+                </div>
+
+                <form id="uploadForm" enctype="multipart/form-data" class="upload-form">
+                    <div class="upload-area" id="dropArea">
+                        <div class="upload-content">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <p class="upload-text">Перетащите файл сюда или кликните для выбора</p>
+                            <p class="upload-hint">Поддерживаемые форматы: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4</p>
+                            <input type="file" id="audioFile" name="file" accept=".wav,.mp3,.m4a,.flac,.aac,.ogg,.wma,.webm,.mp4" required class="file-input">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="language"><i class="fas fa-language"></i> Язык</label>
+                            <select id="language" name="language" class="form-select">
+                                <option value="" selected>Автоопределение</option>
+                                <option value="ru">Русский</option>
+                                <option value="en">English</option>
+                                <option value="de">Deutsch</option>
+                                <option value="fr">Français</option>
+                                <option value="es">Español</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="task"><i class="fas fa-tasks"></i> Задача</label>
+                            <select id="task" name="task" class="form-select">
+                                <option value="transcribe">Транскрибация</option>
+                                <option value="translate">Перевод на английский</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model"><i class="fas fa-microchip"></i> Модель</label>
+                            <select id="model" name="model" class="form-select">
+                                <option value="tiny">Tiny</option>
+                                <option value="base">Base</option>
+                                <option value="small">Small</option>
+                                <option value="medium">Medium</option>
+                                <option value="turbo" selected>Turbo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="noSpeechThreshold"><i class="fas fa-signal"></i> Порог отсутствия речи</label>
+                            <input type="range" id="noSpeechThreshold" name="no_speech_threshold" value="0.3" step="0.01" min="0" max="1" class="form-range">
+                            <div class="range-value">0.3</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hallucinationSilenceThreshold"><i class="fas fa-microphone-slash"></i> Порог галлюцинаций/тишины</label>
+                            <input type="range" id="hallucinationSilenceThreshold" name="hallucination_silence_threshold" value="0.45" step="0.01" min="0" max="1" class="form-range">
+                            <div class="range-value">0.45</div>
+                        </div>
+                    </div>
+
+                    <div class="form-checkboxes">
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="wordTimestamps" name="word_timestamps" value="true">
+                                <i class="fas fa-clock"></i> Включить word-level timestamps
+                            </label>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="conditionOnPreviousText" name="condition_on_previous_text" value="true" checked>
+                                <i class="fas fa-comments"></i> Использовать предыдущий текст для контекста
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitButton" class="submit-button">
+                        <i class="fas fa-play"></i> Транскрибировать
+                    </button>
+                </form>
+            </div>
+
+            <div class="result-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-alt"></i> Результат</h2>
+                    <div class="section-description">
+                        <p>Результат транскрибации будет отображаться здесь</p>
+                    </div>
+                </div>
+
+                <div id="result" class="result-content">
+                    <div class="empty-state">
+                        <i class="fas fa-file-medical"></i>
+                        <h3>Загрузите файл для транскрибации</h3>
+                        <p>Выберите аудиофайл и нажмите "Транскрибировать" для начала процесса</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>MLX-Whisper REST API - Транскрибация аудио с использованием оптимизированной модели Apple ML</p>
+        </footer>
+    </div>
+
+    <script>
+        // Обновление значений ползунков
+        document.getElementById('noSpeechThreshold').addEventListener('input', function() {
+            document.querySelector('#noSpeechThreshold + .range-value').textContent = this.value;
+        });
+
+        document.getElementById('hallucinationSilenceThreshold').addEventListener('input', function() {
+            document.querySelector('#hallucinationSilenceThreshold + .range-value').textContent = this.value;
+        });
+
+        // Drag and Drop для загрузки файла
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('audioFile');
+
+        // Добавляем обработчик клика на область загрузки для открытия диалога выбора файла
+        dropArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.classList.add('drag-over');
+        }
+
+        function unhighlight() {
+            dropArea.classList.remove('drag-over');
+        }
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            updateFileDisplay(files[0]);
+        }
+
+        // Обновление отображения выбранного файла
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                updateFileDisplay(this.files[0]);
+            }
+        });
+
+        function updateFileDisplay(file) {
+            const fileInput = document.getElementById('audioFile');
+            const fileText = file ? file.name : '';
+            const fileIcon = file ? getFileIcon(file.name) : 'fa-file';
+
+            // Обновляем отображение в области загрузки
+            const uploadText = document.querySelector('.upload-text');
+            if (uploadText) {
+                uploadText.innerHTML = file ?
+                    `<i class="${fileIcon}"></i> ${file.name}` :
+                    'Перетащите файл сюда или кликните для выбора';
+            }
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const iconMap = {
+                'wav': 'fa-file-audio',
+                'mp3': 'fa-file-audio',
+                'm4a': 'fa-file-audio',
+                'flac': 'fa-file-audio',
+                'aac': 'fa-file-audio',
+                'ogg': 'fa-file-audio',
+                'wma': 'fa-file-audio',
+                'webm': 'fa-file-video',
+                'mp4': 'fa-file-video'
+            };
+            return iconMap[ext] || 'fa-file';
+        }
+
+        // Обработка формы
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const resultDiv = document.getElementById('result');
+            const submitButton = document.getElementById('submitButton');
+
+            // Показываем состояние загрузки
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обработка...';
+            submitButton.disabled = true;
+
+            try {
+                resultDiv.innerHTML = `
+                    <div class="loading-state">
+                        <i class="fas fa-cog fa-spin"></i>
+                        <h3>Обработка файла</h3>
+                        <p>Пожалуйста, подождите...</p>
+                    </div>
+                `;
+
+                const response = await fetch('/api/v1/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Display the text result with proper model name
+                    let modelName = data.model || 'Неизвестная модель';
+                    // Map model codes to readable names for display
+                    const modelNames = {
+                        'tiny': 'Tiny',
+                        'base': 'Base',
+                        'small': 'Small',
+                        'medium': 'Medium',
+                        'large': 'Large',
+                        'turbo': 'Turbo'
+                    };
+                    const readableModelName = modelNames[modelName] || modelName;
+
+                    // Get the original filename from the form input
+                    const originalFilename = document.getElementById('audioFile').files[0].name;
+
+                    resultDiv.innerHTML = `
+                        <div class="result-box">
+                            <div class="result-header">
+                                <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
+                                <div class="result-actions">
+                                    <button onclick="downloadMainText()" class="action-button">
+                                        <i class="fas fa-download"></i> Основной текст
+                                    </button>
+                                    ${data.word_timestamps ? '<button onclick="downloadSegments()" class="action-button secondary">Сегменты</button>' : ''}
+                                </div>
+                            </div>
+
+                            <div class="text-content">
+                                <p>${data.text}</p>
+                            </div>
+
+                            <div class="result-details">
+                                <div class="detail-grid">
+                                    <div class="detail-item">
+                                        <i class="fas fa-file"></i>
+                                        <span><strong>Файл:</strong> ${originalFilename}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-language"></i>
+                                        <span><strong>Язык:</strong> ${data.language}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-microchip"></i>
+                                        <span><strong>Модель:</strong> ${readableModelName}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-signal"></i>
+                                        <span><strong>Порог отсутствия речи:</strong> ${data.no_speech_threshold}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-microphone-slash"></i>
+                                        <span><strong>Порог галлюцинаций:</strong> ${data.hallucination_silence_threshold}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-id-badge"></i>
+                                        <span><strong>ID задания:</strong> ${data.job_id}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span><strong>Время выполнения:</strong> ${data.duration ? data.duration.toFixed(2) + ' секунд' : 'Неизвестно'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Сохраняем данные в глобальной переменной для использования в функции downloadText
+                    window.downloadData = {
+                        text: data.text,
+                        language: data.language,
+                        model: modelName,
+                        segments: data.segments || [],
+                        originalFilename: originalFilename  // Added this missing property
+                    };
+                } else {
+                    resultDiv.innerHTML = `<div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Ошибка обработки</h3>
+                        <p>${data.error}</p>
+                    </div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Ошибка соединения</h3>
+                    <p>${error.message}</p>
+                </div>`;
+            } finally {
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+            }
+        });
+
+        function downloadMainText() {
+            if (window.downloadData) {
+                const blob = new Blob([window.downloadData.text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Use the original filename but change extension to .txt
+                let fileName = 'transcription.txt';
+                if (window.downloadData.originalFilename) {
+                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
+                    fileName = `${baseName}.txt`;
+                }
+
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                console.error('downloadData is not defined');
+                alert('Ошибка: данные для скачивания не найдены');
+            }
+        }
+
+        function downloadSegments() {
+            if (window.downloadData && window.downloadData.segments && window.downloadData.segments.length > 0) {
+                let segmentsContent = '--- Сегменты с временным кодом ---\n';
+                window.downloadData.segments.forEach(segment => {
+                    segmentsContent += `[${formatTime(segment.start)} - ${formatTime(segment.end)}] ${segment.text}\n`;
+                });
+
+                const blob = new Blob([segmentsContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Use the original filename but change extension to _segments.txt
+                let fileName = 'transcription_segments.txt';
+                if (window.downloadData.originalFilename) {
+                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
+                    fileName = `${baseName}_segments.txt`;
+                }
+
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                console.error('No segments data available');
+                alert('Ошибка: данные о сегментах отсутствуют');
+            }
+        }
+
+        function downloadText() {
+            if (window.downloadData) {
+                let textContent = window.downloadData.text;
+
+                // If segments are available, include them in the download
+                if (window.downloadData.segments && window.downloadData.segments.length > 0) {
+                    textContent += '\n\n--- Сегменты с временным кодом ---\n';
+                    window.downloadData.segments.forEach(segment => {
+                        textContent += `[${formatTime(segment.start)} - ${formatTime(segment.end)}] ${segment.text}\n`;
+                    });
+                }
+
+                const blob = new Blob([textContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Use the original filename but change extension to .txt
+                let fileName = 'transcription.txt';
+                if (window.downloadData.originalFilename) {
+                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
+                    fileName = `${baseName}.txt`;
+                }
+
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                console.error('downloadData is not defined');
+                alert('Ошибка: данные для скачивания не найдены');
+            }
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+        }
+    </script>
+</body>
+</html>

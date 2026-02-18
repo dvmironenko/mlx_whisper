@@ -34,7 +34,7 @@ app.include_router(router)
 @app.get("/", include_in_schema=False)
 async def read_root(request: Request):
     """Root endpoint with web interface."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("new_index.html", {"request": request})
 
 
 if __name__ == "__main__":
