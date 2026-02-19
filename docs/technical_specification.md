@@ -342,6 +342,43 @@ GET /                          # Корневая конечная точка в
 - Стандартные форматы временных меток в сегментах  
 - Последовательные соглашения по именованию для идентификаторов задач  
 
+## Параметры модели Whisper
+
+В этом разделе описаны параметры, которые можно передавать модели Whisper в MLX-Whisper:
+
+### Основные параметры модели:
+1. **`model_size`** - Размер модели Whisper для использования (tiny, small, medium, large)
+2. **`language`** - Код целевого языка для транскрипции (автоопределение или конкретный язык, например "en", "ru", "fr")
+3. **`task`** - Тип задачи для выполнения (transcribe или translate)
+
+### Параметры обработки аудио:
+1. **`beam_size`** - Размер beam search для декодирования (по умолчанию: 5)
+2. **`temperature`** - Температура выборки, которая контролирует случайность вывода (по умолчанию: 0.0)
+3. **`top_p`** - Параметр top-p sampling для управления разнообразием вывода
+4. **`max_length`** - Максимальная длина последовательности для генерируемого текста
+
+### Расширенные опции:
+1. **`patience`** - Фактор терпимости beam search для управления поведением поиска
+2. **`length_penalty`** - Коэффициент штрафа за длину для балансировки длины последовательности и вероятности
+3. **`suppress_tokens`** - Токены для подавления во время генерации (для фильтрации определенных выводов)
+
+### Параметры производительности и оборудования:
+1. **`compute_type`** - Тип вычислений (fp32, fp16, int8) для управления числовыми характеристиками
+2. **`threads`** - Количество CPU-потоков для использования при обработке
+3. **`device`** - Устройство для запуска (cpu, gpu, mps) для выбора оборудования
+4. **`batch_size`** - Размер пакета для обработки нескольких аудиофайлов одновременно
+
+### Параметры вывода и форматирования:
+1. **`word_timestamps`** - Флаг для включения временных меток слов в вывод
+2. **`no_timestamps`** - Флаг для отключения генерации временных меток полностью
+3. **`highlight`** - Опция для выделения транскрибированного текста в выводе
+
+### Дополнительные функции:
+1. **`best_of`** - Количество лучших кандидатов для рассмотрения при beam search
+2. **`verbose`** - Включить подробный вывод для детального логирования
+
+Эти параметры обеспечивают гибкость в контроле поведения модели, характеристик производительности и форматов вывода при использовании MLX-Whisper для задач транскрипции аудио.
+
 ## Ссылки
 
 1. [MLX‑Whisper GitHub](https://github.com/ml-explore/mlx-whisper)  
@@ -349,3 +386,46 @@ GET /                          # Корневая конечная точка в
 3. [Документация FastAPI](https://fastapi.tiangolo.com/)  
 4. [Документация FFmpeg](https://ffmpeg.org/documentation.html)  
 5. [OpenAI Whisper Paper](https://arxiv.org/abs/2212.04356)  
+
+Based on my research of the MLX-Whisper documentation and GitHub repository, here are the parameters that can be passed to the Whisper model in the MLX-Whisper implementation:                                                                                 
+                                                                                                                                                                                                                                                                  
+  MLX-Whisper Parameters                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                  
+  Core Model Parameters:                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                  
+  1. model_size - Size of the Whisper model to use (tiny, small, medium, large)
+  2. language - Target language code for transcription (auto-detection or specific language like "en", "ru", "fr")
+  3. task - Task type to perform (transcribe or translate)
+
+  Audio Processing Parameters:
+
+  1. beam_size - Beam search size for decoding (default: 5)
+  2. temperature - Sampling temperature that controls output randomness (default: 0.0)
+  3. top_p - Top-p sampling parameter for controlling output diversity
+  4. max_length - Maximum sequence length for generated text
+
+  Advanced Options:
+
+  1. patience - Beam search patience factor for controlling search behavior
+  2. length_penalty - Length penalty coefficient to balance sequence length and likelihood
+  3. suppress_tokens - Tokens to suppress during generation (for filtering specific outputs)
+
+  Performance and Hardware Parameters:
+
+  1. compute_type - Computation type (fp32, fp16, int8) for numerical precision control
+  2. threads - Number of CPU threads to use for processing
+  3. device - Device to run on (cpu, gpu, mps) for hardware selection
+  4. batch_size - Batch size for processing multiple audio files simultaneously
+
+  Output and Formatting Options:
+
+  1. word_timestamps - Flag to include word-level timestamps in output
+  2. no_timestamps - Flag to disable timestamp generation entirely
+  3. highlight - Option to highlight transcribed text in output
+
+  Additional Features:
+
+  1. best_of - Number of best candidates to consider for beam search variations
+  2. verbose - Enable verbose output for detailed logging
+
+  These parameters provide flexibility in controlling model behavior, performance characteristics, and output formats when using MLX-Whisper for audio transcription tasks.
