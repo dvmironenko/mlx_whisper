@@ -33,7 +33,15 @@
       "Bash(python3:*)",
       "Bash(playwright install chromium)",
       "Bash(kill:*)",
-      "Bash(jq)"
+      "Bash(jq)",
+      "Bash(git push:*)",
+      "Bash(MLX_WHISPER_PORT=8802 python src/main.py)",
+      "Bash(lsof -i :8802)",
+      "Bash(git add src/templates/new_index.html src/static/new_style.css src/main.py)",
+      "Bash(git remote remove:*)",
+      "Bash(git add:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

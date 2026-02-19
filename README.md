@@ -235,42 +235,6 @@ pytest tests/ -v
 - `no_speech_threshold` - Пороговое значение для фильтрации
 - `hallucination_silence_threshold` - Пороговое значение для фильтрации
 
-## CI/CD пайплайн
-
-Приложение использует GitHub Actions для автоматического тестирования:
-
-```yaml
-# .github/workflows/tests.yml
-name: Tests
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-      - name: Install dependencies
-        run: pip install pytest pytest-asyncio
-      - name: Run unit tests
-        run: pytest tests/ -v
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run linters
-        run: black --check src/ tests/
-```
-
 ## Заключение
 
 Приложение предоставляет надежное, масштабируемое решение для транскрипции аудио с интуитивно понятным веб-интерфейсом и правильной обработкой ошибок. Использование MLX-Whisper обеспечивает оптимизированные характеристики производительности от Apple, при этом сохраняя доступность через веб-интерфейс.

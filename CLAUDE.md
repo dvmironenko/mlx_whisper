@@ -110,6 +110,7 @@ pytest tests/ -v
 - Use type annotations for function parameters and return values
 - Implement proper error handling with HTTP exceptions
 - Use async/await for I/O operations to maintain performance
+- **All documentation must be saved in the `docs/` folder**
 
 ### Testing Approach:
 - Manual testing with audio files in `tests/` directory
