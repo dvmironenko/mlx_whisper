@@ -21,12 +21,12 @@ async def transcribe_audio_endpoint(
     condition_on_previous_text: str = Form("true"),
     no_speech_threshold: Optional[str] = Form("0.4"),
     hallucination_silence_threshold: Optional[str] = Form("0.8"),
-    remove_silence: str = Form("true"),
-    silence_threshold: str = Form("-60.0"),
-    silence_duration: str = Form("0.5"),
+    remove_silence: str = Form(None),  # Используем None для определения, что параметр не задан
+    silence_threshold: str = Form(None),
+    silence_duration: str = Form(None),
 ):
     """Транскрибировать аудиофайл."""
-    from src.config import logger
+    from src.config import logger, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION
 
     # Валидация расширения
     if file.filename is None:
@@ -48,6 +48,11 @@ async def transcribe_audio_endpoint(
             detail=f"Unsupported model. Supported: {', '.join(SUPPORTED_MODELS.keys())}"
         )
 
+    # Обработка параметров, если они не были переданы
+    remove_silence_value = REMOVE_SILENCE if remove_silence is None else remove_silence.lower() == "true"
+    silence_threshold_value = SILENCE_THRESHOLD if silence_threshold is None else float(silence_threshold)
+    silence_duration_value = SILENCE_DURATION if silence_duration is None else float(silence_duration)
+
     # Конвертация
     tmp_path = f"uploads/tmp_{file.filename}"
     converted_wav_path = None
@@ -63,9 +68,9 @@ async def transcribe_audio_endpoint(
         convert_to_wav(
             tmp_path,
             converted_wav_path,
-            remove_silence=remove_silence.lower() == "true",
-            silence_threshold=float(silence_threshold),
-            silence_duration=float(silence_duration)
+            remove_silence=remove_silence_value,
+            silence_threshold=silence_threshold_value,
+            silence_duration=silence_duration_value
         )
 
         # Transcribe

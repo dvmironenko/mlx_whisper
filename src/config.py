@@ -32,6 +32,11 @@ API_KEY: Optional[str] = os.getenv("MLX_WHISPER_API_KEY")
 LOGS_DIR: str = os.getenv("LOGS_DIR", "logs")
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
+# Silence removal settings
+REMOVE_SILENCE: bool = os.getenv("REMOVE_SILENCE", "true").lower() == "true"
+SILENCE_THRESHOLD: float = float(os.getenv("SILENCE_THRESHOLD", "-60.0"))
+SILENCE_DURATION: float = float(os.getenv("SILENCE_DURATION", "0.5"))
+
 # Audio extensions
 AUDIO_EXTENSIONS: set = {
     ".wav",
