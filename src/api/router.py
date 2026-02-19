@@ -21,6 +21,9 @@ async def transcribe_audio_endpoint(
     condition_on_previous_text: str = Form("true"),
     no_speech_threshold: Optional[str] = Form("0.4"),
     hallucination_silence_threshold: Optional[str] = Form("0.8"),
+    remove_silence: str = Form("true"),
+    silence_threshold: str = Form("-60.0"),
+    silence_duration: str = Form("0.5"),
 ):
     """Транскрибировать аудиофайл."""
     from src.config import logger
@@ -57,7 +60,13 @@ async def transcribe_audio_endpoint(
 
         # Convert to WAV
         converted_wav_path = f"uploads/{os.path.splitext(file.filename)[0]}_converted.wav"
-        convert_to_wav(tmp_path, converted_wav_path)
+        convert_to_wav(
+            tmp_path,
+            converted_wav_path,
+            remove_silence=remove_silence.lower() == "true",
+            silence_threshold=float(silence_threshold),
+            silence_duration=float(silence_duration)
+        )
 
         # Transcribe
         result = transcribe_audio(

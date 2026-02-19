@@ -6,16 +6,28 @@ from typing import Optional
 from src.config import CONVERSION_TIMEOUT_SECONDS, CHUNK_SIZE
 
 
-def convert_to_wav(input_path: str, output_path: str) -> bool:
+def convert_to_wav(input_path: str, output_path: str, remove_silence: bool = True, silence_threshold: float = -60.0, silence_duration: float = 0.5) -> bool:
     """Конвертировать аудио в WAV формат (16kHz, mono)."""
-    cmd = [
-        "ffmpeg",
-        "-i", input_path,
-        "-acodec", "pcm_s16le",
-        "-ar", "16000",
-        "-ac", "1",
-        output_path,
-    ]
+    # Если нужно удалять тишину, используем фильтры FFmpeg
+    if remove_silence:
+        cmd = [
+            "ffmpeg",
+            "-i", input_path,
+            "-acodec", "pcm_s16le",
+            "-ar", "16000",
+            "-ac", "1",
+            "-af", f"silenceremove=start_periods=1:start_duration={silence_duration}:start_threshold={silence_threshold}dB",
+            output_path,
+        ]
+    else:
+        cmd = [
+            "ffmpeg",
+            "-i", input_path,
+            "-acodec", "pcm_s16le",
+            "-ar", "16000",
+            "-ac", "1",
+            output_path,
+        ]
 
     try:
         result = subprocess.run(

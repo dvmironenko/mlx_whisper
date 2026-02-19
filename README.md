@@ -234,6 +234,9 @@ pytest tests/ -v
 - `condition_on_previous_text` - Контекстная обработка
 - `no_speech_threshold` - Пороговое значение для фильтрации
 - `hallucination_silence_threshold` - Пороговое значение для фильтрации
+- `remove_silence` - Удаление тишины в начале и конце аудио (true/false)
+- `silence_threshold` - Порог для обнаружения тишины (в dB, по умолчанию -60.0)
+- `silence_duration` - Минимальная длительность тишины для удаления (в секундах, по умолчанию 0.5)
 
 ## Заключение
 
