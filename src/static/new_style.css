@@ -1,17 +1,30 @@
-/* src/static/new_style.css - Современный дизайн для MLX-Whisper */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* src/static/new_style.css - Light/Dark theme for MLX-Whisper */
+:root {
+    /* Light theme color palette */
+    --primary-color: #2563eb;
+    --secondary-color: #7c3aed;
+    --accent-color: #10b981;
+    --background-dark: #f8fafc;
+    --background-light: #ffffff;
+    --card-bg: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --warning-color: #f59e0b;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --transition: all 0.3s ease;
+    --glow-color: rgba(37, 99, 235, 0.3);
+    --switch-thumb: #ffffff;
+    --switch-track: #cbd5e1;
 }
 
-:root {
-    /* Цветовая палитра */
-    --primary-color: #6366f1;
-    --primary-dark: #4f46e5;
-    --secondary-color: #10b981;
-    --accent-color: #f59e0b;
+/* Dark theme color palette */
+[data-theme="dark"] {
+    --primary-color: #60a5fa;
+    --secondary-color: #a78bfa;
+    --accent-color: #34d399;
     --background-dark: #0f172a;
     --background-light: #1e293b;
     --card-bg: #1e293b;
@@ -19,14 +32,22 @@
     --text-secondary: #94a3b8;
     --border-color: #334155;
     --success-color: #10b981;
-    --error-color: #ef4444;
-    --warning-color: #f59e0b;
-    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    --transition: all 0.3s ease;
+    --error-color: #f87171;
+    --warning-color: #fbbf24;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --glow-color: rgba(96, 165, 166, 0.3);
+    --switch-thumb: #f1f5f9;
+    --switch-track: #475569;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--text-primary);
     background-color: var(--background-dark);
@@ -44,148 +65,143 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    border: 1px solid var(--border-color);
+    position: relative;
+    z-index: 1;
 }
 
-/* Заголовок приложения */
+/* Header styling */
 .app-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    padding: 20px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 30px 20px;
     color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
 }
 
-.header-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    text-align: center;
+.app-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.1), transparent),
+        linear-gradient(180deg, transparent, rgba(124, 58, 237, 0.1), transparent);
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
 }
 
 .app-title {
+    font-family: 'Inter', sans-serif;
     font-size: 2.5rem;
+    font-weight: 800;
     margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .app-subtitle {
-    font-size: 1.1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.2rem;
     opacity: 0.9;
-    margin-top: 5px;
+    letter-spacing: 0.5px;
 }
 
-/* Основная часть */
+/* Main content - One Column Layout */
 .app-main {
     flex: 1;
     padding: 30px 20px;
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 30px;
+    align-items: stretch;
 }
 
-/* Раздел загрузки */
-.upload-section {
-    background-color: var(--card-bg);
-    border-radius: 12px;
+/* Section styling with Glassmorphism */
+.upload-section, .result-section {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
     padding: 25px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.upload-section:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+.upload-section:hover, .result-section:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.upload-section::before, .result-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, transparent 100%);
+    pointer-events: none;
+    border-radius: 16px;
+}
+
+.upload-section::after, .result-section::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 16px;
+    padding: 1px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
 }
 
 .section-header {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--primary-color);
 }
 
 .section-header h2 {
-    font-size: 1.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    color: var(--primary-color);
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--text-primary);
 }
 
 .section-description p {
     color: var(--text-secondary);
-    margin-top: 5px;
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
-/* Зона загрузки файлов */
-.upload-area {
-    border: 2px dashed var(--border-color);
-    border-radius: 12px;
-    padding: 40px 20px;
-    text-align: center;
-    margin-bottom: 25px;
-    transition: var(--transition);
-    background-color: rgba(30, 41, 59, 0.5);
-    cursor: pointer;
-}
-
-.upload-area:hover {
-    border-color: var(--primary-color);
-    background-color: rgba(99, 102, 241, 0.1);
-}
-
-.upload-area.drag-over {
-    border-color: var(--primary-color);
-    background-color: rgba(99, 102, 241, 0.15);
-}
-
-.upload-icon {
-    font-size: 3rem;
-    color: var(--primary-color);
-    margin-bottom: 15px;
-}
-
-.upload-text {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-    color: var(--text-primary);
-}
-
-.upload-hint {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-top: 10px;
-}
-
-.file-input {
-    display: none;
-}
-
-/* Стили для отображения файла в области загрузки */
-.upload-text {
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-    color: var(--text-primary);
-    cursor: pointer;
-}
-
-.upload-text:hover {
-    color: var(--primary-color);
-}
-
-/* Форма загрузки */
-.upload-form {
-    width: 100%;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 25px;
-}
-
+/* Form styling */
 .form-group {
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
 }
@@ -196,82 +212,172 @@ body {
     gap: 8px;
     margin-bottom: 8px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--primary-color);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+    font-size: 1rem;
 }
 
-.form-select {
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* File upload styling */
+.upload-area {
+    position: relative;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    transition: var(--transition);
     background-color: var(--background-dark);
+    cursor: pointer;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-area:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(37, 99, 235, 0.05);
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.1);
+}
+
+.upload-area.drag-over {
+    border-color: var(--primary-color);
+    background-color: rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.2);
+}
+
+.upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--primary-color);
+}
+
+.upload-text {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.upload-hint {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+.file-input {
+    display: none;
+}
+
+/* Input elements */
+.form-select {
+    background-color: var(--background-light);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 12px 15px;
     font-size: 1rem;
     transition: var(--transition);
+    font-family: 'Inter', sans-serif;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    width: 100%;
 }
 
 .form-select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    background-color: var(--background-light);
 }
 
-/* Слайдеры */
-.form-group .form-range {
+.form-input {
+    background-color: var(--background-light);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 1rem;
+    transition: var(--transition);
+    font-family: 'Inter', sans-serif;
     width: 100%;
-    height: 6px;
-    border-radius: 3px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.initial-prompt-input {
+    font-size: 1rem;
+}
+
+/* Range sliders */
+.form-range {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
     background: var(--border-color);
     outline: none;
     -webkit-appearance: none;
 }
 
-.form-group .form-range::-webkit-slider-thumb {
+.form-range::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 20px;
     height: 20px;
     border-radius: 50%;
     background: var(--primary-color);
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.form-group .form-range::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .range-value {
     text-align: right;
+    margin-top: 5px;
     font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-top: 5px;
 }
 
-/* Чекбоксы */
+/* Checkbox styling */
 .form-checkboxes {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-    margin-bottom: 25px;
+    margin: 25px 0;
 }
 
 .checkbox-group {
     display: flex;
     align-items: center;
     padding: 12px 15px;
-    background-color: rgba(30, 41, 59, 0.7);
+    background-color: var(--background-dark);
     border-radius: 8px;
     border: 1px solid var(--border-color);
     transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 15px;
 }
 
 .checkbox-group:hover {
-    background-color: rgba(99, 102, 241, 0.1);
+    background-color: rgba(37, 99, 235, 0.05);
     border-color: var(--primary-color);
 }
 
@@ -283,6 +389,8 @@ body {
     font-weight: 500;
     color: var(--text-primary);
     flex: 1;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
 }
 
 .checkbox-group input[type="checkbox"] {
@@ -294,6 +402,7 @@ body {
     position: relative;
     cursor: pointer;
     transition: var(--transition);
+    background-color: var(--background-light);
 }
 
 .checkbox-group input[type="checkbox"]:checked {
@@ -312,10 +421,9 @@ body {
     font-weight: bold;
 }
 
-
-/* Кнопка отправки */
+/* Submit button */
 .submit-button {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     padding: 16px 25px;
     border: none;
@@ -329,116 +437,134 @@ body {
     gap: 10px;
     width: 100%;
     transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--primary-color);
+}
+
+.submit-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.submit-button:hover::before {
+    left: 100%;
 }
 
 .submit-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
-.submit-button:disabled {
-    background: var(--border-color);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+.submit-button:active {
+    transform: translateY(0);
 }
 
-/* Результат */
-.result-section {
-    background-color: var(--card-bg);
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
-    transition: var(--transition);
-    max-width: 100%; /* Ограничиваем ширину, чтобы не выходить за пределы контейнера */
-}
-
-.result-section:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
+/* Result section */
 .result-content {
     min-height: 200px;
+    padding: 20px;
+    background-color: var(--background-dark);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    /* ensure content block fills its parent and wraps long text */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
-/* Текстовый контент в результат */
-.text-content {
-    max-width: 100%; /* Ограничиваем ширину текстового контента */
-    width: 100%; /* Устанавливаем полную ширину внутри контейнера */
-    box-sizing: border-box; /* Учитываем padding в расчетах ширины */
-}
-
-/* Пустое состояние */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
     color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
 .empty-state i {
-    font-size: 3rem;
-    color: var(--border-color);
-    margin-bottom: 20px;
+    font-size: 4rem;
+    color: var(--primary-color);
+    opacity: 0.7;
 }
 
 .empty-state h3 {
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem;
+    color: var(--primary-color);
 }
 
-/* Загрузка */
+.empty-state p {
+    font-size: 1.1rem;
+    max-width: 600px;
+    line-height: 1.6;
+}
+
+/* Loading state */
 .loading-state {
     text-align: center;
     padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
 .loading-state i {
     font-size: 3rem;
     color: var(--primary-color);
-    margin-bottom: 20px;
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 .loading-state h3 {
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem;
+    color: var(--primary-color);
 }
 
-/* Ошибка */
+/* Error state */
 .error-state {
     text-align: center;
     padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
     color: var(--error-color);
-    background-color: rgba(239, 68, 68, 0.1);
-    border-radius: 8px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .error-state i {
     font-size: 3rem;
-    margin-bottom: 20px;
 }
 
 .error-state h3 {
-    font-size: 1.3rem;
-    margin-bottom: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem;
 }
 
-/* Результат */
+/* Result box styling */
 .result-box {
-    background-color: rgba(30, 41, 59, 0.7);
+    background-color: var(--background-light);
     border-radius: 8px;
     padding: 20px;
     border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
 }
 
 .result-header {
@@ -448,20 +574,25 @@ body {
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .result-header h3 {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--text-primary);
+    color: var(--primary-color);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+    font-size: 1.3rem;
 }
 
 .action-button {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 10px 15px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
@@ -469,15 +600,19 @@ body {
     align-items: center;
     gap: 5px;
     transition: var(--transition);
+    font-weight: 500;
+    border: 1px solid var(--primary-color);
 }
 
 .action-button:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-1px);
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .action-button.secondary {
-    background-color: var(--secondary-color);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
 }
 
 .action-button.secondary:hover {
@@ -492,25 +627,26 @@ body {
     border-radius: 6px;
     margin-bottom: 20px;
     border: 1px solid var(--border-color);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
 }
 
 .text-content p {
     margin-bottom: 0;
-    line-height: 1.6;
     color: var(--text-primary);
 }
 
-/* Детали результата */
 .result-details {
-    background-color: rgba(30, 41, 59, 0.7);
+    background-color: var(--background-dark);
     border-radius: 8px;
     padding: 20px;
     margin-top: 20px;
+    border: 1px solid var(--border-color);
 }
 
 .detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 15px;
 }
 
@@ -518,31 +654,47 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.9rem;
     color: var(--text-secondary);
+    font-size: 0.95rem;
 }
 
 .detail-item i {
     color: var(--primary-color);
-    width: 20px;
-    text-align: center;
+    min-width: 20px;
 }
 
 .detail-item span {
-    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
 }
 
-/* Футер */
+/* Footer */
 .app-footer {
     text-align: center;
     padding: 20px;
     color: var(--text-secondary);
     font-size: 0.9rem;
     border-top: 1px solid var(--border-color);
-    background-color: rgba(30, 41, 59, 0.7);
+    background-color: var(--background-dark);
+    position: relative;
+    overflow: hidden;
 }
 
-/* Адаптивность */
+/* Animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
     .app-main {
         padding: 20px 15px;
@@ -558,7 +710,7 @@ body {
     }
 
     .section-header h2 {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
     }
 
     .form-grid {
@@ -571,13 +723,13 @@ body {
         gap: 15px;
     }
 
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
     .action-button {
         width: 100%;
         justify-content: center;
-    }
-
-    .detail-grid {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -590,51 +742,260 @@ body {
         font-size: 1.8rem;
     }
 
+    .app-subtitle {
+        font-size: 1rem;
+    }
+
     .section-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.3rem;
+    }
+
+    .empty-state p {
+        font-size: 1rem;
+    }
+
+    .loading-state h3 {
+        font-size: 1.3rem;
+    }
+
+    .error-state h3 {
+        font-size: 1.3rem;
+    }
+
+    .result-header h3 {
         font-size: 1.2rem;
     }
 
-    .upload-icon {
-        font-size: 2rem;
+    .text-content {
+        font-size: 0.9rem;
     }
 
-    .upload-text {
-        font-size: 1rem;
+    .detail-item {
+        font-size: 0.85rem;
     }
-}
 
-/* Анимации */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    .detail-item i {
+        font-size: 0.8rem;
     }
 }
 
-.upload-section,
-.result-section {
-    animation: fadeIn 0.5s ease-out;
+/* Custom scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* Текстовые поля для ввода */
-.form-select,
-.form-range {
-    background-color: var(--background-dark);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 12px 15px;
-    font-size: 1rem;
+::-webkit-scrollbar-track {
+    background: var(--background-dark);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
+/* Additional effects */
+.container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 58, 237, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Hover effects */
+* {
     transition: var(--transition);
 }
 
-.form-select:focus,
-.form-range:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+/* Focus rings for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Theme Switcher Styles */
+.theme-switch-container {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.theme-switch-container:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .theme-switch-container:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-switch-label {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.theme-switch-wrapper {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+
+/* Hide the actual checkbox visually but keep it accessible */
+.theme-toggle {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+    margin: 0;
+}
+
+.theme-switch-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: var(--switch-track);
+    border-radius: 34px;
+    transition: var(--transition);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.theme-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    background-color: var(--switch-thumb);
+    border-radius: 50%;
+    transition: var(--transition);
+    z-index: 2;
+}
+
+/* When checkbox is checked - use parent wrapper styling */
+.theme-switch-wrapper input:checked + .theme-switch-track {
+    background-color: var(--primary-color);
+}
+
+.theme-switch-wrapper input:checked + .theme-switch-track .theme-switch-thumb {
+    transform: translateX(24px);
+}
+
+/* Accordion for transcription parameters */
+.transcription-parameters {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: var(--transition);
+    margin-bottom: 20px;
+}
+
+.transcription-parameters .parameters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background-color: var(--background-dark);
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.transcription-parameters .parameters-header:hover {
+    background-color: rgba(37, 99, 235, 0.03);
+}
+
+.transcription-parameters .parameters-header h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.3rem;
+    color: var(--primary-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.toggle-btn:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.transcription-parameters[data-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.transcription-parameters .parameters-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
+    padding: 0 20px;
+}
+
+.transcription-parameters[data-expanded="true"] .parameters-content {
+    padding: 20px;
+    max-height: 2000px;
+}
+
+.transcription-parameters .form-grid {
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.form-buttons .submit-button {
+    flex: 1;
+    max-width: 400px;
+    margin: 0 auto;
 }
