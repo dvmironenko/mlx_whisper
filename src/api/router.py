@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from typing import Optional
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE
+from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION
 from src.models.transcription import transcribe_audio
 from src.utils.audio import convert_to_wav
 from src.utils.files import generate_unique_filename, delete_file, validate_file_extension
@@ -19,14 +19,14 @@ async def transcribe_audio_endpoint(
     model: str = Form("large"),
     word_timestamps: str = Form("false"),
     condition_on_previous_text: str = Form("true"),
-    no_speech_threshold: Optional[str] = Form("0.4"),
-    hallucination_silence_threshold: Optional[str] = Form("0.8"),
+    no_speech_threshold: Optional[str] = Form(None),
+    hallucination_silence_threshold: Optional[str] = Form(None),
+    initial_prompt: Optional[str] = Form(None),
     remove_silence: str = Form(None),  # Используем None для определения, что параметр не задан
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
 ):
     """Транскрибировать аудиофайл."""
-    from src.config import logger, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION
 
     # Валидация расширения
     if file.filename is None:
@@ -48,10 +48,29 @@ async def transcribe_audio_endpoint(
             detail=f"Unsupported model. Supported: {', '.join(SUPPORTED_MODELS.keys())}"
         )
 
-    # Обработка параметров, если они не были переданы
+    # Обработка параметров, если они не были переданы (значения из .env)
+    # Если передано дефолтное значение, используем значение из .env (если задано)
+    task_value = task
+    if task == "transcribe":
+        task_value = os.getenv("DEFAULT_TASK", "transcribe")
+
+    model_value = model
+    if model == "large":
+        model_value = os.getenv("DEFAULT_MODEL", "large")
+
+    word_timestamps_value = word_timestamps.lower() == "true"
+    if word_timestamps == "false":
+        word_timestamps_value = os.getenv("DEFAULT_WORD_TIMESTAMPS", "false").lower() == "true"
+
+    condition_on_previous_text_value = condition_on_previous_text.lower() == "true"
+    if condition_on_previous_text == "true":
+        condition_on_previous_text_value = os.getenv("DEFAULT_CONDITION_ON_PREVIOUS", "true").lower() == "true"
+
     remove_silence_value = REMOVE_SILENCE if remove_silence is None else remove_silence.lower() == "true"
     silence_threshold_value = SILENCE_THRESHOLD if silence_threshold is None else float(silence_threshold)
     silence_duration_value = SILENCE_DURATION if silence_duration is None else float(silence_duration)
+    no_speech_threshold_value = NO_SPEECH_THRESHOLD if no_speech_threshold is None else float(no_speech_threshold)
+    hallucination_silence_threshold_value = HALLUCINATION_SILENCE_THRESHOLD if hallucination_silence_threshold is None else float(hallucination_silence_threshold)
 
     # Конвертация
     tmp_path = f"uploads/tmp_{file.filename}"
@@ -77,12 +96,13 @@ async def transcribe_audio_endpoint(
         result = transcribe_audio(
             file_path=converted_wav_path,
             language=language,
-            task=task,
-            model=model,
-            word_timestamps=word_timestamps.lower() == "true",
-            condition_on_previous_text=condition_on_previous_text.lower() == "true",
-            no_speech_threshold=float(no_speech_threshold) if no_speech_threshold else 0.4,
-            hallucination_silence_threshold=float(hallucination_silence_threshold) if hallucination_silence_threshold else 0.8,
+            task=task_value,
+            model=model_value,
+            word_timestamps=word_timestamps_value,
+            condition_on_previous_text=condition_on_previous_text_value,
+            no_speech_threshold=no_speech_threshold_value,
+            hallucination_silence_threshold=hallucination_silence_threshold_value,
+            initial_prompt=initial_prompt,
         )
 
         # Add file references to result
@@ -106,6 +126,29 @@ async def transcribe_audio_endpoint(
 async def health_check():
     """Проверка состояния сервиса."""
     return {"status": "healthy", "version": "1.0.0"}
+
+
+@router.get("/config")
+async def get_config():
+    """Получить конфигурацию из .env файла."""
+    from src.config import (
+        INITIAL_PROMPT,
+        REMOVE_SILENCE,
+        SILENCE_THRESHOLD,
+        SILENCE_DURATION,
+        DEFAULT_LANGUAGE,
+        NO_SPEECH_THRESHOLD,
+        HALLUCINATION_SILENCE_THRESHOLD
+    )
+    return {
+        "initial_prompt": INITIAL_PROMPT,
+        "remove_silence": REMOVE_SILENCE,
+        "silence_threshold": SILENCE_THRESHOLD,
+        "silence_duration": SILENCE_DURATION,
+        "default_language": DEFAULT_LANGUAGE,
+        "no_speech_threshold": NO_SPEECH_THRESHOLD,
+        "hallucination_silence_threshold": HALLUCINATION_SILENCE_THRESHOLD,
+    }
 
 
 @router.get("/models")

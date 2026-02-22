@@ -1,6 +1,10 @@
 """Main FastAPI application."""
 import os
 
+# Load .env file before any other imports
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
+
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -11,8 +15,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Also add parent directory for src imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import HOST, PORT, DEBUG, logger
-from api import router
+from src.config import HOST, PORT, DEBUG, logger
+from src.api import router
 
 # Initialize FastAPI app
 app = FastAPI(

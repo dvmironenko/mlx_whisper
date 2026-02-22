@@ -81,6 +81,17 @@ def test_root_endpoint_playwright():
                 else:
                     print("   ⚠ Контент слишком маленький")
 
+                # Проверка CSS: блоки загрузки и результата должны иметь одинаковую ширину
+                try:
+                    css_resp = requests.get("http://localhost:8801/static/new_style.css", timeout=5)
+                    css_text = css_resp.text
+                    if ".upload-section, .result-section" in css_text and "width: 100%" in css_text:
+                        print("   ✓ CSS правило для одинаковой ширины найдено")
+                    else:
+                        print("   ⚠ Отсутствует CSS правило ширины для секций")
+                except Exception:
+                    print("   ⚠ Не удалось загрузить CSS для проверки")
+
             else:
                 print(f"   ⚠ Непредвиденный статус: {response.status_code}")
 

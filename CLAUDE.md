@@ -96,6 +96,7 @@ pytest tests/ -v
    - Model size selection
    - Word-level timestamps option
    - Context-aware processing option
+   - Initial prompt option for context-aware transcription
 
 ## Development Workflow
 

@@ -1,6 +1,12 @@
 """Конфигурация приложения через environment variables."""
 
+from dotenv import load_dotenv
 import os
+
+# Загружаем переменные из .env файла (ищем в родительской директории)
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+load_dotenv(env_path)
+
 import logging
 from typing import Optional
 from logging.handlers import RotatingFileHandler
@@ -32,10 +38,20 @@ API_KEY: Optional[str] = os.getenv("MLX_WHISPER_API_KEY")
 LOGS_DIR: str = os.getenv("LOGS_DIR", "logs")
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
+# Initial prompt for context-aware transcription (optional)
+INITIAL_PROMPT: Optional[str] = os.getenv("INITIAL_PROMPT", None)
+
 # Silence removal settings
 REMOVE_SILENCE: bool = os.getenv("REMOVE_SILENCE", "true").lower() == "true"
 SILENCE_THRESHOLD: float = float(os.getenv("SILENCE_THRESHOLD", "-60.0"))
 SILENCE_DURATION: float = float(os.getenv("SILENCE_DURATION", "0.5"))
+
+# Default language for transcription (empty string for auto-detect)
+DEFAULT_LANGUAGE: Optional[str] = os.getenv("DEFAULT_LANGUAGE", None)
+
+# Transcription thresholds
+NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "0.4"))
+HALLUCINATION_SILENCE_THRESHOLD: float = float(os.getenv("HALLUCINATION_SILENCE_THRESHOLD", "0.8"))
 
 # Audio extensions
 AUDIO_EXTENSIONS: set = {

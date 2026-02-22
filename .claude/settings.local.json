@@ -41,7 +41,15 @@
       "Bash(git remote remove:*)",
       "Bash(git add:*)",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(find /Users/dvmironenko/dev/mlx_whisper -name \"*.py\" -exec grep -l \"initial_prompt\\\\|prompt\" {} ;)",
+      "Bash(echo \"INITIAL_PROMPT: $INITIAL_PROMPT\")",
+      "Bash(echo \"DEFAULT_LANGUAGE: $DEFAULT_LANGUAGE\")",
+      "Bash(pip uninstall -y python-dotenv)",
+      "Bash(python3.12 -c \"from dotenv import load_dotenv; print\\(''Success''\\)\")",
+      "Bash(pip show python-dotenv)",
+      "Bash(source:*)"
     ]
-  }
+  },
+  "outputStyle": "Explanatory"
 }
