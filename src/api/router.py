@@ -1,11 +1,13 @@
 """FastAPI роуты для API."""
 import os
+import time
+import uuid
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from typing import Optional
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION
+from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, logger, log_transcription_result
 from src.models.transcription import transcribe_audio
-from src.utils.audio import convert_to_wav
+from src.utils.audio import convert_to_wav, get_audio_duration
 from src.utils.files import generate_unique_filename, delete_file, validate_file_extension
 
 router = APIRouter(prefix="/api/v1", tags=["transcription"])
@@ -75,6 +77,7 @@ async def transcribe_audio_endpoint(
     # Конвертация
     tmp_path = f"uploads/tmp_{file.filename}"
     converted_wav_path = None
+    total_start_time = time.time()
 
     try:
         # Save file
@@ -82,8 +85,12 @@ async def transcribe_audio_endpoint(
             while chunk := await file.read(CHUNK_SIZE):
                 f.write(chunk)
 
-        # Convert to WAV
+        # Измеряем длительность аудио до конвертации
+        audio_duration = get_audio_duration(tmp_path)
+
+        # Convert to WAV и измеряем время
         converted_wav_path = f"uploads/{os.path.splitext(file.filename)[0]}_converted.wav"
+        convert_start_time = time.time()
         convert_to_wav(
             tmp_path,
             converted_wav_path,
@@ -91,8 +98,10 @@ async def transcribe_audio_endpoint(
             silence_threshold=silence_threshold_value,
             silence_duration=silence_duration_value
         )
+        convert_duration = time.time() - convert_start_time
 
-        # Transcribe
+        # Transcribe и измеряем время
+        transcribe_start_time = time.time()
         result = transcribe_audio(
             file_path=converted_wav_path,
             language=language,
@@ -104,17 +113,53 @@ async def transcribe_audio_endpoint(
             hallucination_silence_threshold=hallucination_silence_threshold_value,
             initial_prompt=initial_prompt,
         )
+        transcribe_duration = time.time() - transcribe_start_time
 
-        # Add file references to result
+        # Добавляем информацию о времени в результат
+        total_duration = time.time() - total_start_time
         result["uploaded_file"] = os.path.basename(tmp_path)
         result["result_file"] = os.path.splitext(os.path.basename(converted_wav_path))[0] + ".txt"
-        result["job_id"] = generate_unique_filename(file.filename)
+        result["job_id"] = str(uuid.uuid4())
+        result["model"] = model_value
+        result["no_speech_threshold"] = no_speech_threshold_value
+        result["hallucination_silence_threshold"] = hallucination_silence_threshold_value
+        result["convert_duration"] = round(convert_duration, 2)
+        result["transcribe_duration"] = round(transcribe_duration, 2)
+        result["total_duration"] = round(total_duration, 2)
+        if audio_duration is not None:
+            result["audio_duration"] = round(audio_duration, 2)
 
-        # Add duration to the result for frontend display
-        if "duration" not in result:
-            result["duration"] = None
+        # Логируем результат
+        log_transcription_result(
+            filename=os.path.basename(tmp_path),
+            model=model_value,
+            language=language,
+            task=task_value,
+            audio_duration=audio_duration,
+            convert_duration=convert_duration,
+            transcribe_duration=transcribe_duration,
+            total_duration=total_duration,
+            success=True,
+        )
 
         return result
+    except Exception as e:
+        # Логируем ошибку
+        total_duration = time.time() - total_start_time
+        logger.error(f"Transcription API error for {os.path.basename(tmp_path)}: {e}")
+        log_transcription_result(
+            filename=os.path.basename(tmp_path),
+            model=model_value,
+            language=language,
+            task=task_value,
+            audio_duration=audio_duration if 'audio_duration' in locals() else None,
+            convert_duration=convert_duration if 'convert_duration' in locals() else None,
+            transcribe_duration=0.0,
+            total_duration=total_duration,
+            success=False,
+            error=str(e),
+        )
+        raise
     finally:
         # Cleanup temp files
         delete_file(tmp_path)

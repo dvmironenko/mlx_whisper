@@ -295,6 +295,10 @@
                         'large': 'Large',
                         'turbo': 'Turbo'
                     };
+                    // Extract model name if path is provided (e.g., "models/whisper-turbo" -> "turbo")
+                    if (typeof modelName === 'string' && modelName.includes('/')) {
+                        modelName = modelName.split('/').pop().replace('whisper-', '');
+                    }
                     const readableModelName = modelNames[modelName] || modelName;
 
                     // Get the original filename from the form input
@@ -320,11 +324,11 @@
                                 <div class="detail-grid">
                                     <div class="detail-item">
                                         <i class="fas fa-file"></i>
-                                        <span><strong>Файл:</strong> ${originalFilename}</span>
+                                        <span><strong>Файл:</strong> ${originalFilename || 'Неизвестно'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-language"></i>
-                                        <span><strong>Язык:</strong> ${data.language}</span>
+                                        <span><strong>Язык:</strong> ${data.language || 'Не определён'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-microchip"></i>
@@ -332,19 +336,19 @@
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-signal"></i>
-                                        <span><strong>Порог отсутствия речи:</strong> ${data.no_speech_threshold}</span>
+                                        <span><strong>Порог отсутствия речи:</strong> ${data.no_speech_threshold !== undefined ? data.no_speech_threshold : 'Не задан'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-microphone-slash"></i>
-                                        <span><strong>Порог галлюцинаций:</strong> ${data.hallucination_silence_threshold}</span>
+                                        <span><strong>Порог галлюцинаций:</strong> ${data.hallucination_silence_threshold !== undefined ? data.hallucination_silence_threshold : 'Не задан'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-id-badge"></i>
-                                        <span><strong>ID задания:</strong> ${data.job_id}</span>
+                                        <span><strong>ID задания:</strong> ${data.job_id || 'Не доступен'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-clock"></i>
-                                        <span><strong>Время выполнения:</strong> ${data.duration ? data.duration.toFixed(2) + ' секунд' : 'Неизвестно'}</span>
+                                        <span><strong>Время выполнения:</strong> ${data.total_duration ? data.total_duration.toFixed(2) + ' секунд' : (data.audio_duration ? 'Приблизительно ' + data.audio_duration.toFixed(2) + ' секунд' : 'Неизвестно')}</span>
                                     </div>
                                 </div>
                             </div>
