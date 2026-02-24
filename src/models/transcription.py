@@ -1,6 +1,7 @@
 """Реализация транскрибации с помощью MLX-Whisper."""
 
 import os
+import time
 from typing import Any, Optional
 
 # Import mlx_whisper.transcribe
@@ -8,6 +9,9 @@ try:
     from mlx_whisper.transcribe import transcribe
 except ImportError:
     raise ImportError("mlx-whisper package is required. Install it with: pip install mlx-whisper")
+
+from src.utils.audio import get_audio_duration
+from src.config import logger
 
 
 def transcribe_audio(
@@ -74,6 +78,13 @@ def transcribe_audio(
         # Используем модель из HuggingFace
         model_path = f"mlx-community/whisper-{model}"
 
+    # Измеряем длительность аудио
+    try:
+        audio_duration = get_audio_duration(file_path)
+    except Exception as e:
+        logger.error(f"Failed to get audio duration for {file_path}: {e}")
+        audio_duration = None
+
     # Подготавливаем параметры
     transcribe_options = {
         "language": language,
@@ -90,11 +101,22 @@ def transcribe_audio(
     if initial_prompt is not None:
         transcribe_options["initial_prompt"] = initial_prompt
 
-    # Выполняем транскрипцию
-    result = transcribe(
-        audio=file_path,
-        path_or_hf_repo=model_path,
-        **transcribe_options
-    )
+    # Выполняем транскрипцию и измеряем время
+    try:
+        start_time = time.time()
+        result = transcribe(
+            audio=file_path,
+            path_or_hf_repo=model_path,
+            **transcribe_options
+        )
+        transcribe_duration = time.time() - start_time
 
-    return result
+        # Добавляем информацию о времени в результат
+        result["transcribe_duration"] = transcribe_duration
+        if audio_duration is not None:
+            result["audio_duration"] = audio_duration
+
+        return result
+    except Exception as e:
+        logger.error(f"Transcription failed for {file_path}: {e}")
+        raise

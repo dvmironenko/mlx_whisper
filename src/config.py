@@ -113,3 +113,55 @@ error_handler = RotatingFileHandler(
 error_handler.setLevel(logging.ERROR)
 error_handler.setFormatter(formatter)
 logger.addHandler(error_handler)
+
+
+def log_transcription_result(
+    filename: str,
+    model: str,
+    language: Optional[str],
+    task: str,
+    audio_duration: Optional[float],
+    convert_duration: Optional[float],
+    transcribe_duration: float,
+    total_duration: float,
+    success: bool,
+    error: Optional[str] = None,
+) -> None:
+    """
+    Логировать результат транскрипции.
+
+    Parameters
+    ----------
+    filename: str
+        Имя загруженного файла
+    model: str
+        Использованная модель
+    language: Optional[str]
+        Язык транскрипции (или None для auto-detect)
+    task: str
+        Тип задачи (transcribe/translate)
+    audio_duration: Optional[float]
+        Длительность аудио в секундах
+    convert_duration: Optional[float]
+        Время конвертации в секундах
+    transcribe_duration: float
+        Время транскрипции в секундах
+    total_duration: float
+        Общее время обработки в секундах
+    success: bool
+        Успешность завершения
+    error: Optional[str]
+        Описание ошибки (если есть)
+    """
+    if success:
+        logger.info(
+            f"Transcription completed: file={filename}, model={model}, "
+            f"task={task}, language={language or 'auto'}, audio_duration={audio_duration:.2f}s, "
+            f"convert_time={convert_duration:.2f}s, transcribe_time={transcribe_duration:.2f}s, "
+            f"total_time={total_duration:.2f}s"
+        )
+    else:
+        logger.error(
+            f"Transcription failed: file={filename}, model={model}, "
+            f"task={task}, language={language or 'auto'}, error={error}"
+        )
