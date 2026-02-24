@@ -309,6 +309,9 @@
                             <div class="result-header">
                                 <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
                                 <div class="result-actions">
+                                    <button onclick="copyToClipboard()" class="action-button secondary">
+                                        <i class="fas fa-copy"></i> Копировать
+                                    </button>
                                     <button onclick="downloadMainText()" class="action-button">
                                         <i class="fas fa-download"></i> Основной текст
                                     </button>
@@ -381,6 +384,20 @@
                 submitButton.disabled = false;
             }
         });
+
+        function copyToClipboard() {
+            if (window.downloadData && window.downloadData.text) {
+                navigator.clipboard.writeText(window.downloadData.text)
+                    .then(() => alert('Текст скопирован!'))
+                    .catch(err => {
+                        console.error('Clipboard error:', err);
+                        alert('Ошибка при копировании: ' + err);
+                    });
+            } else {
+                console.error('downloadData is not defined');
+                alert('Ошибка: данные для копирования не найдены');
+            }
+        }
 
         function downloadMainText() {
             if (window.downloadData) {
