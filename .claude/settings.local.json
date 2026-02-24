@@ -52,7 +52,9 @@
       "Bash(head:*)",
       "Bash(echo sox not available, trying alternative:*)",
       "Bash(sleep 1:*)",
-      "Bash(true:*)"
+      "Bash(true:*)",
+      "Bash(git rm:*)",
+      "Bash(git restore:*)"
     ]
   },
   "outputStyle": "Explanatory"

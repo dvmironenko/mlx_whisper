@@ -1,99 +1,62 @@
-2026-02-17 18:51:54,588 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 18:51:54,588 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:18:38,721 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:18:38,721 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:27:40,794 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:27:40,794 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:33:26,675 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:33:26,675 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:35:17,349 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:35:17,349 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:36:55,965 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:36:55,965 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:59:14,031 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:59:14,031 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:41,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:41,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:58,068 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:58,068 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:34:32,374 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:34:32,374 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 07:01:52,206 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 07:01:52,206 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 14:49:08,229 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 14:49:08,229 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 15:53:15,412 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 15:53:15,412 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:40:48,992 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:40:48,992 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:57:07,436 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:57:07,436 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:57:35,351 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 16:57:35,351 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 17:11:55,172 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 17:11:55,172 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 19:08:54,894 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 19:08:54,894 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:25,348 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:25,348 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:58,411 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:58,411 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:33:45,353 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:33:45,353 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:01,155 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:01,155 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:52,469 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:52,469 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:06:28,811 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:06:28,811 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:29:13,117 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:29:13,117 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:47,746 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:47,746 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:58,998 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:58,998 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:17,939 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:17,939 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:44,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:44,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 10:15:47,458 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 10:15:47,458 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 13:05:35,669 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 13:05:35,669 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 16:01:10,841 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 16:01:10,841 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:26:21,764 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:26:21,764 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:55:23,252 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:55:23,252 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 22:34:16,658 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 22:34:16,658 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 23:40:15,946 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 23:40:15,946 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 00:43:03,343 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 00:43:03,343 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 11:39:24,545 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 11:39:24,545 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 13:47:41,752 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 13:47:41,752 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 16:47:22,342 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 16:47:22,342 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:36:33,270 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:36:33,270 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:50:25,079 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:50:25,079 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:57:10,013 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:57:10,013 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 09:30:08,833 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 09:30:08,833 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 10:24:18,741 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 10:34:27,830 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 10:37:54,964 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 11:14:19,050 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 11:39:28,973 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 08:43:55,771 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 08:47:48,861 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 08:52:40,847 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 08:54:21,876 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 10:08:07,681 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 10:16:59,548 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 12:44:39,463 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 13:11:35,001 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 13:11:40,951 | INFO     | mlx_whisper | Transcription completed: file=tmp_test.wav, model=tiny, task=transcribe, language=ru, audio_duration=5.00s, convert_time=0.17s, transcribe_time=3.85s, total_time=4.63s
+2026-02-24 13:12:08,007 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 13:29:00,666 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 13:29:02,679 | ERROR    | mlx_whisper | FFmpeg conversion failed for uploads/tmp_empty.wav: ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with Apple clang version 17.0.0 (clang-1700.4.4.1)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.0.1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libharfbuzz --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60.  8.100 / 60.  8.100
+  libavcodec     62. 11.100 / 62. 11.100
+  libavformat    62.  3.100 / 62.  3.100
+  libavdevice    62.  1.100 / 62.  1.100
+  libavfilter    11.  4.100 / 11.  4.100
+  libswscale      9.  1.100 /  9.  1.100
+  libswresample   6.  1.100 /  6.  1.100
+[in#0 @ 0x132e04300] Error opening input: Invalid data found when processing input
+Error opening input file uploads/tmp_empty.wav.
+Error opening input files: Invalid data found when processing input
+
+2026-02-24 13:29:02,679 | ERROR    | mlx_whisper | Transcription API error for tmp_empty.wav: FFmpeg conversion failed: ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with Apple clang version 17.0.0 (clang-1700.4.4.1)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.0.1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libharfbuzz --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60.  8.100 / 60.  8.100
+  libavcodec     62. 11.100 / 62. 11.100
+  libavformat    62.  3.100 / 62.  3.100
+  libavdevice    62.  1.100 / 62.  1.100
+  libavfilter    11.  4.100 / 11.  4.100
+  libswscale      9.  1.100 /  9.  1.100
+  libswresample   6.  1.100 /  6.  1.100
+[in#0 @ 0x132e04300] Error opening input: Invalid data found when processing input
+Error opening input file uploads/tmp_empty.wav.
+Error opening input files: Invalid data found when processing input
+
+2026-02-24 13:29:02,679 | ERROR    | mlx_whisper | Transcription failed: file=tmp_empty.wav, model=turbo, task=transcribe, language=ru, error=FFmpeg conversion failed: ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with Apple clang version 17.0.0 (clang-1700.4.4.1)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.0.1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libharfbuzz --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60.  8.100 / 60.  8.100
+  libavcodec     62. 11.100 / 62. 11.100
+  libavformat    62.  3.100 / 62.  3.100
+  libavdevice    62.  1.100 / 62.  1.100
+  libavfilter    11.  4.100 / 11.  4.100
+  libswscale      9.  1.100 /  9.  1.100
+  libswresample   6.  1.100 /  6.  1.100
+[in#0 @ 0x132e04300] Error opening input: Invalid data found when processing input
+Error opening input file uploads/tmp_empty.wav.
+Error opening input files: Invalid data found when processing input
+
+2026-02-24 13:29:49,430 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 13:29:57,334 | INFO     | mlx_whisper | Transcription completed: file=tmp_test.wav, model=turbo, task=transcribe, language=ru, audio_duration=5.00s, convert_time=0.10s, transcribe_time=5.83s, total_time=6.08s
+2026-02-24 13:38:00,791 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.87s, transcribe_time=137.87s, total_time=140.02s
+2026-02-24 14:45:44,226 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 14:45:55,887 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 14:46:06,316 | INFO     | mlx_whisper | Transcription completed: file=tmp_test.wav, model=turbo, task=transcribe, language=ru, audio_duration=5.00s, convert_time=0.08s, transcribe_time=4.13s, total_time=4.35s
+2026-02-24 15:00:51,868 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=2.27s, transcribe_time=135.23s, total_time=137.89s
+2026-02-24 15:08:57,103 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 15:10:03,001 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 15:10:41,184 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 15:42:03,334 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=2.04s, transcribe_time=128.68s, total_time=130.95s
+2026-02-24 15:44:58,970 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 16:48:03,251 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.66s, transcribe_time=135.68s, total_time=137.72s
+2026-02-24 17:13:18,026 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 17:16:33,466 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.88s, transcribe_time=115.87s, total_time=118.16s
