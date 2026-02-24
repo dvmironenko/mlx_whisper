@@ -60,11 +60,15 @@ curl -X POST "http://localhost:8801/transcribe" \
   -F "language=ru"
 
 # Using the web interface
-# Visit http://localhost:8801 in your browser
+Visit http://localhost:8801 in your browser
 
 # Run unit tests
 pytest tests/ -v
 ```
+
+#### Tests directory
+All tests store in tests/ directory.
+
 
 ## Code Structure
 
@@ -72,7 +76,7 @@ pytest tests/ -v
 - `src/templates/index.html`: Web interface template
 - `src/static/style.css`: CSS styling for web interface
 - `models/`: Directory containing MLX-Whisper model files (tiny, base, small, medium, turbo, large)
-- `tests/`: Test audio files for manual testing
+- `tests/`: Test audio files for manual testing and unit tests
 - `uploads/`: Temporary directory for uploaded audio files (created automatically)
 
 ## Key Features and Design Patterns
