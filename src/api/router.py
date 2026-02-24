@@ -1,8 +1,34 @@
 """FastAPI роуты для API."""
+import math
 import os
 import time
 import uuid
 from fastapi import APIRouter, UploadFile, Form, HTTPException
+from typing import Optional
+
+
+def sanitize_floats(value):
+    """Заменить NaN и Infinity на None для JSON-совместимости."""
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return None
+    return value
+
+
+def sanitize_result(result: dict) -> dict:
+    """Рекурсивно заменить NaN и Infinity в словаре."""
+    sanitized = {}
+    for key, value in result.items():
+        if isinstance(value, dict):
+            sanitized[key] = sanitize_result(value)
+        elif isinstance(value, list):
+            sanitized[key] = [
+                sanitize_result(item) if isinstance(item, dict) else sanitize_floats(item)
+                for item in value
+            ]
+        else:
+            sanitized[key] = sanitize_floats(value)
+    return sanitized
 from typing import Optional
 
 from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, logger, log_transcription_result
@@ -141,6 +167,9 @@ async def transcribe_audio_endpoint(
             total_duration=total_duration,
             success=True,
         )
+
+        # Очистить NaN и Infinity для JSON-совместимости
+        result = sanitize_result(result)
 
         return result
     except Exception as e:
