@@ -79,6 +79,10 @@ SUPPORTED_MODELS: dict = {
 # Create logs directory if not exists
 os.makedirs(LOGS_DIR, exist_ok=True)
 
+# Create uploads directory if not exists
+UPLOADS_DIR = "uploads"
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+
 # Create formatter
 formatter = logging.Formatter(
     "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"

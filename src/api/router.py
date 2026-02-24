@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from typing import Optional
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION
+from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR
 from src.models.transcription import transcribe_audio
 from src.utils.audio import convert_to_wav
 from src.utils.files import generate_unique_filename, delete_file, validate_file_extension
@@ -73,7 +73,7 @@ async def transcribe_audio_endpoint(
     hallucination_silence_threshold_value = HALLUCINATION_SILENCE_THRESHOLD if hallucination_silence_threshold is None else float(hallucination_silence_threshold)
 
     # Конвертация
-    tmp_path = f"uploads/tmp_{file.filename}"
+    tmp_path = f"{UPLOADS_DIR}/tmp_{file.filename}"
     converted_wav_path = None
 
     try:
@@ -83,7 +83,7 @@ async def transcribe_audio_endpoint(
                 f.write(chunk)
 
         # Convert to WAV
-        converted_wav_path = f"uploads/{os.path.splitext(file.filename)[0]}_converted.wav"
+        converted_wav_path = f"{UPLOADS_DIR}/{os.path.splitext(file.filename)[0]}_converted.wav"
         convert_to_wav(
             tmp_path,
             converted_wav_path,
