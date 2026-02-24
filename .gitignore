@@ -1,0 +1,54 @@
+# Tests
+tests/
+
+# Continue configuration
+.continue/rules/CONTINUE.md
+.continue/CONTINUE_comprehensive.md
+.continue/.DS_Store
+
+# VS Code settings
+.vscode/settings.json
+
+
+# GitHub actions
+.github/.DS_Store
+
+# Python cache
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models (если не хранить в репозитории)
+models/
+whisper-*.ggml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Environment file (СЕКРЕТЫ!)
+.env
+
+# Results storage (опционально, если не нужно в git)
+results/
+uploads/
