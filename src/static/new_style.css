@@ -20,6 +20,11 @@
     --switch-track: #cbd5e1;
 }
 
+/* Ensure the theme switch label is always white regardless of theme */
+.theme-switch-label {
+    color: #fff !important;
+}
+
 /* Dark theme color palette */
 [data-theme="dark"] {
     --primary-color: #60a5fa;

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. Always answer on Russian language. Comments and descriptions write on Russian, code write in English.
 
 ## Project Overview
 
@@ -104,12 +104,6 @@ All tests store in tests/ directory.
 
 ## Development Workflow
 
-### Common Development Tasks:
-1. **Adding new models**: Create directories in `models/` and update `SUPPORTED_MODELS` in `src/main.py`
-2. **Modifying web interface**: Edit `src/templates/index.html` and `src/static/style.css`
-3. **Extending API**: Add new endpoints in `src/main.py`
-4. **Improving error handling**: Enhance error responses and logging in `src/main.py`
-
 ### Code Quality Standards:
 - Follow PEP 8 Python style guidelines
 - Use type annotations for function parameters and return values
@@ -118,6 +112,7 @@ All tests store in tests/ directory.
 - **All documentation must be saved in the `docs/` folder**
 
 ### Testing Approach:
+- **All tests must be saved in the `tests/` folder**
 - Manual testing with audio files in `tests/` directory
 - API endpoint integration testing
 - Memory usage optimization verification

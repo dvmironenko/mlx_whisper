@@ -92,3 +92,8 @@
 2026-02-22 11:14:19,050 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
 2026-02-22 11:39:28,973 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
 2026-02-24 08:43:55,771 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 08:47:48,861 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 08:52:40,847 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 08:54:21,876 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 10:08:07,681 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-24 10:16:59,548 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
