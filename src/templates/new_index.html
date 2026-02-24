@@ -507,7 +507,7 @@
                 }
 
                 // Initialize default language if provided
-                if (config.default_language) {
+                if (config.language) {
                     const languageSelect = document.getElementById('language');
                     if (languageSelect) {
                         // Find option that matches the config language
@@ -521,9 +521,9 @@
                                 'fr': 'Français',
                                 'es': 'Español'
                             };
-                            const optionText = langMap[config.default_language];
+                            const optionText = langMap[config.language];
                             if (optionText && options[i].text === optionText) {
-                                languageSelect.value = config.default_language;
+                                languageSelect.value = config.language;
                                 break;
                             }
                         }

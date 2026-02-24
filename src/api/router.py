@@ -31,7 +31,7 @@ def sanitize_result(result: dict) -> dict:
     return sanitized
 from typing import Optional
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, logger, log_transcription_result
+from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, logger, log_transcription_result
 from src.models.transcription import transcribe_audio
 from src.utils.audio import convert_to_wav, get_audio_duration
 from src.utils.files import generate_unique_filename, delete_file, validate_file_extension
@@ -80,19 +80,19 @@ async def transcribe_audio_endpoint(
     # Если передано дефолтное значение, используем значение из .env (если задано)
     task_value = task
     if task == "transcribe":
-        task_value = os.getenv("DEFAULT_TASK", "transcribe")
+        task_value = os.getenv("TASK", "transcribe")
 
     model_value = model
     if model == "large":
-        model_value = os.getenv("DEFAULT_MODEL", "large")
+        model_value = os.getenv("MODEL", "large")
 
     word_timestamps_value = word_timestamps.lower() == "true"
     if word_timestamps == "false":
-        word_timestamps_value = os.getenv("DEFAULT_WORD_TIMESTAMPS", "false").lower() == "true"
+        word_timestamps_value = os.getenv("WORD_TIMESTAMPS", "false").lower() == "true"
 
     condition_on_previous_text_value = condition_on_previous_text.lower() == "true"
     if condition_on_previous_text == "true":
-        condition_on_previous_text_value = os.getenv("DEFAULT_CONDITION_ON_PREVIOUS", "true").lower() == "true"
+        condition_on_previous_text_value = os.getenv("CONDITION_ON_PREVIOUS", "true").lower() == "true"
 
     remove_silence_value = REMOVE_SILENCE if remove_silence is None else remove_silence.lower() == "true"
     silence_threshold_value = SILENCE_THRESHOLD if silence_threshold is None else float(silence_threshold)
@@ -210,7 +210,7 @@ async def get_config():
         REMOVE_SILENCE,
         SILENCE_THRESHOLD,
         SILENCE_DURATION,
-        DEFAULT_LANGUAGE,
+        LANGUAGE,
         NO_SPEECH_THRESHOLD,
         HALLUCINATION_SILENCE_THRESHOLD
     )
@@ -219,7 +219,7 @@ async def get_config():
         "remove_silence": REMOVE_SILENCE,
         "silence_threshold": SILENCE_THRESHOLD,
         "silence_duration": SILENCE_DURATION,
-        "default_language": DEFAULT_LANGUAGE,
+        "language": LANGUAGE,
         "no_speech_threshold": NO_SPEECH_THRESHOLD,
         "hallucination_silence_threshold": HALLUCINATION_SILENCE_THRESHOLD,
     }
