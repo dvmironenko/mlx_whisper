@@ -54,33 +54,35 @@
 - **Динамические кнопки действий**: Копировать, Основной текст, Сегменты (только при наличии timestamps)
 - **Адаптивный дизайн** для мобильных устройств
 
-## Структура кода
+## Структура проекта
 
 ```
-src/
-├── main.py                   # FastAPI приложение (входная точка)
-├── config.py                 # Конфигурация через environment variables
-├── models/
-│   ├── __init__.py
-│   └── transcription.py      # Логика транскрипции и конвертация
-├── api/
-│   ├── __init__.py
-│   ├── router.py             # FastAPI роуты
-│   └── dependencies.py       # Зависимости (auth, auth check)
-└── utils/
-    ├── __init__.py
-    ├── audio.py              # FFmpeg конвертация
-    └── files.py              # Работа с файлами
-
-tests/
-├── test.py                   # Базовые unit-тесты
-├── test.wav                  # Тестовый аудиофайл
-└── playwright/               # E2E тесты с Playwright
-
-models/                       # Каталог моделей Whisper
-uploads/                      # Временное хранилище загруженных файлов
-results/                      # Сохраненные результаты транскрипции
-logs/                         # Логи приложения (app.log, error.log)
+.
+├── src/
+│   ├── main.py                   # FastAPI приложение (входная точка)
+│   ├── config.py                 # Конфигурация через environment variables
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── transcription.py      # Логика транскрипции и конвертация
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── router.py             # FastAPI роуты
+│   │   └── dependencies.py       # Зависимости (auth, auth check)
+│   └── utils/
+│       ├── __init__.py
+│       ├── audio.py              # FFmpeg конвертация
+│       └── files.py              # Работа с файлами
+│
+├── tests/
+│   ├── test.py                   # Базовые unit-тесты
+│   ├── test.wav                  # Тестовый аудиофайл
+│   └── playwright/               # E2E тесты с Playwright
+│
+├── models/                       # Каталог моделей Whisper
+├── uploads/                      # Временное хранилище загруженных файлов
+├── results/                      # Сохраненные результаты транскрипции
+├── logs/                         # Логи приложения (app.log, error.log)
+└── .env                          # Конфигурация приложения
 ```
 
 ### Ключевые модули
@@ -266,10 +268,10 @@ LANGUAGE=ru                       # Язык по умолчанию для тр
 # Transcription Thresholds - Пороги транскрипции
 # ========================================
 
-NO_SPEECH_THRESHOLD=0.4           # Порог отсутствия речи (по умолчанию: 0.4)
+NO_SPEECH_THRESHOLD=0.6           # Порог отсутствия речи (по умолчанию: 0.6)
                                   # Значения ниже этого порога считаются тишиной
 
-HALLUCINATION_SILENCE_THRESHOLD=0.8  # Порог галлюцинаций/тишины (по умолчанию: 0.8)
+HALLUCINATION_SILENCE_THRESHOLD=2.0  # Порог галлюцинаций/тишины (по умолчанию: 2.0)
                                      # Порог для определения галлюцинаций модели
 
 # ========================================
