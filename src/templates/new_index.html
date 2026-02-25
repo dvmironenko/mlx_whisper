@@ -306,21 +306,20 @@
 
                     resultDiv.innerHTML = `
                         <div class="result-box">
-                            <div class="result-header">
-                                <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
-                                <div class="result-actions">
-                                    <button onclick="copyToClipboard()" class="action-button secondary">
-                                        <i class="fas fa-copy"></i> Копировать
-                                    </button>
-                                    <button onclick="downloadMainText()" class="action-button">
-                                        <i class="fas fa-download"></i> Основной текст
-                                    </button>
-                                    ${data.word_timestamps ? '<button onclick="downloadSegments()" class="action-button secondary">Сегменты</button>' : ''}
-                                </div>
-                            </div>
+                            <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
 
                             <div class="text-content">
                                 <p>${data.text}</p>
+                            </div>
+
+                            <div class="result-actions">
+                                <button onclick="copyToClipboard()" class="action-button secondary">
+                                    <i class="fas fa-copy"></i> Копировать
+                                </button>
+                                <button onclick="downloadMainText()" class="action-button">
+                                    <i class="fas fa-download"></i> Основной текст
+                                </button>
+                                ${data.word_timestamps ? '<button onclick="downloadSegments()" class="action-button secondary">Сегменты</button>' : ''}
                             </div>
 
                             <div class="result-details">
