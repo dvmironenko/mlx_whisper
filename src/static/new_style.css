@@ -917,7 +917,7 @@ body {
 .theme-switch-thumb {
     position: absolute;
     top: 2px;
-    left: 2px;
+    left: -4px;
     width: 22px;
     height: 22px;
     background-color: var(--switch-thumb);
