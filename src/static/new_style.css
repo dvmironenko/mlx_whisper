@@ -624,6 +624,19 @@ body {
     background-color: #059669;
 }
 
+/* Result actions - horizontal layout */
+.result-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.result-actions .action-button {
+    flex: 0 0 auto;
+}
+
 .text-content {
     max-height: 300px;
     overflow-y: auto;
@@ -735,6 +748,10 @@ body {
     .action-button {
         width: 100%;
         justify-content: center;
+    }
+
+    .result-actions {
+        flex-wrap: nowrap !important;
     }
 }
 
