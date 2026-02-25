@@ -129,6 +129,18 @@ button:hover {
     color: #2c3e50;
 }
 
+.result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.result-header h3 {
+    flex: 1;
+    margin-bottom: 0;
+}
+
 .text-content {
     max-height: 300px; /* Примерно 20 строк текста */
     overflow-y: auto;
@@ -174,7 +186,6 @@ footer {
     display: flex;
     flex-wrap: nowrap;
     gap: 10px;
-    margin-top: 15px;
 }
 
 .result-actions button {
