@@ -932,7 +932,7 @@ body {
 }
 
 .theme-switch-wrapper input:checked + .theme-switch-track .theme-switch-thumb {
-    transform: translateX(24px);
+    transform: translateX(16px);
 }
 
 /* Accordion for transcription parameters */
