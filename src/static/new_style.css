@@ -335,6 +335,11 @@ body {
     font-size: 1rem;
 }
 
+/* Отступ после поля initial prompt */
+#initialPrompt {
+    margin-bottom: 20px;
+}
+
 /* Range sliders */
 .form-range {
     width: 100%;
