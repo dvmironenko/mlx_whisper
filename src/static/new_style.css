@@ -659,6 +659,11 @@ body {
     color: var(--text-primary);
 }
 
+/* Отступ после элемента "Распознанный текст" */
+.text-content + .result-actions {
+    margin-top: 16px;
+}
+
 .result-details {
     background-color: var(--background-dark);
     border-radius: 8px;
