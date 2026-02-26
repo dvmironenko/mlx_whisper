@@ -60,3 +60,22 @@ Error opening input files: Invalid data found when processing input
 2026-02-24 16:48:03,251 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.66s, transcribe_time=135.68s, total_time=137.72s
 2026-02-24 17:13:18,026 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
 2026-02-24 17:16:33,466 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.88s, transcribe_time=115.87s, total_time=118.16s
+2026-02-24 22:33:32,270 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=0.75s, transcribe_time=51.99s, total_time=52.95s
+2026-02-25 06:25:06,524 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=0.76s, transcribe_time=51.07s, total_time=52.43s
+2026-02-25 06:42:38,619 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 06:43:42,076 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=0.75s, transcribe_time=50.24s, total_time=51.13s
+2026-02-25 06:45:11,848 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 06:57:46,871 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.88s, transcribe_time=138.85s, total_time=141.00s
+2026-02-25 07:10:45,115 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.92s, transcribe_time=132.17s, total_time=134.50s
+2026-02-25 08:42:06,376 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=2.07s, transcribe_time=136.34s, total_time=138.74s
+2026-02-25 09:46:08,119 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 09:48:59,126 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 11:03:11,455 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 11:03:53,713 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 11:06:42,787 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=2.22s, transcribe_time=147.93s, total_time=151.09s
+2026-02-25 11:18:33,084 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=1.83s, transcribe_time=144.09s, total_time=146.33s
+2026-02-25 11:48:47,910 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 15:23:46,847 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+2026-02-25 18:05:37,602 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=0.76s, transcribe_time=50.97s, total_time=51.93s
+2026-02-26 11:27:03,437 | INFO     | mlx_whisper | Transcription completed: file=tmp_2_5258335770527167268.ogg, model=turbo, task=transcribe, language=ru, audio_duration=583.36s, convert_time=0.76s, transcribe_time=52.69s, total_time=53.66s
+2026-02-26 13:00:56,172 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801

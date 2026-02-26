@@ -595,6 +595,8 @@ body {
     color: var(--primary-color);
     font-family: 'Inter', sans-serif;
     letter-spacing: 0.5px;
+    margin-bottom: 16px;
+}
     font-size: 1.3rem;
 }
 
