@@ -64,6 +64,7 @@ AUDIO_EXTENSIONS: set = {
     ".wma",
     ".webm",
     ".mp4",
+    ".mkv",
 }
 
 # Supported models

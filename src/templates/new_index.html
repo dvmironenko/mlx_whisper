@@ -48,8 +48,8 @@
                         <div class="upload-content">
                             <i class="fas fa-cloud-upload-alt upload-icon"></i>
                             <p class="upload-text">Перетащите файл сюда или кликните для выбора</p>
-                            <p class="upload-hint">Поддерживаемые форматы: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4</p>
-                            <input type="file" id="audioFile" name="file" accept=".wav,.mp3,.m4a,.flac,.aac,.ogg,.wma,.webm,.mp4" required class="file-input">
+                            <p class="upload-hint">Поддерживаемые форматы: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV</p>
+                            <input type="file" id="audioFile" name="file" accept=".wav,.mp3,.m4a,.flac,.aac,.ogg,.wma,.webm,.mp4,.mkv" required class="file-input">
                         </div>
                     </div>
 
@@ -249,7 +249,8 @@
                 'ogg': 'fa-file-audio',
                 'wma': 'fa-file-audio',
                 'webm': 'fa-file-video',
-                'mp4': 'fa-file-video'
+                'mp4': 'fa-file-video',
+                'mkv': 'fa-file-video'
             };
             return iconMap[ext] || 'fa-file';
         }
