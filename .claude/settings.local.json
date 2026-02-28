@@ -59,7 +59,14 @@
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "mcp__plugin_playwright_playwright__browser_snapshot",
-      "mcp__plugin_playwright_playwright__browser_close"
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Bash(make run:*)",
+      "Bash(uvicorn src.main:app:*)",
+      "Bash(venv/bin/python:*)",
+      "Bash(/usr/bin/python3:*)",
+      "Bash(/Users/dvmironenko/dev/mlx_whisper/.venv/bin/python:*)",
+      "Bash(pgrep:*)",
+      "Bash(lsof:*)"
     ]
   },
   "enabledPlugins": {
