@@ -165,6 +165,39 @@
     </div>
 
     <script>
+        // Поддерживаемые расширения файлов
+        const SUPPORTED_EXTENSIONS = new Set([
+            '.wav', '.mp3', '.m4a', '.flac', '.aac',
+            '.ogg', '.wma', '.webm', '.mp4', '.mkv'
+        ]);
+
+        // Проверка расширения файла
+        function validateFile(filename) {
+            if (!filename) return false;
+            const ext = '.' + filename.split('.').pop().toLowerCase();
+            return SUPPORTED_EXTENSIONS.has(ext);
+        }
+
+        // Отображение ошибки в области загрузки
+        function showError(message) {
+            let errorBlock = document.querySelector('.error-message');
+            if (!errorBlock) {
+                const uploadArea = document.querySelector('.upload-area');
+                errorBlock = document.createElement('div');
+                errorBlock.className = 'error-message';
+                uploadArea.parentNode.insertBefore(errorBlock, uploadArea);
+            }
+            errorBlock.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        }
+
+        // Очистка ошибки
+        function clearError() {
+            const errorBlock = document.querySelector('.error-message');
+            if (errorBlock) {
+                errorBlock.remove();
+            }
+        }
+
         // Обновление значений ползунков
         document.getElementById('noSpeechThreshold').addEventListener('input', function() {
             document.querySelector('#noSpeechThreshold + .range-value').textContent = this.value;
@@ -213,6 +246,17 @@
         function handleDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
+
+            if (files.length > 0) {
+                // Проверка расширения
+                if (!validateFile(files[0].name)) {
+                    showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+                    fileInput.files = [];
+                    return;
+                }
+                clearError();
+            }
+
             fileInput.files = files;
             updateFileDisplay(files[0]);
         }
@@ -220,7 +264,16 @@
         // Обновление отображения выбранного файла
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
+                // Проверка расширения
+                if (!validateFile(this.files[0].name)) {
+                    showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+                    this.value = '';
+                    return;
+                }
+                clearError();
                 updateFileDisplay(this.files[0]);
+            } else {
+                clearError();
             }
         });
 
@@ -258,6 +311,19 @@
         // Обработка формы
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            const files = document.getElementById('audioFile').files;
+            if (files.length === 0) {
+                showError('Выберите файл для загрузки');
+                return;
+            }
+
+            // Проверка расширения файла
+            if (!validateFile(files[0].name)) {
+                showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+                return;
+            }
+            clearError();
 
             const formData = new FormData(this);
             const resultDiv = document.getElementById('result');

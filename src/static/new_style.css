@@ -566,6 +566,24 @@ body {
     font-size: 1.5rem;
 }
 
+/* Error message in upload area */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--error-color);
+    border-radius: 8px;
+    color: var(--error-color);
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+}
+
+.error-message i {
+    flex-shrink: 0;
+}
+
 /* Result box styling */
 .result-box {
     background-color: var(--background-light);
@@ -655,17 +673,18 @@ body {
     box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
 }
 
-/* Result actions - horizontal layout */
+/* Result actions - horizontal layout by default */
 .result-actions {
     display: flex;
     gap: 10px;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     margin-bottom: 20px;
 }
 
 .result-actions .action-button {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-width: 140px;
 }
 
 .text-content {
@@ -784,10 +803,11 @@ body {
     .action-button {
         width: 100%;
         justify-content: center;
+        min-width: auto;
     }
 
     .result-actions {
-        flex-wrap: nowrap !important;
+        flex-wrap: wrap;
     }
 }
 
