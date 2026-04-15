@@ -48,8 +48,8 @@
                         <div class="upload-content">
                             <i class="fas fa-cloud-upload-alt upload-icon"></i>
                             <p class="upload-text">Перетащите файл сюда или кликните для выбора</p>
-                            <p class="upload-hint">Поддерживаемые форматы: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4</p>
-                            <input type="file" id="audioFile" name="file" accept=".wav,.mp3,.m4a,.flac,.aac,.ogg,.wma,.webm,.mp4" required class="file-input">
+                            <p class="upload-hint">Поддерживаемые форматы: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV</p>
+                            <input type="file" id="audioFile" name="file" accept=".wav,.mp3,.m4a,.flac,.aac,.ogg,.wma,.webm,.mp4,.mkv,video/x-matroska" required class="file-input">
                         </div>
                     </div>
 
@@ -97,37 +97,62 @@
 
                         <div class="form-group">
                             <label for="noSpeechThreshold"><i class="fas fa-signal"></i> Порог отсутствия речи</label>
-                            <input type="range" id="noSpeechThreshold" name="no_speech_threshold" value="0.4" step="0.01" min="0" max="1" class="form-range">
-                            <div class="range-value">0.4</div>
+                            <div class="range-container">
+                                <input type="range" id="noSpeechThreshold" name="no_speech_threshold" value="0.6" step="0.1" min="0" max="1" class="form-range">
+                                <div class="range-value">0.6</div>
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label for="hallucinationSilenceThreshold"><i class="fas fa-microphone-slash"></i> Порог галлюцинаций/тишины</label>
-                            <input type="range" id="hallucinationSilenceThreshold" name="hallucination_silence_threshold" value="0.8" step="0.01" min="0" max="1" class="form-range">
-                            <div class="range-value">0.8</div>
+                            <div class="range-container">
+                                <input type="range" id="hallucinationSilenceThreshold" name="hallucination_silence_threshold" value="2.0" step="0.1" min="0" max="10" class="form-range">
+                                <div class="range-value">2.0</div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-checkboxes">
-                        <div class="checkbox-group">
-                            <label>
+                        <div class="form-group">
+                            <label for="removeSilence"><i class="fas fa-volume-mute"></i> Удалять тишину</label>
+                            <select id="removeSilence" name="remove_silence" class="form-select">
+                                <option value="true">Включено</option>
+                                <option value="false" selected>Выключено</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="silenceThreshold"><i class="fas fa-volume-off"></i> Порог тишины (dB)</label>
+                            <div class="range-container">
+                                <input type="range" id="silenceThreshold" name="silence_threshold" value="-60.0" step="1" min="-100" max="0" class="form-range">
+                                <div class="range-value">-60.0</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="silenceDuration"><i class="fas fa-stopwatch"></i> Мин. длительность тишины (сек)</label>
+                            <div class="range-container">
+                                <input type="range" id="silenceDuration" name="silence_duration" value="0.5" step="0.1" min="0.1" max="5" class="form-range">
+                                <div class="range-value">0.5</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
                                 <input type="checkbox" id="wordTimestamps" name="word_timestamps" value="true">
-                                <i class="fas fa-clock"></i> Включить word-level timestamps
-                            </label>
+                                <span>Использовать временные метки</span>
+                            </div>
                         </div>
 
-                        <div class="checkbox-group">
-                            <label>
+                        <div class="form-group">
+                            <div class="checkbox-group">
                                 <input type="checkbox" id="conditionOnPreviousText" name="condition_on_previous_text" value="true" checked>
-                                <i class="fas fa-comments"></i> Использовать предыдущий текст для контекста
-                            </label>
+                                <span>Использовать предыдущий текст</span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="initialPrompt"><i class="fas fa-comment"></i> Начальный текст для контекста</label>
-                        <input type="text" id="initialPrompt" name="initial_prompt" class="form-input initial-prompt-input" placeholder="Введите начальный текст для контекста транскрибирования (опционально)">
-                    </div>
+                        <div class="form-group form-input-full">
+                            <label for="initialPrompt"><i class="fas fa-comment"></i> Начальный текст для контекста</label>
+                            <input type="text" id="initialPrompt" name="initial_prompt" class="form-input initial-prompt-input" placeholder="Введите начальный текст для контекста транскрибирования (опционально)">
+                        </div>
                             </div>
                         </div>
                     </div>
@@ -165,6 +190,39 @@
     </div>
 
     <script>
+        // Поддерживаемые расширения файлов
+        const SUPPORTED_EXTENSIONS = new Set([
+            '.wav', '.mp3', '.m4a', '.flac', '.aac',
+            '.ogg', '.wma', '.webm', '.mp4', '.mkv'
+        ]);
+
+        // Проверка расширения файла
+        function validateFile(filename) {
+            if (!filename) return false;
+            const ext = '.' + filename.split('.').pop().toLowerCase();
+            return SUPPORTED_EXTENSIONS.has(ext);
+        }
+
+        // Отображение ошибки в области загрузки
+        function showError(message) {
+            let errorBlock = document.querySelector('.error-message');
+            if (!errorBlock) {
+                const uploadArea = document.querySelector('.upload-area');
+                errorBlock = document.createElement('div');
+                errorBlock.className = 'error-message';
+                uploadArea.parentNode.insertBefore(errorBlock, uploadArea);
+            }
+            errorBlock.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        }
+
+        // Очистка ошибки
+        function clearError() {
+            const errorBlock = document.querySelector('.error-message');
+            if (errorBlock) {
+                errorBlock.remove();
+            }
+        }
+
         // Обновление значений ползунков
         document.getElementById('noSpeechThreshold').addEventListener('input', function() {
             document.querySelector('#noSpeechThreshold + .range-value').textContent = this.value;
@@ -172,6 +230,14 @@
 
         document.getElementById('hallucinationSilenceThreshold').addEventListener('input', function() {
             document.querySelector('#hallucinationSilenceThreshold + .range-value').textContent = this.value;
+        });
+
+        document.getElementById('silenceThreshold').addEventListener('input', function() {
+            document.querySelector('#silenceThreshold + .range-value').textContent = this.value;
+        });
+
+        document.getElementById('silenceDuration').addEventListener('input', function() {
+            document.querySelector('#silenceDuration + .range-value').textContent = this.value;
         });
 
         // Drag and Drop для загрузки файла
@@ -213,6 +279,17 @@
         function handleDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
+
+            if (files.length > 0) {
+                // Проверка расширения
+                if (!validateFile(files[0].name)) {
+                    showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+                    fileInput.files = [];
+                    return;
+                }
+                clearError();
+            }
+
             fileInput.files = files;
             updateFileDisplay(files[0]);
         }
@@ -220,7 +297,16 @@
         // Обновление отображения выбранного файла
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
+                // Проверка расширения
+                if (!validateFile(this.files[0].name)) {
+                    showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+                    this.value = '';
+                    return;
+                }
+                clearError();
                 updateFileDisplay(this.files[0]);
+            } else {
+                clearError();
             }
         });
 
@@ -249,7 +335,8 @@
                 'ogg': 'fa-file-audio',
                 'wma': 'fa-file-audio',
                 'webm': 'fa-file-video',
-                'mp4': 'fa-file-video'
+                'mp4': 'fa-file-video',
+                'mkv': 'fa-file-video'
             };
             return iconMap[ext] || 'fa-file';
         }
@@ -257,6 +344,19 @@
         // Обработка формы
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            const files = document.getElementById('audioFile').files;
+            if (files.length === 0) {
+                showError('Выберите файл для загрузки');
+                return;
+            }
+
+            // Проверка расширения файла
+            if (!validateFile(files[0].name)) {
+                showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+                return;
+            }
+            clearError();
 
             const formData = new FormData(this);
             const resultDiv = document.getElementById('result');
@@ -295,6 +395,10 @@
                         'large': 'Large',
                         'turbo': 'Turbo'
                     };
+                    // Extract model name if path is provided (e.g., "models/whisper-turbo" -> "turbo")
+                    if (typeof modelName === 'string' && modelName.includes('/')) {
+                        modelName = modelName.split('/').pop().replace('whisper-', '');
+                    }
                     const readableModelName = modelNames[modelName] || modelName;
 
                     // Get the original filename from the form input
@@ -302,49 +406,39 @@
 
                     resultDiv.innerHTML = `
                         <div class="result-box">
-                            <div class="result-header">
-                                <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
-                                <div class="result-actions">
-                                    <button onclick="downloadMainText()" class="action-button">
-                                        <i class="fas fa-download"></i> Основной текст
-                                    </button>
-                                    ${data.word_timestamps ? '<button onclick="downloadSegments()" class="action-button secondary">Сегменты</button>' : ''}
-                                </div>
-                            </div>
+                            <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
 
                             <div class="text-content">
                                 <p>${data.text}</p>
+                            </div>
+
+                            <div class="result-actions">
+                                <button onclick="copyToClipboard()" class="action-button secondary">
+                                    <i class="fas fa-copy"></i> Копировать
+                                </button>
+                                <button onclick="downloadMainText()" class="action-button">
+                                    <i class="fas fa-download"></i> Основной текст
+                                </button>
+                                ${data.word_timestamps ? '<button onclick="downloadSegments()" class="action-button secondary">Сегменты</button>' : ''}
                             </div>
 
                             <div class="result-details">
                                 <div class="detail-grid">
                                     <div class="detail-item">
                                         <i class="fas fa-file"></i>
-                                        <span><strong>Файл:</strong> ${originalFilename}</span>
+                                        <span><strong>Файл:</strong> ${originalFilename || 'Неизвестно'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-language"></i>
-                                        <span><strong>Язык:</strong> ${data.language}</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-microchip"></i>
-                                        <span><strong>Модель:</strong> ${readableModelName}</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-signal"></i>
-                                        <span><strong>Порог отсутствия речи:</strong> ${data.no_speech_threshold}</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-microphone-slash"></i>
-                                        <span><strong>Порог галлюцинаций:</strong> ${data.hallucination_silence_threshold}</span>
+                                        <span><strong>Язык:</strong> ${data.language || 'Не определён'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-id-badge"></i>
-                                        <span><strong>ID задания:</strong> ${data.job_id}</span>
+                                        <span><strong>ID задания:</strong> ${data.job_id || 'Не доступен'}</span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="fas fa-clock"></i>
-                                        <span><strong>Время выполнения:</strong> ${data.duration ? data.duration.toFixed(2) + ' секунд' : 'Неизвестно'}</span>
+                                        <span><strong>Время выполнения:</strong> ${data.total_duration ? data.total_duration.toFixed(2) + ' секунд' : (data.audio_duration ? 'Приблизительно ' + data.audio_duration.toFixed(2) + ' секунд' : 'Неизвестно')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -377,6 +471,69 @@
                 submitButton.disabled = false;
             }
         });
+
+        function copyToClipboard() {
+            if (window.downloadData && window.downloadData.text) {
+                const text = window.downloadData.text;
+
+                // Современный Clipboard API
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text)
+                        .then(() => alert('Текст скопирован!'))
+                        .catch(err => {
+                            console.log('Clipboard API not available, using fallback:', err);
+                            copyToClipboardFallback(text);
+                        });
+                } else {
+                    // Fallback для старых браузеров (Firefox Linux)
+                    copyToClipboardFallback(text);
+                }
+            } else {
+                console.error('downloadData is not defined');
+                alert('Ошибка: данные для копирования не найдены');
+            }
+        }
+
+        // Fallback метод для Firefox и других браузеров
+        function copyToClipboardFallback(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                const success = document.execCommand('copy');
+                if (success) {
+                    alert('Текст скопирован!');
+                } else {
+                    throw new Error('execCommand failed');
+                }
+            } catch (err) {
+                // Если execCommand не работает, пробуем Selection API
+                try {
+                    const selection = window.getSelection();
+                    if (selection) {
+                        selection.removeAllRanges();
+                        const range = document.createRange();
+                        range.selectNodeContents(textarea);
+                        selection.addRange(range);
+                        const selSuccess = document.execCommand('copy');
+                        if (selSuccess) {
+                            alert('Текст скопирован!');
+                        } else {
+                            throw new Error('Selection API fallback failed');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Fallback copy error:', e);
+                    alert('Ошибка при копировании: ' + err);
+                }
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
 
         function downloadMainText() {
             if (window.downloadData) {
@@ -503,7 +660,7 @@
                 }
 
                 // Initialize default language if provided
-                if (config.default_language) {
+                if (config.language) {
                     const languageSelect = document.getElementById('language');
                     if (languageSelect) {
                         // Find option that matches the config language
@@ -517,9 +674,9 @@
                                 'fr': 'Français',
                                 'es': 'Español'
                             };
-                            const optionText = langMap[config.default_language];
+                            const optionText = langMap[config.language];
                             if (optionText && options[i].text === optionText) {
-                                languageSelect.value = config.default_language;
+                                languageSelect.value = config.language;
                                 break;
                             }
                         }
@@ -532,7 +689,7 @@
                     const noSpeechThresholdValue = document.querySelector('#noSpeechThreshold + .range-value');
                     if (noSpeechThresholdInput && noSpeechThresholdValue) {
                         noSpeechThresholdInput.value = config.no_speech_threshold;
-                        noSpeechThresholdValue.textContent = config.no_speech_threshold.toFixed(2);
+                        noSpeechThresholdValue.textContent = config.no_speech_threshold.toFixed(1);
                     }
                 }
 
@@ -542,13 +699,41 @@
                     const hallucinationThresholdValue = document.querySelector('#hallucinationSilenceThreshold + .range-value');
                     if (hallucinationThresholdInput && hallucinationThresholdValue) {
                         hallucinationThresholdInput.value = config.hallucination_silence_threshold;
-                        hallucinationThresholdValue.textContent = config.hallucination_silence_threshold.toFixed(2);
+                        hallucinationThresholdValue.textContent = config.hallucination_silence_threshold.toFixed(1);
                     }
                 }
 
                 // Initialize silence removal settings in parameter section (if visible)
                 // The slider values in HTML are defaults - config overrides them
                 // Users can still change them via the form
+
+                // Initialize remove_silence select
+                if (config.remove_silence !== undefined) {
+                    const removeSilenceSelect = document.getElementById('removeSilence');
+                    if (removeSilenceSelect) {
+                        removeSilenceSelect.value = config.remove_silence ? 'true' : 'false';
+                    }
+                }
+
+                // Initialize silence_threshold slider
+                if (config.silence_threshold !== undefined) {
+                    const silenceThresholdInput = document.getElementById('silenceThreshold');
+                    const silenceThresholdValue = document.querySelector('#silenceThreshold + .range-value');
+                    if (silenceThresholdInput && silenceThresholdValue) {
+                        silenceThresholdInput.value = config.silence_threshold;
+                        silenceThresholdValue.textContent = config.silence_threshold.toFixed(1);
+                    }
+                }
+
+                // Initialize silence_duration slider
+                if (config.silence_duration !== undefined) {
+                    const silenceDurationInput = document.getElementById('silenceDuration');
+                    const silenceDurationValue = document.querySelector('#silenceDuration + .range-value');
+                    if (silenceDurationInput && silenceDurationValue) {
+                        silenceDurationInput.value = config.silence_duration;
+                        silenceDurationValue.textContent = config.silence_duration.toFixed(1);
+                    }
+                }
             } catch (error) {
                 console.error('Error loading config:', error);
                 // Continue without config - defaults will be used

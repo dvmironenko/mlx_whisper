@@ -53,3 +53,4 @@ temp/
 # Results storage (опционально, если не нужно в git)
 results/
 uploads/
+media/

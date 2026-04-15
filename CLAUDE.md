@@ -1,119 +1,51 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Общий вводный текст
 
-## Project Overview
+Файл предоставляет руководство для Claude Code при работе с репозиторием `mlx_whisper`. Все ответы и комментарии пишутся на русском, а код — в английском.
 
-This is a high-performance web service for audio transcription and translation using Apple's optimized Whisper model (MLX-Whisper). The service provides both a web interface and REST API for converting speech to text with support for multiple languages and flexible processing parameters.
+## Обзор проекта
 
-## Key Architecture Components
+Высокопроизводительный веб‑сервис для транскрипции и перевода аудио с использованием оптимизированной модели Whisper от Apple (MLX‑Whisper). Предоставляет веб‑интерфейс и REST API для преобразования речи в текст с поддержкой множества языков и гибкими параметрами.
 
-1. **FastAPI Application** (`src/main.py`):
-   - Main application entry point built with FastAPI
-   - Handles HTTP requests and responses for audio transcription
-   - Implements REST API endpoints for transcription operations
+### Веб‑интерфейс
 
-2. **Web Interface**:
-   - HTML template (`src/templates/index.html`) with embedded JavaScript
-   - CSS styling (`src/static/style.css`)
-   - Provides user-friendly web interface for audio file upload and processing
+Приложение включает минималистичный веб‑интерфейс (`src/templates/new_index.html`) со следующими возможностями:
+- Drag & drop загрузка аудиофайлов
+- Переключение светлой/тёмной темы
+- Расширенные настройки транскрипции (сворачиваемая панель)
+- Минималистичный дизайн с muted color palette
 
-3. **Audio Processing Pipeline**:
-   - Audio format conversion using FFmpeg to WAV (16kHz, mono)
-   - MLX-Whisper model integration for transcription
-   - Memory-efficient chunked file processing for large audio files
+## Ключевые архитектурные компоненты
 
-4. **Model Support**:
-   - Multiple Whisper model sizes (tiny, base, small, medium, turbo, large)
-   - Model files stored in `models/` directory with specific paths
+1. **FastAPI приложение** (`src/main.py`) – основной входной пункт и API‑эндпоинты.
+2. **Веб‑интерфейс** – `src/templates/new_index.html` с встроенным JavaScript и `src/static/new_style.css`.
+3. **Пайплайн аудио‑обработки** – преобразование через FFmpeg в WAV (16 кГц, mono) + транскрипция MLX‑Whisper с разбивкой на чанки.
+4. **Поддержка моделей** – несколько размеров Whisper, хранящихся в `models/`.
+5. **Управление задачами** – отслеживание заданий в памяти, уникальные ID и пул потоков.
 
-5. **Task Management**:
-   - Job status tracking using in-memory dictionary
-   - Unique job IDs for each transcription task
-   - Thread pool executor for concurrent processing
+### Структура веб‑интерфейса
 
-## Development Commands
+```
+src/templates/
+├── new_index.html    # Основная страница транскрипции
+└── index.html        # Старая версия страницы
 
-### Setup and Installation
-```bash
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r src/requirements.txt
+src/static/
+├── new_style.css     # Минималистичные стили (светлая/тёмная темы)
+└── style.css         # Старые стили
 ```
 
-### Running the Application
-```bash
-# Run the server
-python src/main.py
+## Рабочий процесс разработки
 
-# Server will start on http://localhost:8801
-```
+- Следовать PEP 8, использовать аннотации типов и async/await.
+- Документация хранится в каталоге `docs/`.
+- Тесты находятся в папке `tests/`.
 
-### Testing
-```bash
-# Manual testing with curl
-curl -X POST "http://localhost:8801/transcribe" \
-  -F "file=@tests/test.wav" \
-  -F "language=ru"
+## Запуск приложения
 
-# Using the web interface
-# Visit http://localhost:8801 in your browser
+Запуск приложения описан в [`docs/dev-commands.md`](docs/dev-commands.md).
 
-# Run unit tests
-pytest tests/ -v
-```
+## Команды разработки
 
-## Code Structure
-
-- `src/main.py`: Main FastAPI application with transcription logic
-- `src/templates/index.html`: Web interface template
-- `src/static/style.css`: CSS styling for web interface
-- `models/`: Directory containing MLX-Whisper model files (tiny, base, small, medium, turbo, large)
-- `tests/`: Test audio files for manual testing
-- `uploads/`: Temporary directory for uploaded audio files (created automatically)
-
-## Key Features and Design Patterns
-
-1. **Memory Optimization**:
-   - Chunked file reading/writing for handling large audio files efficiently
-   - Thread pool execution for CPU-intensive transcription tasks
-
-2. **Error Handling**:
-   - Comprehensive error handling with proper HTTP status codes
-   - Memory-safe cleanup of temporary files
-   - JSON serialization with NaN/Infinity handling
-
-3. **Multi-Format Support**:
-   - Supports various audio formats (WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4)
-   - Automatic conversion to WAV format using FFmpeg
-
-4. **Configuration Options**:
-   - Language selection (auto-detection or specific)
-   - Task types (transcribe/translate)
-   - Model size selection
-   - Word-level timestamps option
-   - Context-aware processing option
-   - Initial prompt option for context-aware transcription
-
-## Development Workflow
-
-### Common Development Tasks:
-1. **Adding new models**: Create directories in `models/` and update `SUPPORTED_MODELS` in `src/main.py`
-2. **Modifying web interface**: Edit `src/templates/index.html` and `src/static/style.css`
-3. **Extending API**: Add new endpoints in `src/main.py`
-4. **Improving error handling**: Enhance error responses and logging in `src/main.py`
-
-### Code Quality Standards:
-- Follow PEP 8 Python style guidelines
-- Use type annotations for function parameters and return values
-- Implement proper error handling with HTTP exceptions
-- Use async/await for I/O operations to maintain performance
-- **All documentation must be saved in the `docs/` folder**
-
-### Testing Approach:
-- Manual testing with audio files in `tests/` directory
-- API endpoint integration testing
-- Memory usage optimization verification
+Для подробных команд, запуска, установки и тестирования см. [dev‑commands](docs/dev-commands.md).
