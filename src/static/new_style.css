@@ -15,13 +15,8 @@
     --warning-color: #ecc94b;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     --transition: all 0.2s ease;
-    --switch-thumb: #ffffff;
-    --switch-track: #e2e8f0;
-}
-
-/* Ensure the theme switch label is always white regardless of theme */
-.theme-switch-label {
-    color: #fff !important;
+    --switch-thumb: #2d3748;
+    --switch-track: #a0aec0;
 }
 
 /* Dark theme color palette */
@@ -41,6 +36,15 @@
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     --switch-thumb: #f7fafc;
     --switch-track: #4a5568;
+}
+
+/* Theme switcher label colors */
+.theme-switch-label {
+    color: #2d3748;
+}
+
+[data-theme="dark"] .theme-switch-label {
+    color: #f7fafc;
 }
 
 * {
@@ -71,6 +75,7 @@ body {
     border: 1px solid var(--border-color);
     position: relative;
     z-index: 1;
+    margin-top: 60px;
 }
 
 /* Header styling - minimal */
@@ -838,13 +843,13 @@ body {
 
 /* Theme Switcher Styles */
 .theme-switch-container {
-    position: absolute;
-    top: 15px;
+    position: fixed;
+    top: 20px;
     right: 20px;
-    z-index: 100;
+    z-index: 1000;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
     cursor: pointer;
     padding: 8px 12px;
     border-radius: 8px;
