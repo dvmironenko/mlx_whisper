@@ -55,3 +55,4 @@ results/
 uploads/
 media/
 .claude/settings.local.json
+logs/app.log
