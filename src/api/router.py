@@ -8,10 +8,10 @@ from fastapi import APIRouter, UploadFile, Form, HTTPException
 from fastapi.responses import FileResponse
 from typing import Optional
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, logger, log_transcription_result
+from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, MAX_FILE_SIZE, logger, log_transcription_result
 from src.models.transcription import transcribe_audio
 from src.utils.audio import convert_to_wav, get_audio_duration
-from src.utils.files import generate_unique_filename, delete_file, validate_file_extension, build_job_path
+from src.utils.files import generate_unique_filename, delete_file, validate_file_extension, validate_file_size, build_job_path
 
 router = APIRouter(prefix="/api/v1", tags=["transcription"])
 
@@ -112,6 +112,13 @@ async def transcribe_audio_endpoint(
         with open(tmp_path, "wb") as f:
             while chunk := await file.read(CHUNK_SIZE):
                 f.write(chunk)
+
+        # Валидация размера файла
+        if not validate_file_size(tmp_path):
+            raise HTTPException(
+                status_code=413,
+                detail=f"File size exceeds maximum allowed ({MAX_FILE_SIZE // (1024 * 1024)} MB)"
+            )
 
         # Генерируем job_id и создаём директорию для хранения файлов
         job_id = str(uuid.uuid4())
