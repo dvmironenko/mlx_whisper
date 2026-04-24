@@ -31,6 +31,10 @@ MODELS_DIR: str = os.getenv("MODELS_DIR", "models")
 RESULTS_DIR: str = os.getenv("RESULTS_DIR", "results")
 RESULTS_RETENTION_DAYS: int = int(os.getenv("RESULTS_RETENTION_DAYS", "30"))
 
+# User uploads storage
+DATA_UPLOADS_DIR: str = "data/uploads"
+os.makedirs(DATA_UPLOADS_DIR, exist_ok=True)
+
 # Auth
 API_KEY: Optional[str] = os.getenv("MLX_WHISPER_API_KEY")
 

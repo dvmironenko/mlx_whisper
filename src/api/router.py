@@ -1,15 +1,17 @@
 """FastAPI роуты для API."""
 import math
 import os
+import shutil
 import time
 import uuid
 from fastapi import APIRouter, UploadFile, Form, HTTPException
+from fastapi.responses import FileResponse
 from typing import Optional
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, logger, log_transcription_result
+from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, logger, log_transcription_result
 from src.models.transcription import transcribe_audio
 from src.utils.audio import convert_to_wav, get_audio_duration
-from src.utils.files import generate_unique_filename, delete_file, validate_file_extension
+from src.utils.files import generate_unique_filename, delete_file, validate_file_extension, build_job_path
 
 router = APIRouter(prefix="/api/v1", tags=["transcription"])
 
@@ -102,6 +104,7 @@ async def transcribe_audio_endpoint(
     # Конвертация
     tmp_path = f"{UPLOADS_DIR}/tmp_{file.filename}"
     converted_wav_path = None
+    txt_path = None
     total_start_time = time.time()
 
     try:
@@ -110,11 +113,20 @@ async def transcribe_audio_endpoint(
             while chunk := await file.read(CHUNK_SIZE):
                 f.write(chunk)
 
+        # Генерируем job_id и создаём директорию для хранения файлов
+        job_id = str(uuid.uuid4())
+        job_path = build_job_path(job_id)
+
+        # Сохраняем оригинал в data/uploads/{job_id}/
+        original_path = os.path.join(job_path, file.filename)
+        shutil.copy2(tmp_path, original_path)
+
         # Измеряем длительность аудио до конвертации
         audio_duration = get_audio_duration(tmp_path)
 
         # Convert to WAV и измеряем время
-        converted_wav_path = f"{UPLOADS_DIR}/{os.path.splitext(file.filename)[0]}_converted.wav"
+        wav_name = f"{os.path.splitext(file.filename)[0]}_converted.wav"
+        converted_wav_path = os.path.join(job_path, wav_name)
         convert_start_time = time.time()
         convert_to_wav(
             tmp_path,
@@ -142,9 +154,16 @@ async def transcribe_audio_endpoint(
 
         # Добавляем информацию о времени в результат
         total_duration = time.time() - total_start_time
-        result["uploaded_file"] = os.path.basename(tmp_path)
-        result["result_file"] = os.path.splitext(os.path.basename(converted_wav_path))[0] + ".txt"
-        result["job_id"] = str(uuid.uuid4())
+        result["uploaded_file"] = file.filename
+        result["result_file"] = f"{os.path.splitext(file.filename)[0]}.txt"
+        result["job_id"] = job_id
+        result["storage_dir"] = job_path
+
+        # Сохраняем результат транскрипции в TXT файл
+        txt_name = f"{os.path.splitext(file.filename)[0]}.txt"
+        txt_path = os.path.join(job_path, txt_name)
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write(result.get("text", ""))
         result["model"] = model_value
         result["no_speech_threshold"] = no_speech_threshold_value
         result["hallucination_silence_threshold"] = hallucination_silence_threshold_value
@@ -196,10 +215,9 @@ async def transcribe_audio_endpoint(
         )
         raise
     finally:
-        # Cleanup temp files
+        # Удаляем только временный файл из uploads/
         delete_file(tmp_path)
-        if converted_wav_path and os.path.exists(converted_wav_path):
-            delete_file(converted_wav_path)
+        # Converted WAV и TXT сохраняются в data/uploads/{job_id}/
 
 
 @router.get("/health")
@@ -242,3 +260,58 @@ async def get_job_status(job_id: str):
     """Статус задачи."""
     # TODO: Реализовать сохранение/получение из файла
     return {"job_id": job_id, "status": "pending"}
+
+
+@router.get("/jobs")
+async def list_jobs():
+    """Список всех сохранённых задач."""
+    jobs = []
+    if not os.path.exists(DATA_UPLOADS_DIR):
+        return jobs
+
+    for job_id in sorted(os.listdir(DATA_UPLOADS_DIR)):
+        job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
+        if os.path.isdir(job_dir):
+            files = []
+            for f in os.listdir(job_dir):
+                fp = os.path.join(job_dir, f)
+                if os.path.isfile(fp):
+                    files.append({"name": f, "size": os.path.getsize(fp)})
+            jobs.append({"job_id": job_id, "files": files})
+    return jobs
+
+
+
+
+@router.get("/files/{filename}/download")
+async def download_file(filename: str):
+    """Скачивание файла из data/uploads/."""
+    import os
+
+    # Защита от path traversal
+    # Сначала ищем в директориях job_id, затем в корневой data/uploads
+    print(f"DEBUG: Download request for filename: {filename}")
+    print(f"DEBUG: DATA_UPLOADS_DIR: {DATA_UPLOADS_DIR}")
+    if os.path.exists(os.path.join(DATA_UPLOADS_DIR, filename)):
+        # Файл в корневой директории (редкий случай)
+        resolved = os.path.realpath(os.path.join(DATA_UPLOADS_DIR, filename))
+        base = os.path.realpath(DATA_UPLOADS_DIR)
+    else:
+        # Ищем в поддиректориях job_id
+        found = False
+        for job_id in os.listdir(DATA_UPLOADS_DIR):
+            job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
+            if os.path.isdir(job_dir):
+                potential_path = os.path.join(job_dir, filename)
+                if os.path.exists(potential_path):
+                    resolved = os.path.realpath(potential_path)
+                    base = os.path.realpath(DATA_UPLOADS_DIR)
+                    found = True
+                    break
+        if not found:
+            raise HTTPException(status_code=404, detail="File not found")
+
+    if not resolved.startswith(base):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    return FileResponse(resolved)

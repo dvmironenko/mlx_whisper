@@ -12,6 +12,13 @@ def generate_unique_filename(original_filename: str) -> str:
     return f"{uuid.uuid4()}{ext}"
 
 
+def build_job_path(job_id: str) -> str:
+    """Создать путь директории для job_id."""
+    path = os.path.join("data/uploads", job_id)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def validate_file_size(file_path: str) -> bool:
     """Проверить размер файла."""
     return os.path.getsize(file_path) <= MAX_FILE_SIZE
