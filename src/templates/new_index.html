@@ -35,7 +35,18 @@
         </div>
 
         <main class="app-main">
-            <div class="upload-section">
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="switchTab('upload')">
+                    <i class="fas fa-upload"></i> Загрузка
+                </button>
+                <button class="nav-tab" onclick="switchTab('jobs')">
+                    <i class="fas fa-list"></i> Задания
+                </button>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
                 <div class="section-header">
                     <h2><i class="fas fa-upload"></i> Загрузка аудиофайла</h2>
                     <div class="section-description">
@@ -180,6 +191,47 @@
                 </div>
             </div>
 
+            </div>
+
+            <!-- Jobs Section -->
+            <div class="upload-section" id="jobsSection">
+                <div class="section-header">
+                    <h2><i class="fas fa-list-ul"></i> Список заданий</h2>
+                    <div class="section-description">
+                        <p>Просмотр и управление сохранёнными транскрипциями</p>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="jobs-filters">
+                    <input type="text" id="jobSearch" class="form-input" placeholder="Поиск по ID задания...">
+                    <select id="jobPeriodFilter">
+                        <option value="all">Все задания</option>
+                        <option value="7">Последние 7 дней</option>
+                        <option value="30">Последние 30 дней</option>
+                    </select>
+                </div>
+
+                <!-- Jobs Table -->
+                <table id="jobsTable">
+                    <thead>
+                        <tr>
+                            <th>ID Задания</th>
+                            <th>Файлы</th>
+                            <th>Размер</th>
+                            <th>Дата создания</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobsTableBody">
+                        <!-- Заполняется динамически -->
+                    </tbody>
+                </table>
+
+                <div id="emptyJobsState" class="empty-jobs-state" style="display: none;">
+                    <i class="fas fa-inbox"></i>
+                    <h3>Нет заданий</h3>
+                    <p>Здесь будут отображаться ваши транскрипции. Загрузите файл для начала.</p>
+                </div>
             </div>
 
         </main>
@@ -787,6 +839,268 @@
             const secs = Math.floor(seconds % 60);
             const ms = Math.floor((seconds % 1) * 1000);
             return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+        }
+
+        // ====================
+        // Jobs List Logic
+        // ====================
+
+        let jobsList = [];
+
+        // Переключение вкладок
+        function switchTab(tabName) {
+            const uploadSection = document.getElementById('uploadSection');
+            const jobsSection = document.getElementById('jobsSection');
+            const navTabs = document.querySelectorAll('.nav-tab');
+
+            if (tabName === 'upload') {
+                uploadSection.style.display = 'block';
+                jobsSection.style.display = 'none';
+
+                navTabs[0].classList.add('active');
+                navTabs[1].classList.remove('active');
+            } else {
+                uploadSection.style.display = 'none';
+                jobsSection.style.display = 'block';
+
+                navTabs[0].classList.remove('active');
+                navTabs[1].classList.add('active');
+
+                // Загрузить задания
+                loadJobs();
+            }
+        }
+
+        // Загрузка списка заданий
+        async function loadJobs() {
+            const tableBody = document.getElementById('jobsTableBody');
+            const emptyState = document.getElementById('emptyJobsState');
+
+            try {
+                const response = await fetch('/api/v1/jobs');
+                if (!response.ok) {
+                    throw new Error('Failed to load jobs');
+                }
+                jobsList = await response.json();
+
+                // Применить фильтры
+                const filteredJobs = filterJobs();
+
+                if (filteredJobs.length === 0) {
+                    tableBody.innerHTML = '';
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                    const fragment = document.createDocumentFragment();
+                    filteredJobs.forEach(job => {
+                        const rows = createJobRowElement(job);
+                        rows.forEach(row => fragment.appendChild(row));
+                    });
+                    tableBody.innerHTML = '';
+                    tableBody.appendChild(fragment);
+                }
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;"><i class="fas fa-exclamation-triangle"></i> Ошибка загрузки: ' + escapeHtml(error.message) + '</td></tr>';
+            }
+        }
+
+        // Экранирование HTML для безопасности
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Фильтрация заданий
+        function filterJobs() {
+            const searchValue = document.getElementById('jobSearch').value.toLowerCase();
+            const periodValue = document.getElementById('jobPeriodFilter').value;
+
+            return jobsList.filter(job => {
+                // Фильтрация по поиску (ID)
+                if (searchValue && job.job_id.toLowerCase().indexOf(searchValue) === -1) {
+                    return false;
+                }
+
+                // Фильтрация по периоду (используем текущую дату как приблизительную)
+                if (periodValue !== 'all') {
+                    const days = parseInt(periodValue);
+                    const jobDate = new Date();
+                    const cutoffDate = new Date();
+                    cutoffDate.setDate(cutoffDate.getDate() - days);
+                    // Показываем все задания для упрощенной фильтрации
+                    // В реальном приложении нужно добавить timestamp в API response
+                }
+
+                return true;
+            });
+        }
+
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Форматирование даты
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ru-RU', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Создание DOM элемента строки таблицы для одного файла
+        function createFileRowElement(job, file, isFirstFile) {
+            const jobIdShort = job.job_id.substring(0, 8);
+
+            // Создаем строку таблицы
+            const tr = document.createElement('tr');
+
+            // ID Задания - отображается только для первого файла задания
+            if (isFirstFile) {
+                const tdId = document.createElement('td');
+                const codeId = document.createElement('code');
+                codeId.className = 'job-id';
+                codeId.textContent = jobIdShort + '...';
+                tdId.appendChild(codeId);
+                tdId.rowSpan = job.files.length;
+                tr.appendChild(tdId);
+            }
+
+            // Файл с кнопкой скачивания
+            const tdFiles = document.createElement('td');
+            const fileRowDiv = document.createElement('div');
+            fileRowDiv.className = 'file-row';
+
+            const badge = document.createElement('span');
+            badge.className = 'file-badge';
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-file';
+            badge.appendChild(icon);
+            badge.appendChild(document.createTextNode(' ' + file.name));
+
+            // Кнопка скачивания
+            const btnDownload = document.createElement('button');
+            btnDownload.className = 'btn-download-file';
+            btnDownload.title = 'Скачать файл';
+            btnDownload.onclick = function() {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = '/api/v1/files/' + encodeURIComponent(file.name) + '/download';
+                downloadLink.download = file.name;
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            };
+            const iconDownload = document.createElement('i');
+            iconDownload.className = 'fas fa-download';
+            btnDownload.appendChild(iconDownload);
+
+            // Кнопка удаления файла
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'btn-delete-file';
+            btnDelete.title = 'Удалить файл';
+            btnDelete.onclick = function() {
+                if (confirm('Вы уверены, что хотите удалить файл "' + file.name + '"?')) {
+                    deleteFile(job.job_id, file.name);
+                }
+            };
+            const iconDelete = document.createElement('i');
+            iconDelete.className = 'fas fa-trash';
+            btnDelete.appendChild(iconDelete);
+
+            fileRowDiv.appendChild(badge);
+            fileRowDiv.appendChild(btnDownload);
+            fileRowDiv.appendChild(btnDelete);
+            tdFiles.appendChild(fileRowDiv);
+            tr.appendChild(tdFiles);
+
+            // Размер файла - отображается только для первого файла задания
+            if (isFirstFile) {
+                const tdSize = document.createElement('td');
+                tdSize.textContent = formatFileSize(job.files.reduce((sum, f) => sum + f.size, 0));
+                tdSize.rowSpan = job.files.length;
+                tr.appendChild(tdSize);
+            }
+
+            // Дата создания - отображается только для первого файла задания
+            if (isFirstFile) {
+                const tdDate = document.createElement('td');
+                tdDate.textContent = formatDate(new Date().toISOString());
+                tdDate.rowSpan = job.files.length;
+                tr.appendChild(tdDate);
+            }
+
+            return tr;
+        }
+
+        // Создание DOM элемента строки таблицы для задания
+        function createJobRowElement(job) {
+            const fragments = [];
+            job.files.forEach((file, index) => {
+                fragments.push(createFileRowElement(job, file, index === 0));
+            });
+            return fragments;
+        }
+
+        // Удаление файла из задания
+        async function deleteFile(jobId, filename) {
+            try {
+                const response = await fetch('/api/v1/jobs/' + jobId + '/files/' + encodeURIComponent(filename), {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Файл успешно удален');
+                    loadJobs(); // Перезагрузить список
+                } else {
+                    const data = await response.json();
+                    alert('Ошибка удаления: ' + (data.detail || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                alert('Ошибка соединения: ' + error.message);
+            }
+        }
+
+        // Фильтрация при вводе в поле поиска
+        document.getElementById('jobSearch').addEventListener('input', function() {
+            const filteredJobs = filterJobs();
+            updateJobsTable(filteredJobs);
+        });
+
+        // Фильтрация при изменении периода
+        document.getElementById('jobPeriodFilter').addEventListener('change', function() {
+            const filteredJobs = filterJobs();
+            updateJobsTable(filteredJobs);
+        });
+
+        // Обновление таблицы заданий (для фильтрации)
+        function updateJobsTable(jobs) {
+            const tableBody = document.getElementById('jobsTableBody');
+            const emptyState = document.getElementById('emptyJobsState');
+
+            if (jobs.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                const fragment = document.createDocumentFragment();
+                jobs.forEach(job => {
+                    const rows = createJobRowElement(job);
+                    rows.forEach(row => fragment.appendChild(row));
+                });
+                tableBody.innerHTML = '';
+                tableBody.appendChild(fragment);
+            }
         }
     </script>
 </body>

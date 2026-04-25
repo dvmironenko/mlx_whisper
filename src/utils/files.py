@@ -14,7 +14,7 @@ def generate_unique_filename(original_filename: str) -> str:
 
 def build_job_path(job_id: str) -> str:
     """Создать путь директории для job_id."""
-    path = os.path.join("data/uploads", job_id)
+    path = os.path.join("data", job_id)
     os.makedirs(path, exist_ok=True)
     return path
 

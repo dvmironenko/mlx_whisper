@@ -290,6 +290,31 @@ async def list_jobs():
 
 
 
+@router.delete("/jobs/{job_id}")
+async def delete_job(job_id: str):
+    """Удалить задание и все связанные файлы."""
+    job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
+    if not os.path.exists(job_dir):
+        raise HTTPException(status_code=404, detail="Job not found")
+    shutil.rmtree(job_dir)
+    return {"status": "deleted", "job_id": job_id}
+
+
+@router.delete("/jobs/{job_id}/files/{filename}")
+async def delete_file_from_job(job_id: str, filename: str):
+    """Удалить отдельный файл из задания."""
+    job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
+    if not os.path.exists(job_dir):
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    file_path = os.path.join(job_dir, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    os.remove(file_path)
+    return {"status": "deleted", "job_id": job_id, "filename": filename}
+
+
 @router.get("/files/{filename}/download")
 async def download_file(filename: str):
     """Скачивание файла из data/uploads/."""
