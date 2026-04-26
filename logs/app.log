@@ -255,3 +255,19 @@ INFO:     Finished server process [89815]
 INFO:     Started server process [90396]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/router.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [90396]
+INFO:     Started server process [94189]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/router.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94189]
+INFO:     Started server process [94415]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

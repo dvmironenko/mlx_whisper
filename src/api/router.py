@@ -1,4 +1,5 @@
 """FastAPI роуты для API."""
+import json
 import math
 import os
 import shutil
@@ -7,6 +8,15 @@ import uuid
 from fastapi import APIRouter, UploadFile, Form, HTTPException
 from fastapi.responses import FileResponse
 from typing import Optional
+
+
+def format_timestamp(seconds: float) -> str:
+    """Форматировать секунды в HH:MM:SS.mmm формат."""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+    ms = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
 
 from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, MAX_FILE_SIZE, logger, log_transcription_result
 from src.models.transcription import transcribe_audio
@@ -166,11 +176,30 @@ async def transcribe_audio_endpoint(
         result["job_id"] = job_id
         result["storage_dir"] = job_path
 
-        # Сохраняем результат транскрипции в TXT файл
+        # Сохраняем основной TXT файл (простой текст)
         txt_name = f"{os.path.splitext(file.filename)[0]}.txt"
         txt_path = os.path.join(job_path, txt_name)
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(result.get("text", ""))
+
+        # Сохраняем файлы с сегментами если word_timestamps=True
+        if word_timestamps_value and result.get("segments"):
+            # TXT с разметкой времени
+            segments_txt_name = f"{os.path.splitext(file.filename)[0]}_segments.txt"
+            segments_txt_path = os.path.join(job_path, segments_txt_name)
+            with open(segments_txt_path, "w", encoding="utf-8") as f:
+                for segment in result["segments"]:
+                    start = segment.get("start", 0)
+                    end = segment.get("end", 0)
+                    text = segment.get("text", "")
+                    f.write(f"[{format_timestamp(start)}] {text}\n")
+
+            # JSON с полной структурой
+            segments_json_name = f"{os.path.splitext(file.filename)[0]}_segments.json"
+            segments_json_path = os.path.join(job_path, segments_json_name)
+            with open(segments_json_path, "w", encoding="utf-8") as f:
+                json.dump({"segments": result["segments"]}, f, ensure_ascii=False, indent=2)
+
         result["model"] = model_value
         result["no_speech_threshold"] = no_speech_threshold_value
         result["hallucination_silence_threshold"] = hallucination_silence_threshold_value
