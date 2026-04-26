@@ -47,8 +47,8 @@ INITIAL_PROMPT: Optional[str] = os.getenv("INITIAL_PROMPT", None)
 
 # Silence removal settings
 REMOVE_SILENCE: bool = os.getenv("REMOVE_SILENCE", "true").lower() == "true"
-SILENCE_THRESHOLD: float = float(os.getenv("SILENCE_THRESHOLD", "-60.0"))
-SILENCE_DURATION: float = float(os.getenv("SILENCE_DURATION", "0.5"))
+SILENCE_THRESHOLD: float = float(os.getenv("SILENCE_THRESHOLD", "-45.0"))
+SILENCE_DURATION: float = float(os.getenv("SILENCE_DURATION", "1.0"))
 
 # Default language for transcription (empty string for auto-detect)
 DEFAULT_LANGUAGE: Optional[str] = os.getenv("DEFAULT_LANGUAGE", None)

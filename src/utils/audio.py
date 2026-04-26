@@ -9,7 +9,7 @@ from src.config import CONVERSION_TIMEOUT_SECONDS, CHUNK_SIZE
 logger = logging.getLogger("mlx_whisper")
 
 
-def convert_to_wav(input_path: str, output_path: str, remove_silence: bool = True, silence_threshold: float = -60.0, silence_duration: float = 0.5) -> bool:
+def convert_to_wav(input_path: str, output_path: str, remove_silence: bool = True, silence_threshold: float = -45.0, silence_duration: float = 1.0) -> bool:
     """Конвертировать аудио в WAV формат (16kHz, mono)."""
     # Если нужно удалять тишину, используем фильтры FFmpeg
     if remove_silence:
@@ -19,7 +19,7 @@ def convert_to_wav(input_path: str, output_path: str, remove_silence: bool = Tru
             "-acodec", "pcm_s16le",
             "-ar", "16000",
             "-ac", "1",
-            "-af", f"silenceremove=start_periods=1:start_duration={silence_duration}:start_threshold={silence_threshold}dB",
+            "-af", f"silenceremove=stop_periods=-1:stop_duration={silence_duration}:stop_threshold={silence_threshold}dB",
             output_path,
         ]
     else:
@@ -27,8 +27,8 @@ def convert_to_wav(input_path: str, output_path: str, remove_silence: bool = Tru
             "ffmpeg",
             "-i", input_path,
             "-acodec", "pcm_s16le",
-            "-ar", "16000",
-            "-ac", "1",
+            "-ar", 16000,
+            "-ac", 1,
             output_path,
         ]
 

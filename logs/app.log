@@ -271,3 +271,24 @@ INFO:     Finished server process [94189]
 INFO:     Started server process [94415]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:     192.168.50.252:54726 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:54726 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:54726 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:54726 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:54726 - "GET /api/v1/config HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'src/utils/audio.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [94415]
+INFO:     Started server process [96282]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/config.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [96282]
+INFO:     Started server process [96372]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
