@@ -313,7 +313,13 @@ async def list_jobs():
                 fp = os.path.join(job_dir, f)
                 if os.path.isfile(fp):
                     files.append({"name": f, "size": os.path.getsize(fp)})
-            jobs.append({"job_id": job_id, "files": files})
+            # Дата создания папки задания
+            created_at = os.path.getctime(job_dir)
+            jobs.append({
+                "job_id": job_id,
+                "files": files,
+                "created_at": created_at
+            })
     return jobs
 
 

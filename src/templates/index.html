@@ -297,7 +297,9 @@
             // Card footer
             const cardFooter = document.createElement('div');
             cardFooter.className = 'job-card-footer';
-            cardFooter.innerHTML = '<i class="fas fa-calendar"></i> <span class="job-date">Создано: ' + formatDate(new Date().toISOString()) + '</span> &bull; <i class="fas fa-hdd"></i> <span class="job-size">Размер: ' + totalSize + '</span>';
+            // Используем created_at из API (unix timestamp в секундах)
+            const createdDate = job.created_at ? new Date(job.created_at * 1000) : new Date();
+            cardFooter.innerHTML = '<i class="fas fa-calendar"></i> <span class="job-date">Создано: ' + formatDate(createdDate.toISOString()) + '</span> &bull; <i class="fas fa-hdd"></i> <span class="job-size">Размер: ' + totalSize + '</span>';
 
             card.appendChild(cardHeader);
             card.appendChild(filesContainer);
