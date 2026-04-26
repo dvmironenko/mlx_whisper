@@ -66,3 +66,5 @@ mlx-whisper/
 - **Техническая спецификация**: [`docs/technical_specification.md`](docs/technical_specification.md)
 - **README**: [`README.md`](README.md) — полная документация пользователя
 - **Implementation Plan**: [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) — план реализации функциональности
+
+Все файлы тестов размещать в папке tests/

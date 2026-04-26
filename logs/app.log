@@ -1,104 +1,257 @@
-2026-02-17 18:51:54,588 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 18:51:54,588 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:18:38,721 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:18:38,721 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:27:40,794 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 20:27:40,794 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:33:26,675 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:33:26,675 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:35:17,349 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:35:17,349 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:36:55,965 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:36:55,965 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:59:14,031 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-17 21:59:14,031 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:41,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:41,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:58,068 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:26:58,068 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:34:32,374 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 06:34:32,374 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 07:01:52,206 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 07:01:52,206 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 14:49:08,229 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 14:49:08,229 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 15:53:15,412 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 15:53:15,412 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:40:48,992 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:40:48,992 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:57:07,436 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:57:07,436 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 16:57:35,351 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 16:57:35,351 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 17:11:55,172 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 17:11:55,172 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8802
-2026-02-18 19:08:54,894 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-18 19:08:54,894 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:25,348 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:25,348 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:58,411 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:30:58,411 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:33:45,353 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 11:33:45,353 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:01,155 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:01,155 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:52,469 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 17:14:52,469 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:06:28,811 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:06:28,811 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:29:13,117 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:29:13,117 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:47,746 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:47,746 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:58,998 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:35:58,998 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:17,939 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:17,939 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:44,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-19 22:36:44,667 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 10:15:47,458 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 10:15:47,458 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 13:05:35,669 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 13:05:35,669 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 16:01:10,841 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 16:01:10,841 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:26:21,764 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:26:21,764 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:55:23,252 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 20:55:23,252 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 22:34:16,658 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 22:34:16,658 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 23:40:15,946 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-20 23:40:15,946 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 00:43:03,343 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 00:43:03,343 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 11:39:24,545 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 11:39:24,545 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 13:47:41,752 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 13:47:41,752 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 16:47:22,342 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 16:47:22,342 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:36:33,270 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:36:33,270 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:50:25,079 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:50:25,079 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:57:10,013 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-21 23:57:10,013 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 09:30:08,833 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 09:30:08,833 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 10:24:18,741 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 10:34:27,830 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 10:37:54,964 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 11:14:19,050 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-22 11:39:28,973 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-23 19:10:48,910 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-23 20:54:42,351 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-23 20:58:50,129 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-23 21:08:09,053 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-23 21:12:41,470 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-23 21:17:58,578 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 15:18:16,425 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 15:37:45,554 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 16:34:59,224 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 19:51:26,541 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
-2026-02-24 19:58:17,505 | INFO     | mlx_whisper | Starting MLX-Whisper REST API on http://0.0.0.0:8801
+INFO:     Will watch for changes in these directories: ['/Users/dvmironenko/dev/mlx_whisper']
+INFO:     Uvicorn running on http://0.0.0.0:8801 (Press CTRL+C to quit)
+INFO:     Started reloader process [49925] using WatchFiles
+INFO:     Started server process [49959]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:64970 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64970 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64970 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64975 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64975 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64975 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64975 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64975 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38118 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38118 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38118 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38118 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38128 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38128 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38128 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:38134 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53670 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53670 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53670 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53680 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53680 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:42554 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:42554 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58718 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58718 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58718 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58718 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:58730 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58730 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58730 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58730 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:46478 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:46478 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:46478 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:46478 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:37204 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:37204 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:37204 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:37204 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:53284 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53284 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53298 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:53298 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33800 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33800 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33800 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33800 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:39642 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:39642 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:39642 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:39644 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:49478 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:49478 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:49478 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:49478 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:37052 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:37052 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:37052 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:37052 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:40842 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:40842 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:40842 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:40842 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33700 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33700 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33700 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33700 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:39838 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:39838 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:39838 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65435 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65437 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:47978 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:47978 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:47978 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:45466 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:45466 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:45474 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:45474 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:55612 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:55612 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65452 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65454 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65457 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65459 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65461 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65463 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65465 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65469 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65469 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65469 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65469 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:51744 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:51744 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:51744 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:51744 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:34716 - "DELETE /api/v1/jobs/12244997-7792-4fe2-93dd-03b697d3e0e0/files/test_converted.wav HTTP/1.1" 200 OK
+INFO:     192.168.50.252:34730 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53774 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:53774 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:53774 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49192 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49197 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49199 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49204 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49206 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:51916 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:51916 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:51918 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:51918 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:48978 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:48978 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:42024 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:42024 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49252 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49254 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49256 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:42310 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:42310 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:42310 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49327 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:46102 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:46102 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:46102 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:55522 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:55522 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:48944 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:48944 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:48944 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:35610 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:35610 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:59698 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:59698 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:59708 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:59708 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49381 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49381 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49381 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49381 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49383 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49383 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49383 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:43444 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:43444 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:43444 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:43444 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49387 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49387 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49387 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50386 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50386 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:50386 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49392 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49392 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49392 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:39106 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:39106 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:39106 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:39106 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:38320 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38320 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:38320 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:38320 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49436 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49436 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49436 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49436 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49438 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49438 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49442 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49442 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49442 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49514 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49519 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49521 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49521 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49528 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49528 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:48570 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:48570 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:48570 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50384 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50384 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50384 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:50384 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49595 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49595 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49595 - "GET /api/v1/config HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50904 - "GET /uploads HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50904 - "GET /api/v1/config HTTP/1.1" 200 OK
+2026-04-26 00:38:19,440 | INFO     | mlx_whisper | Transcription completed: file=tmp_Встреча в Телемосте 22.04.26 19-09-12 — запись.webm, model=turbo, task=transcribe, language=ru, audio_duration=5049.86s, convert_time=9.04s, transcribe_time=127.37s, total_time=145.78s
+2026-04-26 00:38:19,529 | DEBUG    | mlx_whisper | Memory cleared
+INFO:     192.168.50.252:35412 - "POST /api/v1/transcribe HTTP/1.1" 200 OK
+2026-04-26 01:13:11,497 | INFO     | mlx_whisper | Transcription completed: file=tmp_Встреча в Телемосте 22.04.26 19-09-12 — запись.webm, model=turbo, task=transcribe, language=ru, audio_duration=5049.86s, convert_time=8.96s, transcribe_time=213.62s, total_time=231.49s
+2026-04-26 01:13:12,091 | DEBUG    | mlx_whisper | Memory cleared
+INFO:     192.168.50.252:47738 - "POST /api/v1/transcribe HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50218 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:50218 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     192.168.50.252:50218 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50233 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50235 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50235 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50235 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50251 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50251 - "GET /static/new_style.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50251 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50251 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50381 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50382 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50383 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50384 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50386 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50412 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58990 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58990 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:58990 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50553 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50555 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50559 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:41432 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:41432 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:41432 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:41436 - "DELETE /api/v1/jobs/068a3167-2443-4278-9bd4-ecabd2ef1358 HTTP/1.1" 200 OK
+INFO:     192.168.50.252:41436 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:52310 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:52310 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:52310 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     192.168.50.252:52310 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:60474 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:60474 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33750 - "GET / HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33750 - "GET /static/new_style.css HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33750 - "GET /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     192.168.50.252:33750 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'tests/test_initial_prompt.py', 'tests/test_interface.py', 'tests/comprehensive_initial_prompt_test.py', 'test_interface.py', 'simple_initial_prompt_test.py', 'test_initial_prompt.py', 'comprehensive_initial_prompt_test.py', 'tests/simple_initial_prompt_test.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [49959]
+INFO:     Started server process [89815]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'tests/final_interface_check.py', 'final_verification.py', 'tests/final_verification.py', 'final_interface_check.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [89815]
+INFO:     Started server process [90396]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
