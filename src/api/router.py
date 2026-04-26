@@ -6,7 +6,7 @@ import shutil
 import time
 import uuid
 from fastapi import APIRouter, UploadFile, Form, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from typing import Optional
 
 
@@ -382,3 +382,45 @@ async def download_file(filename: str):
         raise HTTPException(status_code=400, detail="Invalid path")
 
     return FileResponse(resolved)
+
+
+@router.get("/files/{filename}/content")
+async def get_file_content(filename: str):
+    """Получить содержимое текстового файла для просмотра."""
+    import os
+
+    # Защита от path traversal
+    # Сначала ищем в директориях job_id, затем в корневой data/uploads
+    if os.path.exists(os.path.join(DATA_UPLOADS_DIR, filename)):
+        # Файл в корневой директории (редкий случай)
+        resolved = os.path.realpath(os.path.join(DATA_UPLOADS_DIR, filename))
+        base = os.path.realpath(DATA_UPLOADS_DIR)
+    else:
+        # Ищем в поддиректориях job_id
+        found = False
+        for job_id in os.listdir(DATA_UPLOADS_DIR):
+            job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
+            if os.path.isdir(job_dir):
+                potential_path = os.path.join(job_dir, filename)
+                if os.path.exists(potential_path):
+                    resolved = os.path.realpath(potential_path)
+                    base = os.path.realpath(DATA_UPLOADS_DIR)
+                    found = True
+                    break
+        if not found:
+            raise HTTPException(status_code=404, detail="File not found")
+
+    if not resolved.startswith(base):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    # Определяем тип контента в зависимости от расширения
+    ext = os.path.splitext(filename)[1].lower()
+    if ext == ".json":
+        media_type = "application/json"
+    else:
+        media_type = "text/plain; charset=utf-8"
+
+    with open(resolved, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    return PlainTextResponse(content=content, media_type=media_type)

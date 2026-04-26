@@ -81,6 +81,128 @@
 
         let jobsList = [];
 
+        // ====================
+        // Modal View Logic
+        // ====================
+
+        let currentModal = null;
+
+        // Загрузка и отображение содержимого файла
+        async function viewFileContent(jobId, filename) {
+            try {
+                const response = await fetch('/api/v1/files/' + encodeURIComponent(filename) + '/content');
+                if (!response.ok) {
+                    throw new Error('Failed to load file content');
+                }
+                const content = await response.text();
+
+                // Создаем и показываем модальное окно
+                currentModal = createModal(filename, content);
+                document.body.appendChild(currentModal);
+
+                // Добавляем обработчик ESC
+                document.addEventListener('keydown', handleModalEscape);
+
+                // Фокус на кнопку закрытия для доступности
+                const closeBtn = currentModal.querySelector('.modal-close-btn');
+                if (closeBtn) closeBtn.focus();
+
+            } catch (error) {
+                console.error('Error loading file content:', error);
+                alert('Ошибка загрузки содержимого файла: ' + error.message);
+            }
+        }
+
+        // Создание HTML модального окна (без innerHTML для безопасности)
+        function createModal(filename, content) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.setAttribute('aria-labelledby', 'modal-title');
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'modal-content';
+
+            const header = document.createElement('div');
+            header.className = 'modal-header';
+
+            const titleWrapper = document.createElement('div');
+            titleWrapper.className = 'modal-title-wrapper';
+
+            const titleIcon = document.createElement('i');
+            titleIcon.className = 'fas fa-file-alt';
+            titleWrapper.appendChild(titleIcon);
+
+            const titleText = document.createElement('h3');
+            titleText.id = 'modal-title';
+            titleText.className = 'modal-title';
+            titleText.textContent = filename;
+            titleWrapper.appendChild(titleText);
+
+            header.appendChild(titleWrapper);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'modal-close-btn';
+            closeBtn.setAttribute('aria-label', 'Закрыть');
+            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            closeBtn.addEventListener('click', closeModal);
+            header.appendChild(closeBtn);
+
+            contentDiv.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'modal-body';
+
+            const pre = document.createElement('pre');
+            pre.setAttribute('role', 'region');
+            pre.setAttribute('aria-label', 'Содержимое файла ' + filename);
+
+            const code = document.createElement('code');
+            code.textContent = content;
+            pre.appendChild(code);
+            body.appendChild(pre);
+
+            contentDiv.appendChild(body);
+
+            const footer = document.createElement('div');
+            footer.className = 'modal-footer';
+
+            const closeFooterBtn = document.createElement('button');
+            closeFooterBtn.className = 'btn-modal-close';
+            closeFooterBtn.textContent = 'Закрыть';
+            closeFooterBtn.addEventListener('click', closeModal);
+            footer.appendChild(closeFooterBtn);
+
+            contentDiv.appendChild(footer);
+            modal.appendChild(contentDiv);
+
+            // Закрытие при клике вне контента
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            return modal;
+        }
+
+        // Закрытие модального окна
+        function closeModal() {
+            if (currentModal) {
+                currentModal.remove();
+                currentModal = null;
+                document.removeEventListener('keydown', handleModalEscape);
+            }
+        }
+
+        // Обработка ESC для закрытия
+        function handleModalEscape(e) {
+            if (e.key === 'Escape' && currentModal) {
+                closeModal();
+            }
+        }
+
         // Загрузка списка заданий
         async function loadJobs() {
             const container = document.getElementById('jobsCardsContainer');
@@ -253,6 +375,21 @@
                 const iconDownload = document.createElement('i');
                 iconDownload.className = 'fas fa-download';
                 btnDownload.appendChild(iconDownload);
+
+                // Кнопка Просмотр для .txt файлов
+                if (file.name.toLowerCase().endsWith('.txt')) {
+                    const btnView = document.createElement('button');
+                    btnView.className = 'btn-view-file';
+                    btnView.title = 'Просмотреть содержимое';
+                    btnView.setAttribute('aria-label', 'Просмотреть содержимое файла ' + file.name);
+                    btnView.onclick = function() {
+                        viewFileContent(job.job_id, file.name);
+                    };
+                    const iconView = document.createElement('i');
+                    iconView.className = 'fas fa-eye';
+                    btnView.appendChild(iconView);
+                    fileActions.appendChild(btnView);
+                }
 
                 const btnDelete = document.createElement('button');
                 btnDelete.className = 'btn-delete-file';
