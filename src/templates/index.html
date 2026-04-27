@@ -203,6 +203,262 @@
             }
         }
 
+        // ====================
+        // Delete Confirmation Modal
+        // ====================
+
+        let currentConfirmModal = null;
+
+        // Создание модального окна подтверждения удаления
+        function createConfirmModal(jobId, callback) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.setAttribute('aria-labelledby', 'confirm-title');
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'modal-content modal-confirm';
+
+            const header = document.createElement('div');
+            header.className = 'modal-header';
+
+            const titleWrapper = document.createElement('div');
+            titleWrapper.className = 'modal-title-wrapper';
+
+            const titleIcon = document.createElement('i');
+            titleIcon.className = 'fas fa-exclamation-triangle';
+            titleWrapper.appendChild(titleIcon);
+
+            const titleText = document.createElement('h3');
+            titleText.id = 'confirm-title';
+            titleText.className = 'modal-title';
+            titleText.textContent = 'Удалить задание?';
+            titleWrapper.appendChild(titleText);
+
+            header.appendChild(titleWrapper);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'modal-close-btn';
+            closeBtn.setAttribute('aria-label', 'Закрыть');
+            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            closeBtn.addEventListener('click', () => {
+                if (currentConfirmModal) {
+                    currentConfirmModal.remove();
+                    currentConfirmModal = null;
+                    document.removeEventListener('keydown', handleConfirmEscape);
+                }
+            });
+            header.appendChild(closeBtn);
+
+            contentDiv.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'modal-body';
+
+            const messageP = document.createElement('p');
+            const messageText1 = document.createTextNode('Вы уверены, что хотите удалить всё задание ');
+            messageP.appendChild(messageText1);
+
+            const jobIdSpan = document.createElement('span');
+            jobIdSpan.style.color = 'var(--primary-color)';
+            jobIdSpan.style.fontWeight = '600';
+            jobIdSpan.textContent = jobId;
+            messageP.appendChild(jobIdSpan);
+
+            const messageText2 = document.createTextNode('?');
+            messageP.appendChild(messageText2);
+
+            const break1 = document.createElement('br');
+            messageP.appendChild(break1);
+
+            const break2 = document.createElement('br');
+            messageP.appendChild(break2);
+
+            const messageText3 = document.createTextNode('Все файлы будут удалены без возможности восстановления.');
+            messageP.appendChild(messageText3);
+
+            body.appendChild(messageP);
+
+            contentDiv.appendChild(body);
+
+            const footer = document.createElement('div');
+            footer.className = 'modal-footer';
+
+            const btnCancel = document.createElement('button');
+            btnCancel.className = 'btn-cancel-delete';
+            btnCancel.textContent = 'Нет';
+            btnCancel.addEventListener('click', () => {
+                if (currentConfirmModal) {
+                    currentConfirmModal.remove();
+                    currentConfirmModal = null;
+                    document.removeEventListener('keydown', handleConfirmEscape);
+                }
+            });
+
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'btn-confirm-delete';
+            const btnDeleteIcon = document.createElement('i');
+            btnDeleteIcon.className = 'fas fa-trash';
+            btnDelete.appendChild(btnDeleteIcon);
+            const btnDeleteText = document.createTextNode(' Да, удалить');
+            btnDelete.appendChild(btnDeleteText);
+            btnDelete.addEventListener('click', async () => {
+                if (currentConfirmModal) {
+                    currentConfirmModal.remove();
+                    currentConfirmModal = null;
+                    document.removeEventListener('keydown', handleConfirmEscape);
+                }
+                await callback();
+            });
+
+            footer.appendChild(btnCancel);
+            footer.appendChild(btnDelete);
+            contentDiv.appendChild(footer);
+
+            modal.appendChild(contentDiv);
+
+            // Закрытие при клике вне контента
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    if (currentConfirmModal) {
+                        currentConfirmModal.remove();
+                        currentConfirmModal = null;
+                        document.removeEventListener('keydown', handleConfirmEscape);
+                    }
+                }
+            });
+
+            return modal;
+        }
+
+        // Закрытие модального окна подтверждения
+        function closeConfirmModal() {
+            if (currentConfirmModal) {
+                currentConfirmModal.remove();
+                currentConfirmModal = null;
+                document.removeEventListener('keydown', handleConfirmEscape);
+            }
+        }
+
+        // Обработка ESC для закрытия подтверждения
+        function handleConfirmEscape(e) {
+            if (e.key === 'Escape' && currentConfirmModal) {
+                closeConfirmModal();
+            }
+        }
+
+        // ====================
+        // Notification Modal
+        // ====================
+
+        let currentNotificationModal = null;
+
+        // Создание модального окна уведомления
+        function createNotificationModal(title, message, callback) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.setAttribute('aria-labelledby', 'notify-title');
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'modal-content modal-confirm';
+
+            const header = document.createElement('div');
+            header.className = 'modal-header';
+
+            const titleWrapper = document.createElement('div');
+            titleWrapper.className = 'modal-title-wrapper';
+
+            const titleIcon = document.createElement('i');
+            titleIcon.className = 'fas fa-check-circle';
+            titleWrapper.appendChild(titleIcon);
+
+            const titleText = document.createElement('h3');
+            titleText.id = 'notify-title';
+            titleText.className = 'modal-title';
+            titleText.textContent = title;
+            titleWrapper.appendChild(titleText);
+
+            header.appendChild(titleWrapper);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'modal-close-btn';
+            closeBtn.setAttribute('aria-label', 'Закрыть');
+            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            closeBtn.addEventListener('click', () => {
+                if (currentNotificationModal) {
+                    currentNotificationModal.remove();
+                    currentNotificationModal = null;
+                    document.removeEventListener('keydown', handleNotificationEscape);
+                    if (callback) callback();
+                }
+            });
+            header.appendChild(closeBtn);
+
+            contentDiv.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'modal-body';
+
+            const messageP = document.createElement('p');
+            messageP.textContent = message;
+            body.appendChild(messageP);
+
+            contentDiv.appendChild(body);
+
+            const footer = document.createElement('div');
+            footer.className = 'modal-footer';
+
+            const btnClose = document.createElement('button');
+            btnClose.className = 'btn-confirm-delete';
+            btnClose.textContent = 'OK';
+            btnClose.addEventListener('click', () => {
+                if (currentNotificationModal) {
+                    currentNotificationModal.remove();
+                    currentNotificationModal = null;
+                    document.removeEventListener('keydown', handleNotificationEscape);
+                    if (callback) callback();
+                }
+            });
+
+            footer.appendChild(btnClose);
+            contentDiv.appendChild(footer);
+
+            modal.appendChild(contentDiv);
+
+            // Закрытие при клике вне контента
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    if (currentNotificationModal) {
+                        currentNotificationModal.remove();
+                        currentNotificationModal = null;
+                        document.removeEventListener('keydown', handleNotificationEscape);
+                        if (callback) callback();
+                    }
+                }
+            });
+
+            return modal;
+        }
+
+        // Закрытие модального окна уведомления
+        function closeNotificationModal() {
+            if (currentNotificationModal) {
+                currentNotificationModal.remove();
+                currentNotificationModal = null;
+                document.removeEventListener('keydown', handleNotificationEscape);
+            }
+        }
+
+        // Обработка ESC для закрытия уведомления
+        function handleNotificationEscape(e) {
+            if (e.key === 'Escape' && currentNotificationModal) {
+                closeNotificationModal();
+            }
+        }
+
         // Загрузка списка заданий
         async function loadJobs() {
             const container = document.getElementById('jobsCardsContainer');
@@ -304,14 +560,45 @@
                 });
 
                 if (response.ok) {
-                    alert('Задание успешно удалено');
-                    loadJobs();
+                    const notification = createNotificationModal(
+                        'Задание удалено',
+                        'Задание "' + jobId + '" успешно удалено. Все файлы удалены.',
+                        () => {
+                            loadJobs();
+                        }
+                    );
+                    if (notification) {
+                        notification.querySelector('.modal-content').classList.add('modal-success');
+                        currentNotificationModal = notification;
+                        document.body.appendChild(notification);
+                        document.addEventListener('keydown', handleNotificationEscape);
+                        const focusBtn = notification.querySelector('.btn-confirm-delete');
+                        if (focusBtn) focusBtn.focus();
+                    }
                 } else {
                     const data = await response.json();
-                    alert('Ошибка удаления: ' + (data.detail || 'Неизвестная ошибка'));
+                    const errorNotification = createNotificationModal(
+                        'Ошибка удаления',
+                        data.detail || 'Неизвестная ошибка',
+                        null
+                    );
+                    if (errorNotification) {
+                        currentNotificationModal = errorNotification;
+                        document.body.appendChild(errorNotification);
+                        document.addEventListener('keydown', handleNotificationEscape);
+                    }
                 }
             } catch (error) {
-                alert('Ошибка соединения: ' + error.message);
+                const errorNotification = createNotificationModal(
+                    'Ошибка соединения',
+                    error.message,
+                    null
+                );
+                if (errorNotification) {
+                    currentNotificationModal = errorNotification;
+                    document.body.appendChild(errorNotification);
+                    document.addEventListener('keydown', handleNotificationEscape);
+                }
             }
         }
 
@@ -396,8 +683,18 @@
                 btnDelete.title = 'Удалить файл';
                 btnDelete.setAttribute('aria-label', 'Удалить файл ' + file.name);
                 btnDelete.onclick = function() {
-                    if (confirm('Вы уверены, что хотите удалить файл "' + escapeHtml(file.name) + '"?')) {
-                        deleteFile(job.job_id, file.name);
+                    const confirmModal = createConfirmModal(
+                        file.name,
+                        async () => {
+                            await deleteFile(job.job_id, file.name);
+                        }
+                    );
+                    if (confirmModal) {
+                        currentConfirmModal = confirmModal;
+                        document.body.appendChild(confirmModal);
+                        document.addEventListener('keydown', handleConfirmEscape);
+                        const focusBtn = confirmModal.querySelector('.btn-confirm-delete');
+                        if (focusBtn) focusBtn.focus();
                     }
                 };
                 const iconDelete = document.createElement('i');
@@ -421,8 +718,15 @@
             btnDeleteJob.title = 'Удалить задание';
             btnDeleteJob.setAttribute('aria-label', 'Удалить задание ' + job.job_id);
             btnDeleteJob.onclick = function() {
-                if (confirm('Вы уверены, что хотите удалить всё задание "' + job.job_id + '"? Все файлы будут удалены.')) {
-                    deleteJob(job.job_id);
+                const confirmModal = createConfirmModal(job.job_id, async () => {
+                    await deleteJob(job.job_id);
+                });
+                if (confirmModal) {
+                    currentConfirmModal = confirmModal;
+                    document.body.appendChild(confirmModal);
+                    document.addEventListener('keydown', handleConfirmEscape);
+                    const focusBtn = confirmModal.querySelector('.btn-confirm-delete');
+                    if (focusBtn) focusBtn.focus();
                 }
             };
             const iconDeleteJob = document.createElement('i');
@@ -475,14 +779,45 @@
                 });
 
                 if (response.ok) {
-                    alert('Файл успешно удален');
-                    loadJobs();
+                    const notification = createNotificationModal(
+                        'Файл удален',
+                        'Файл "' + filename + '" успешно удален.',
+                        () => {
+                            loadJobs();
+                        }
+                    );
+                    if (notification) {
+                        notification.querySelector('.modal-content').classList.add('modal-success');
+                        currentNotificationModal = notification;
+                        document.body.appendChild(notification);
+                        document.addEventListener('keydown', handleNotificationEscape);
+                        const focusBtn = notification.querySelector('.btn-confirm-delete');
+                        if (focusBtn) focusBtn.focus();
+                    }
                 } else {
                     const data = await response.json();
-                    alert('Ошибка удаления: ' + (data.detail || 'Неизвестная ошибка'));
+                    const errorNotification = createNotificationModal(
+                        'Ошибка удаления',
+                        data.detail || 'Неизвестная ошибка',
+                        null
+                    );
+                    if (errorNotification) {
+                        currentNotificationModal = errorNotification;
+                        document.body.appendChild(errorNotification);
+                        document.addEventListener('keydown', handleNotificationEscape);
+                    }
                 }
             } catch (error) {
-                alert('Ошибка соединения: ' + error.message);
+                const errorNotification = createNotificationModal(
+                    'Ошибка соединения',
+                    error.message,
+                    null
+                );
+                if (errorNotification) {
+                    currentNotificationModal = errorNotification;
+                    document.body.appendChild(errorNotification);
+                    document.addEventListener('keydown', handleNotificationEscape);
+                }
             }
         }
 

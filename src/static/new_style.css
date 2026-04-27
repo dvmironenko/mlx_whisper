@@ -1499,3 +1499,106 @@ body {
 .btn-view-file:active {
     transform: translateY(0);
 }
+
+/* Delete confirmation modal */
+.modal-confirm {
+    max-width: 450px;
+}
+
+.modal-confirm .modal-header {
+    padding: 20px;
+    background-color: var(--error-color);
+    border-bottom-color: #c53030;
+}
+
+.modal-confirm .modal-title-wrapper {
+    color: white;
+    gap: 10px;
+}
+
+.modal-confirm .modal-title {
+    color: white;
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.modal-confirm .modal-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.modal-confirm .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.modal-confirm .modal-body {
+    padding: 20px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+    max-height: none;
+    overflow: visible;
+}
+
+.modal-confirm .modal-body strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.modal-confirm .modal-footer {
+    padding: 16px 20px;
+    gap: 10px;
+    background-color: var(--background-dark);
+}
+
+.modal-confirm .btn-confirm-delete {
+    background-color: var(--error-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: 'Source Sans 3', sans-serif;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.modal-confirm .btn-confirm-delete:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.modal-confirm .btn-confirm-delete:active {
+    transform: translateY(0);
+}
+
+.modal-confirm .btn-cancel-delete {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: 'Source Sans 3', sans-serif;
+    transition: var(--transition);
+}
+
+.modal-confirm .btn-cancel-delete:hover {
+    opacity: 0.9;
+}
+
+/* Success notification modal */
+.modal-confirm.modal-success .modal-header {
+    background-color: var(--success-color);
+    border-bottom-color: #38a169;
+}
+
+.modal-confirm.modal-success .modal-title-wrapper {
+    color: white;
+}

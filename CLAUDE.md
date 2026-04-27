@@ -7,8 +7,8 @@
 ## Рабочий процесс разработки
 
 - Следовать PEP 8, использовать аннотации типов и async/await.
-- Документация хранится в каталоге `docs/`.
-- Тесты находятся в папке `tests/`.
+- Документация в папке `docs/`. Всю документацию размещай в этой папке.
+- Тесты в папке `tests/`. Все тесты размещай в этой папке.
 - Веб-интерфейс использует минималистичные стили (`src/templates/new_index.html`, `src/static/new_style.css`).
 
 ## Структура проекта
@@ -68,3 +68,12 @@ mlx-whisper/
 - **Implementation Plan**: [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) — план реализации функциональности
 
 Все файлы тестов размещать в папке tests/
+
+## Running the Application
+
+**Важно:** Приложение всегда должно запускаться в виртуальном окружении `venv`:
+
+```bash
+source .venv/bin/activate 
+python src/main.py
+```
