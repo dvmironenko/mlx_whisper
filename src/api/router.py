@@ -5,7 +5,7 @@ import os
 import shutil
 import time
 import uuid
-from fastapi import APIRouter, UploadFile, Form, HTTPException
+from fastapi import APIRouter, UploadFile, Form, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from typing import Optional
 
@@ -52,6 +52,7 @@ def sanitize_result(result: dict) -> dict:
 
 @router.post("/transcribe")
 async def transcribe_audio_endpoint(
+    request: Request,
     file: UploadFile,
     language: Optional[str] = Form(None),
     task: str = Form("transcribe"),
@@ -118,12 +119,22 @@ async def transcribe_audio_endpoint(
     total_start_time = time.time()
 
     try:
+        # Валидация размера через Content-Length header (до сохранения)
+        content_length = request.headers.get("content-length")
+        if content_length:
+            size = int(content_length)
+            if size > MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File size exceeds maximum allowed ({MAX_FILE_SIZE // (1024 * 1024)} MB)"
+                )
+
         # Save file
         with open(tmp_path, "wb") as f:
             while chunk := await file.read(CHUNK_SIZE):
                 f.write(chunk)
 
-        # Валидация размера файла
+        # Backup: валидация размера файла после сохранения
         if not validate_file_size(tmp_path):
             raise HTTPException(
                 status_code=413,
