@@ -66,6 +66,9 @@ OPENAI_REPORT_PROMPT: Optional[str] = os.getenv(
     "Создать отчет о сессии. Отчет должен содержать все фразы спикеров в формате: [Спикер:] [Высказывание]"
 )
 
+# Report generation chunk size (for large texts)
+MAX_REPORT_CHUNK_SIZE: int = int(os.getenv("MAX_REPORT_CHUNK_SIZE", "10000"))
+
 # Audio extensions
 AUDIO_EXTENSIONS: set = {
     ".wav",
