@@ -75,6 +75,12 @@ mlx-whisper-api/
    - трекинг статуса задач по уникальным идентификаторам
    - метаданные о процессе обработки
 
+5. **Генерация отчётов через LLM**
+   - загрузка segments.txt из директории задания
+   - формирование промпта на основе пользовательского шаблона
+   - отправка на OpenAI API для генерации Markdown отчёта
+   - сохранение report.md в директории задания
+
 ### Функции веб‑интерфейса
 
 - drag & drop загрузка аудиофайлов
@@ -126,6 +132,13 @@ mlx-whisper-api/
 1. **`best_of`** — число лучших кандидатов для beam search.
 2. **`verbose`** — подробный лог.
 
+### Генерация отчётов через LLM
+
+1. **`OPENAI_API_KEY`** — API ключ для доступа к OpenAI или совместимому API.
+2. **`OPENAI_BASE_URL`** — URL endpoint для кастомных API (например, локальный сервер).
+3. **`OPENAI_MODEL`** — модель для генерации отчётов (по умолчанию: gpt-4o-mini).
+4. **`OPENAI_REPORT_PROMPT`** — пользовательский промпт для генерации отчётов.
+
 ## Параметры конфигурации (.env файл)
 
 ### Основные параметры
@@ -159,9 +172,40 @@ mlx-whisper-api/
 |----------|--------------|----------|
 | `INITIAL_PROMPT` | пустая строка | Начальный текст для контекстной транскрипции |
 
+### Параметры генерации отчётов
 
+| Параметр | По умолчанию | Описание |
+|----------|--------------|----------|
+| `OPENAI_API_KEY` | — | API ключ для доступа к OpenAI API |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | URL endpoint для кастомных API |
+| `OPENAI_MODEL` | `gpt-4o-mini` | Модель для генерации отчётов |
+| `OPENAI_REPORT_PROMPT` | `Создать отчет о сессии...` | Пользовательский промпт для генерации |
 
 ## API‑конечные точки
+
+### POST /report/{job_id}
+
+`POST /api/v1/report/{job_id}`
+
+**Описание:** Генерирует Markdown отчёт по расшифровке через LLM.
+
+**Алгоритм:**
+
+1. Проверяет наличие директории `data/{job_id}/`
+2. Загружает `*_segments.txt` из директории
+3. Формирует промпт на основе `OPENAI_REPORT_PROMPT`
+4. Отправляет на OpenAI API для генерации Markdown
+5. Сохраняет `report.md` в директории задания
+
+**Ответ:**
+
+```json
+{
+  "status": "success",
+  "job_id": "уникальный_идентификатор_задачи",
+  "report_path": "job_id/report.md"
+}
+```
 
 ### POST /transcribe
 
@@ -200,6 +244,7 @@ GET  /models            # список поддерживаемых моделе
 GET  /api/v1/config     # получение текущих настроек
 POST /api/v1/transcribe # транскрипция аудио
 GET  /job/{job_id}      # статус задачи
+POST /api/v1/report/{job_id}  # генерация отчёта через LLM
 GET  /                  # корневой веб‑интерфейс
 ```
 
@@ -252,6 +297,96 @@ GET  /                  # корневой веб‑интерфейс
 3. Инференс выбранной модели.
 4. Сериализация в JSON.
 5. Создание текстового файла и трекинг задачи.
+
+### Цепочка генерации отчёта через LLM
+
+```mermaid
+sequenceDiagram
+    participant User as Пользователь
+    participant API as /api/v1/transcribe
+    participant Whisper as MLX-Whisper
+    participant Store as data/{job_id}/
+    participant ReportAPI as /api/v1/report/{job_id}
+    participant LLM as OpenAI API
+    participant ReportStore as report.md
+
+    User->>API: Загрузить аудио
+    API->>Whisper: Транскрипция
+    Whisper->>Store: segments.txt (при word_timestamps=true)
+    Store-->>API: job_id
+    API-->>User: result with segments
+
+    User->>ReportAPI: POST /report/{job_id}
+    ReportAPI->>Store: Загрузить segments.txt
+    Store-->>ReportAPI: Текст с таймкодами
+    ReportAPI->>LLM: Промпт + транскрипция
+    LLM-->>ReportAPI: Markdown отчёт
+    ReportAPI->>ReportStore: Сохранить report.md
+    ReportStore-->>ReportAPI: Путь к файлу
+    ReportAPI-->>User: {"status": "success", ...}
+```
+
+### Блок-схема потока обработки
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ПОТОК ОБРАБОТКИ ЧЕРЕЗ LLM                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+                         [ЗАГРУЗКА АУДИО]
+                                 │
+                                 ▼
+                         [ВАЛИДАЦИЯ ФАЙЛА]
+                         ├─ Расширение (.wav, .mp3...)
+                         ├─ Размер (< 500 MB)
+                         └─ Content-Length header
+                                 │
+                                 ▼
+                         [КОНВЕРТАЦИЯ WAV]
+                         ├─ FFmpeg: 16kHz, моно
+                         ├─ Удаление тишины (опционально)
+                         └─ Сохранение: data/{job_id}/_converted.wav
+                                 │
+                                 ▼
+                         [ТРАНСКРИПЦИЯ]
+                         ├─ MLX-Whisper инференс
+                         ├─ word_timestamps: segments[]
+                         └─ Сохранение: data/{job_id}/segments.txt
+                                 │
+                                 ├──────────────┐
+                                 │              │
+                         [ТЕКСТ В JSON]  [СЕГМЕНТЫ В ТЕКСТ]
+                                 │              │
+                                 ▼              ▼
+                         [ОТВЕТ API]    [ДЛЯ LLM ОТЧЁТА]
+                                            │
+                                            ▼
+                                 [ЗАПРОС ГЕНЕРАЦИИ ОТЧЁТА]
+                                            │
+                                            ├─ Проверка: data/{job_id}/segments.txt
+                                            ├─ Загрузка: load_segments_file()
+                                            ├─ Формирование: build_prompt()
+                                            │                 ├─ Базовый: "Создать отчет..."
+                                            │                 └─ Пользовательский: OPENAI_REPORT_PROMPT
+                                            ├─ Вызов: AsyncOpenAI.create()
+                                            │                 ├─ api_key: OPENAI_API_KEY
+                                            │                 ├─ base_url: OPENAI_BASE_URL
+                                            │                 ├─ model: OPENAI_MODEL
+                                            │                 └─ temperature: 0.7
+                                            └─ Сохранение: save_report()
+                                                     └─ report.md в data/{job_id}/
+                                            │
+                                            ▼
+                                 [МАРКДАУН ОТЧЁТ]
+                                            │
+                                            ├─ Заголовки и структура
+                                            ├─ Фразы по спикерам
+                                            ├─ Таймкоды и контекст
+                                            └─ Темы и ключевые моменты
+                                            │
+                                            ▼
+                                 [ОТВЕТ: report_path]
+```
 
 ## Соображения безопасности
 

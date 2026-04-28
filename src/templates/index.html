@@ -602,6 +602,52 @@
             }
         }
 
+        // Генерация отчета через API
+        async function generateReport(jobId) {
+            try {
+                const response = await fetch('/api/v1/report/' + jobId, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const notification = createNotificationModal(
+                        'Отчет генерируется',
+                        'Отчет для задания "' + jobId + '" начат генерироваться. Вы сможете скачать его после завершения.',
+                        null
+                    );
+                    if (notification) {
+                        notification.querySelector('.modal-content').classList.add('modal-success');
+                        currentNotificationModal = notification;
+                        document.body.appendChild(notification);
+                        document.addEventListener('keydown', handleNotificationEscape);
+                    }
+                } else {
+                    const data = await response.json();
+                    const errorNotification = createNotificationModal(
+                        'Ошибка генерации',
+                        data.detail || 'Не удалось запустить генерацию отчета',
+                        null
+                    );
+                    if (errorNotification) {
+                        currentNotificationModal = errorNotification;
+                        document.body.appendChild(errorNotification);
+                        document.addEventListener('keydown', handleNotificationEscape);
+                    }
+                }
+            } catch (error) {
+                const errorNotification = createNotificationModal(
+                    'Ошибка соединения',
+                    error.message,
+                    null
+                );
+                if (errorNotification) {
+                    currentNotificationModal = errorNotification;
+                    document.body.appendChild(errorNotification);
+                    document.addEventListener('keydown', handleNotificationEscape);
+                }
+            }
+        }
+
         // Создание DOM элемента карточки задания
         function createJobCard(job) {
             const totalSize = formatFileSize(job.files.reduce((sum, f) => sum + f.size, 0));
@@ -663,8 +709,8 @@
                 iconDownload.className = 'fas fa-download';
                 btnDownload.appendChild(iconDownload);
 
-                // Кнопка Просмотр для .txt файлов
-                if (file.name.toLowerCase().endsWith('.txt')) {
+                // Кнопка Просмотр для .txt и .md файлов
+                if (file.name.toLowerCase().endsWith('.txt') || file.name.toLowerCase().endsWith('.md')) {
                     const btnView = document.createElement('button');
                     btnView.className = 'btn-view-file';
                     btnView.title = 'Просмотреть содержимое';
@@ -709,9 +755,23 @@
                 filesContainer.appendChild(fileRow);
             });
 
-            // Job actions - Delete button
+            // Job actions - Report button (left) and Delete button (right)
             const jobActions = document.createElement('div');
             jobActions.className = 'job-actions';
+
+            // Button Report Job (left)
+            const btnReport = document.createElement('button');
+            btnReport.className = 'btn-report-job';
+            btnReport.title = 'Сгенерировать отчет';
+            btnReport.setAttribute('aria-label', 'Сгенерировать отчет для задания ' + job.job_id);
+            btnReport.onclick = async () => {
+                await generateReport(job.job_id);
+            };
+            const iconReport = document.createElement('i');
+            iconReport.className = 'fas fa-file-alt';
+            btnReport.appendChild(iconReport);
+            btnReport.appendChild(document.createTextNode(' Отчет'));
+            jobActions.appendChild(btnReport);
 
             const btnDeleteJob = document.createElement('button');
             btnDeleteJob.className = 'btn-delete-job';
@@ -765,6 +825,7 @@
                 'mp4': '#4fd1c5',
                 'mkv': '#4fd1c5',
                 'txt': '#cbd5e0',
+                'md': '#a0aec0',
                 'json': '#63b3ed',
                 'srt': '#90cdfd'
             };

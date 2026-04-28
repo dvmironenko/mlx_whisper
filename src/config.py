@@ -57,6 +57,15 @@ DEFAULT_LANGUAGE: Optional[str] = os.getenv("DEFAULT_LANGUAGE", None)
 NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "0.4"))
 HALLUCINATION_SILENCE_THRESHOLD: float = float(os.getenv("HALLUCINATION_SILENCE_THRESHOLD", "0.8"))
 
+# OpenAI API settings for report generation
+OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY", None)
+OPENAI_BASE_URL: Optional[str] = os.getenv("OPENAI_BASE_URL", None)
+OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_REPORT_PROMPT: Optional[str] = os.getenv(
+    "OPENAI_REPORT_PROMPT",
+    "Создать отчет о сессии. Отчет должен содержать все фразы спикеров в формате: [Спикер:] [Высказывание]"
+)
+
 # Audio extensions
 AUDIO_EXTENSIONS: set = {
     ".wav",

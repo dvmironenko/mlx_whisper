@@ -5,6 +5,7 @@ import os
 import shutil
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, UploadFile, Form, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from typing import Optional
@@ -20,10 +21,57 @@ def format_timestamp(seconds: float) -> str:
 
 from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, MAX_FILE_SIZE, logger, log_transcription_result
 from src.models.transcription import transcribe_audio
+from src.models.report import load_segments_file, generate_report_via_openai, save_report, generate_report_via_openai_sync
+
+# ThreadPoolExecutor для фоновой генерации отчётов
+_report_executor = ThreadPoolExecutor(max_workers=3)
+
 from src.utils.audio import convert_to_wav, get_audio_duration
 from src.utils.files import generate_unique_filename, delete_file, validate_file_extension, validate_file_size, build_job_path
 
 router = APIRouter(prefix="/api/v1", tags=["transcription"])
+
+
+def _start_report_generation(job_id: str):
+    """Запустить генерацию отчёта в фоновом потоке."""
+    import os
+
+    job_path = os.path.join(DATA_UPLOADS_DIR, job_id)
+
+    def run():
+        try:
+            logger.info(f"Report generation started for job: {job_id}")
+
+            if not os.path.exists(job_path):
+                logger.warning(f"Job directory not found: {job_id}")
+                return
+
+            segments_content = load_segments_file(job_path)
+
+            if segments_content is None:
+                logger.error(f"No segments.txt found for job: {job_id}")
+                return
+
+            try:
+                logger.info(f"Calling OpenAI API for report generation (job: {job_id})")
+                report_content = generate_report_via_openai_sync(segments_content)
+            except ValueError as e:
+                logger.error(f"OpenAI configuration error for job {job_id}: {e}")
+                return
+            except Exception as e:
+                logger.error(f"Report generation failed for job {job_id}: {e}")
+                return
+
+            try:
+                report_path = save_report(job_path, job_id, report_content)
+                logger.info(f"Report generation completed for job: {job_id}")
+            except Exception as e:
+                logger.error(f"Failed to save report for job {job_id}: {e}")
+
+        except Exception as e:
+            logger.error(f"Unexpected error in report generation for job {job_id}: {e}")
+
+    _report_executor.submit(run)
 
 
 def sanitize_floats(value):
@@ -133,13 +181,6 @@ async def transcribe_audio_endpoint(
         with open(tmp_path, "wb") as f:
             while chunk := await file.read(CHUNK_SIZE):
                 f.write(chunk)
-
-        # Backup: валидация размера файла после сохранения
-        if not validate_file_size(tmp_path):
-            raise HTTPException(
-                status_code=413,
-                detail=f"File size exceeds maximum allowed ({MAX_FILE_SIZE // (1024 * 1024)} MB)"
-            )
 
         # Генерируем job_id и создаём директорию для хранения файлов
         job_id = str(uuid.uuid4())
@@ -435,3 +476,19 @@ async def get_file_content(filename: str):
         content = f.read()
 
     return PlainTextResponse(content=content, media_type=media_type)
+
+
+@router.post("/report/{job_id}")
+async def generate_report(job_id: str):
+    """
+    Запустить генерацию Markdown отчёта по расшифровке в фоновом потоке.
+
+    Возвращает сразу после запуска генерации. Проверьте директорию задания
+    для скачивания report.md после завершения генерации.
+    """
+    _start_report_generation(job_id)
+    return {
+        "status": "started",
+        "job_id": job_id,
+        "message": "Генерация отчёта запущена. Проверьте директорию задания для скачивания report.md после завершения."
+    }

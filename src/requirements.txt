@@ -6,3 +6,4 @@ Jinja2
 ffmpeg-python
 python-dotenv
 numpy
+openai>=1.0.0
