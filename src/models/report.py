@@ -223,6 +223,16 @@ def generate_report_via_openai_sync(text: str, prompt: Optional[str] = None) -> 
     chunks = split_text(text)
     logger.info(f"Split text into {len(chunks)} chunks for report generation")
 
+    # Вывод чанков для тестирования
+    print("\n" + "=" * 80)
+    print(f"ТЕСТ: Текст разбит на {len(chunks)} чанков для отправки в LLM")
+    print("=" * 80)
+    for i, chunk in enumerate(chunks):
+        preview = chunk[:200] + "..." if len(chunk) > 200 else chunk
+        print(f"\n--- ЧАНК {i + 1}/{len(chunks)} (длина: {len(chunk)} символов) ---")
+        print(preview)
+    print("\n" + "=" * 80 + "\n")
+
     client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
     all_reports = []
 
