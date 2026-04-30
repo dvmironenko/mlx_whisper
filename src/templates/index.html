@@ -168,6 +168,14 @@
             const footer = document.createElement('div');
             footer.className = 'modal-footer';
 
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'btn-modal-copy';
+            copyBtn.textContent = 'Копировать';
+            copyBtn.addEventListener('click', function() {
+                copyToClipboard(content);
+            });
+            footer.appendChild(copyBtn);
+
             const closeFooterBtn = document.createElement('button');
             closeFooterBtn.className = 'btn-modal-close';
             closeFooterBtn.textContent = 'Закрыть';
@@ -185,6 +193,25 @@
             });
 
             return modal;
+        }
+
+        // Копирование текста в буфер обмена
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Успешное копирование
+                const copyBtn = currentModal.querySelector('.btn-modal-copy');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Скопировано!';
+                copyBtn.disabled = true;
+
+                setTimeout(function() {
+                    copyBtn.textContent = originalText;
+                    copyBtn.disabled = false;
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Ошибка копирования:', err);
+                alert('Не удалось скопировать текст');
+            });
         }
 
         // Закрытие модального окна
