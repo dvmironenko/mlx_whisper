@@ -47,6 +47,9 @@ models/
 whisper-*.ggml
 node_modules
 
+# Но отслеживаем src/models/
+!src/models/
+
 # Temporary files
 tmp/
 temp/
