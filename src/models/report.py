@@ -1,6 +1,7 @@
 """Генерация Markdown отчётов по расшифровке через OpenAI API."""
 
 import os
+import time
 from typing import Optional, List
 
 from openai import AsyncOpenAI, OpenAI
@@ -11,6 +12,7 @@ try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 except ImportError:
     RecursiveCharacterTextSplitter = None
+    logger.warning("langchain-text-splitters не установлен. Установите: pip install langchain-text-splitters>=0.3.0")
 
 
 def load_segments_file(job_path: str) -> Optional[str]:
@@ -49,7 +51,8 @@ def load_segments_file(job_path: str) -> Optional[str]:
 
 def split_text(text: str, max_chunk: Optional[int] = None) -> List[str]:
     """
-    Разбить текст на части не более max_chunk символов.
+    Разбить текст на части не более max_chunk символов с помощью
+    RecursiveCharacterTextSplitter из LangChain.
 
     Parameters
     ----------
@@ -67,8 +70,12 @@ def split_text(text: str, max_chunk: Optional[int] = None) -> List[str]:
         max_chunk = MAX_REPORT_CHUNK_SIZE
 
     if RecursiveCharacterTextSplitter is None:
-        # Fallback: просто разбиваем по размеру
-        return [text[i:i + max_chunk] for i in range(0, len(text), max_chunk)]
+        logger.error(
+            "langchain-text-splitters не установлен. Установите: pip install langchain-text-splitters>=0.3.0"
+        )
+        raise RuntimeError(
+            "langchain-text-splitters не установлен. Установите: pip install langchain-text-splitters>=0.3.0"
+        )
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=max_chunk,
@@ -131,10 +138,10 @@ async def generate_report_via_openai(text: str, prompt: Optional[str] = None) ->
         )
 
     client = AsyncOpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
-    full_prompt = build_prompt(text, prompt)
+    base_prompt = prompt or OPENAI_REPORT_PROMPT or "Создать отчет о сессии."
 
     logger.info(f"Sending report request to OpenAI model: {OPENAI_MODEL}")
-    logger.debug(f"Prompt length: {len(full_prompt)} chars")
+    logger.debug(f"Base prompt length: {len(base_prompt)} chars, text length: {len(text)} chars")
 
     try:
         response = await client.chat.completions.create(
@@ -142,9 +149,9 @@ async def generate_report_via_openai(text: str, prompt: Optional[str] = None) ->
             messages=[
                 {
                     "role": "system",
-                    "content": "Ты — эксперт по созданию Markdown отчётов. Выводи только Markdown без дополнительных пояснений.",
+                    "content": f"{base_prompt}\n\nВыводи только Markdown без дополнительных пояснений.",
                 },
-                {"role": "user", "content": full_prompt},
+                {"role": "user", "content": f"Транскрипция:\n{text}"},
             ],
             temperature=0.7,
         )
@@ -184,6 +191,7 @@ def save_report(job_path: str, job_id: str, content: str) -> str:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(content)
         logger.info(f"Report saved: {report_path}, length: {len(content)} chars")
+
         return report_path
     except Exception as e:
         logger.error(f"Failed to save report {report_path}: {e}")
@@ -235,34 +243,41 @@ def generate_report_via_openai_sync(text: str, prompt: Optional[str] = None) -> 
 
     client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
     all_reports = []
+    total_start = time.time()
+
+    base_prompt = prompt or OPENAI_REPORT_PROMPT or "Создать отчет о сессии."
 
     for i, chunk in enumerate(chunks):
-        full_prompt = build_prompt(chunk, prompt)
-
         logger.info(f"Sending report request to OpenAI model: {OPENAI_MODEL} (chunk {i + 1}/{len(chunks)})")
-        logger.debug(f"Prompt length: {len(full_prompt)} chars")
+        logger.debug(f"Base prompt length: {len(base_prompt)} chars, chunk length: {len(chunk)} chars")
 
+        chunk_start = time.time()
         try:
             response = client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[
                     {
                         "role": "system",
-                        "content": "Ты — эксперт по созданию Markdown отчётов. Выводи только Markdown без дополнительных пояснений.",
+                        "content": f"{base_prompt}\n\nВыводи только Markdown без дополнительных пояснений.",
                     },
-                    {"role": "user", "content": full_prompt},
+                    {"role": "user", "content": f"Транскрипция:\n{chunk}"},
                 ],
                 temperature=0.7,
             )
 
             content = response.choices[0].message.content or ""
+            chunk_elapsed = time.time() - chunk_start
             logger.info(f"OpenAI API call successful. Response length: {len(content)} chars")
+            logger.info(f"Chunk {i + 1}/{len(chunks)} processed in {chunk_elapsed:.2f} seconds")
 
             all_reports.append(content)
 
         except Exception as e:
             logger.error(f"OpenAI API error for chunk {i + 1}: {e}")
             raise
+
+    total_elapsed = time.time() - total_start
+    logger.info(f"Report generation completed in {total_elapsed:.2f} seconds")
 
     # Конкатенация результатов
     return "\n\n---\n\n".join(all_reports)

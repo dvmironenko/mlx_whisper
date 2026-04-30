@@ -53,6 +53,9 @@ SILENCE_DURATION: float = float(os.getenv("SILENCE_DURATION", "1.0"))
 # Default language for transcription (empty string for auto-detect)
 DEFAULT_LANGUAGE: Optional[str] = os.getenv("DEFAULT_LANGUAGE", None)
 
+# Default model for transcription
+DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "turbo")
+
 # Transcription thresholds
 NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "0.4"))
 HALLUCINATION_SILENCE_THRESHOLD: float = float(os.getenv("HALLUCINATION_SILENCE_THRESHOLD", "0.8"))
@@ -68,6 +71,12 @@ OPENAI_REPORT_PROMPT: Optional[str] = os.getenv(
 
 # Report generation chunk size (for large texts)
 MAX_REPORT_CHUNK_SIZE: int = int(os.getenv("MAX_REPORT_CHUNK_SIZE", "10000"))
+
+# URL download settings
+ALLOWED_URL_DOMAINS_STR: str = os.getenv("ALLOWED_URL_DOMAINS", "youtube.com,youtu.be,vimeo.com")
+ALLOWED_URL_DOMAINS: list = [d.strip() for d in ALLOWED_URL_DOMAINS_STR.split(",") if d.strip()]
+MAX_DOWNLOAD_SIZE: int = int(os.getenv("MAX_DOWNLOAD_SIZE_MB", "2048")) * 1024 * 1024
+DOWNLOAD_TIMEOUT: int = int(os.getenv("DOWNLOAD_TIMEOUT_SECONDS", "600"))
 
 # Audio extensions
 AUDIO_EXTENSIONS: set = {

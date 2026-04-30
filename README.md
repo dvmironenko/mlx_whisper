@@ -444,5 +444,4 @@ pytest tests/ -v
 
 ### Документация MLX-Whisper
 
-Документация по оригинальному проекту MLX-Whisper от ML Explore доступна по следующей ссылке:
-<https://github.com/ml-explore/mlx-examples/tree/main/whisper/mlx_whisper>
+Документация по оригинальному проекту [MLX-Whisper от ML Explore](https://github.com/ml-explore/mlx-examples/tree/main/whisper/mlx_whisper)

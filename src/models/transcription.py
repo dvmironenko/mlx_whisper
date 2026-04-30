@@ -19,6 +19,7 @@ except ImportError:
 
 from src.utils.audio import get_audio_duration
 from src.config import logger
+from src.models.model_cache import ModelCache
 
 
 def _clear_memory():
@@ -92,6 +93,13 @@ def transcribe_audio(
     if not os.path.exists(model_path):
         # Используем модель из HuggingFace
         model_path = f"mlx-community/whisper-{model}"
+
+    # Кэшируем модель
+    cache = ModelCache.get_instance()
+    cached_model = cache.get_model(model)
+    if cached_model is None:
+        # Модель не в кэше, загружаем
+        cache.load_model(model, model_path)
 
     # Измеряем длительность аудио
     try:

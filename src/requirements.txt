@@ -8,3 +8,4 @@ python-dotenv
 numpy
 openai>=1.0.0
 langchain-text-splitters>=0.3.0
+yt-dlp

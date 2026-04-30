@@ -19,9 +19,11 @@ def format_timestamp(seconds: float) -> str:
     ms = int((seconds % 1) * 1000)
     return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, MAX_FILE_SIZE, logger, log_transcription_result
+from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT, logger, log_transcription_result
 from src.models.transcription import transcribe_audio
 from src.models.report import load_segments_file, generate_report_via_openai, save_report, generate_report_via_openai_sync
+from src.models.model_cache import ModelCache
+from src.utils.download import download_from_url, validate_url
 
 # ThreadPoolExecutor для фоновой генерации отчётов
 _report_executor = ThreadPoolExecutor(max_workers=3)
@@ -334,7 +336,162 @@ async def get_config():
         "default_language": DEFAULT_LANGUAGE,
         "no_speech_threshold": NO_SPEECH_THRESHOLD,
         "hallucination_silence_threshold": HALLUCINATION_SILENCE_THRESHOLD,
+        "allowed_url_domains": ALLOWED_URL_DOMAINS,
+        "max_download_size_mb": MAX_DOWNLOAD_SIZE // (1024 * 1024),
+        "download_timeout": DOWNLOAD_TIMEOUT,
     }
+
+
+@router.post("/transcribe-url")
+async def transcribe_url_endpoint(
+    url: str = Form(...),
+    language: Optional[str] = Form(None),
+    task: str = Form("transcribe"),
+    model: str = Form("large"),
+    word_timestamps: str = Form("false"),
+    condition_on_previous_text: str = Form("true"),
+    no_speech_threshold: Optional[str] = Form(None),
+    hallucination_silence_threshold: Optional[str] = Form(None),
+    initial_prompt: Optional[str] = Form(None),
+    remove_silence: str = Form(None),
+    silence_threshold: str = Form(None),
+    silence_duration: str = Form(None),
+):
+    """Транскрибировать аудио по URL (YouTube, Vimeo, прямые ссылки)."""
+
+    import tempfile
+    import shutil
+
+    from src.utils.files import build_job_path
+    from src.config import (
+        DEFAULT_LANGUAGE, DEFAULT_MODEL, REMOVE_SILENCE, SILENCE_THRESHOLD,
+        SILENCE_DURATION, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD
+    )
+
+    # Валидация URL
+    if not validate_url(url):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid URL. Only YouTube, Vimeo, and direct HTTP/HTTPS links are allowed."
+        )
+
+    # Обработка параметров
+    model_value = model
+    if model == "large":
+        model_value = DEFAULT_MODEL
+
+    word_timestamps_value = word_timestamps.lower() == "true"
+    if word_timestamps == "false":
+        word_timestamps_value = False
+
+    condition_on_previous_text_value = condition_on_previous_text.lower() == "true"
+    if condition_on_previous_text == "true":
+        condition_on_previous_text_value = True
+
+    remove_silence_value = REMOVE_SILENCE if remove_silence is None else remove_silence.lower() == "true"
+    silence_threshold_value = SILENCE_THRESHOLD if silence_threshold is None else float(silence_threshold)
+    silence_duration_value = SILENCE_DURATION if silence_duration is None else float(silence_duration)
+    no_speech_threshold_value = NO_SPEECH_THRESHOLD if no_speech_threshold is None else float(no_speech_threshold)
+    hallucination_silence_threshold_value = HALLUCINATION_SILENCE_THRESHOLD if hallucination_silence_threshold is None else float(hallucination_silence_threshold)
+
+    # Создаём job_id и папку
+    job_id = str(uuid.uuid4())
+    job_path = build_job_path(job_id)
+
+    # Временный файл для скачивания
+    tmp_download = None
+    converted_wav_path = None
+    txt_path = None
+    total_start_time = time.time()
+
+    try:
+        # Скачивание файла
+        tmp_download = os.path.join(job_path, "downloaded.wav")
+        download_from_url(url, tmp_download, MAX_DOWNLOAD_SIZE)
+
+        # Конвертация (если скачалось не WAV)
+        if not tmp_download.endswith(".wav"):
+            converted_wav_path = os.path.join(job_path, "converted.wav")
+            convert_to_wav(
+                tmp_download,
+                converted_wav_path,
+                remove_silence=remove_silence_value,
+                silence_threshold=silence_threshold_value,
+                silence_duration=silence_duration_value
+            )
+        else:
+            converted_wav_path = tmp_download
+
+        # Транскрипция
+        transcribe_start_time = time.time()
+        result = transcribe_audio(
+            file_path=converted_wav_path,
+            language=language,
+            task=task,
+            model=model_value,
+            word_timestamps=word_timestamps_value,
+            condition_on_previous_text=condition_on_previous_text_value,
+            no_speech_threshold=no_speech_threshold_value,
+            hallucination_silence_threshold=hallucination_silence_threshold_value,
+            initial_prompt=initial_prompt,
+        )
+        transcribe_duration = time.time() - transcribe_start_time
+
+        # Добавляем информацию о времени
+        total_duration = time.time() - total_start_time
+        audio_duration = get_audio_duration(converted_wav_path)
+
+        result["uploaded_url"] = url
+        result["job_id"] = job_id
+        result["storage_dir"] = job_path
+        result["model"] = model_value
+        result["convert_duration"] = round(transcribe_duration, 2)  # Для URL просто используем время транскрипции
+        result["transcribe_duration"] = round(transcribe_duration, 2)
+        result["total_duration"] = round(total_duration, 2)
+        if audio_duration is not None:
+            result["audio_duration"] = round(audio_duration, 2)
+
+        # Сохраняем основной TXT файл
+        txt_name = "transcription.txt"
+        txt_path = os.path.join(job_path, txt_name)
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write(result.get("text", ""))
+
+        # Сохраняем файлы с сегментами если word_timestamps=True
+        if word_timestamps_value and result.get("segments"):
+            segments_txt_name = "segments.txt"
+            segments_txt_path = os.path.join(job_path, segments_txt_name)
+            with open(segments_txt_path, "w", encoding="utf-8") as f:
+                for segment in result["segments"]:
+                    start = segment.get("start", 0)
+                    end = segment.get("end", 0)
+                    text = segment.get("text", "")
+                    f.write(f"[{format_timestamp(start)}] {text}\n")
+
+        # Очистка временного скачанного файла
+        if tmp_download and os.path.exists(tmp_download):
+            os.remove(tmp_download)
+
+        # Очистка памяти
+        from src.models.transcription import _clear_memory
+        _clear_memory()
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Transcription URL API error for {url}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        # Удаляем временный скачанный файл
+        if tmp_download and os.path.exists(tmp_download):
+            delete_file(tmp_download)
+        if converted_wav_path and os.path.exists(converted_wav_path) and converted_wav_path != tmp_download:
+            delete_file(converted_wav_path)
+        if txt_path and os.path.exists(txt_path):
+            delete_file(txt_path)
 
 
 @router.get("/models")
@@ -492,3 +649,50 @@ async def generate_report(job_id: str):
         "job_id": job_id,
         "message": "Генерация отчёта запущена. Проверьте директорию задания для скачивания report.md после завершения."
     }
+
+
+@router.get("/cache/models")
+async def get_cached_models():
+    """Получить список загруженных моделей из кэша."""
+    cache = ModelCache.get_instance()
+    return cache.get_stats()
+
+
+@router.post("/cache/clear")
+async def clear_cache():
+    """Очистить все модели из кэша."""
+    cache = ModelCache.get_instance()
+    cache.clear()
+    return {
+        "status": "success",
+        "message": "Model cache cleared"
+    }
+
+
+@router.post("/cache/preload")
+async def preload_model(model: str = "large"):
+    """Предзагрузить модель в кэш."""
+    try:
+        cache = ModelCache.get_instance()
+        models_dir = os.getenv("MODELS_DIR", "models")
+        model_mapping = {
+            "tiny": os.path.join(models_dir, "whisper-tiny"),
+            "base": os.path.join(models_dir, "whisper-base"),
+            "small": os.path.join(models_dir, "whisper-small"),
+            "medium": os.path.join(models_dir, "whisper-medium"),
+            "turbo": os.path.join(models_dir, "whisper-turbo"),
+            "large": os.path.join(models_dir, "whisper-large"),
+        }
+        model_path = model_mapping.get(model, os.path.join(models_dir, "whisper-large"))
+
+        if not os.path.exists(model_path):
+            model_path = f"mlx-community/whisper-{model}"
+
+        cache.load_model(model, model_path)
+        return {
+            "status": "success",
+            "model": model,
+            "model_path": model_path
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to preload model: {str(e)}")
