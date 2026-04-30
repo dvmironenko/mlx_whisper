@@ -180,6 +180,7 @@ mlx-whisper-api/
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | URL endpoint для кастомных API |
 | `OPENAI_MODEL` | `gpt-4o-mini` | Модель для генерации отчётов |
 | `OPENAI_REPORT_PROMPT` | `Создать отчет о сессии...` | Пользовательский промпт для генерации |
+| `MAX_REPORT_CHUNK_SIZE` | `10000` | Максимальный размер части текста для чанкинга |
 
 ## API‑конечные точки
 
@@ -319,8 +320,8 @@ sequenceDiagram
     User->>ReportAPI: POST /report/{job_id}
     ReportAPI->>Store: Загрузить segments.txt
     Store-->>ReportAPI: Текст с таймкодами
-    ReportAPI->>LLM: Промпт + транскрипция
-    LLM-->>ReportAPI: Markdown отчёт
+    ReportAPI->>LLM: Промпт + чанки текста
+    LLM-->>ReportAPI: Markdown отчёты
     ReportAPI->>ReportStore: Сохранить report.md
     ReportStore-->>ReportAPI: Путь к файлу
     ReportAPI-->>User: {"status": "success", ...}

@@ -41,6 +41,7 @@
 | Генерация отчётов через OpenAI | ✅ | Добавлен endpoint `POST /api/v1/report/{job_id}`, модуль `src/models/report.py`, переменные окружения OPENAI_API_KEY, OPENAI_MODEL, OPENAI_REPORT_PROMPT |
 | Фоновая генерация отчётов | ✅ | Изменён роут для запуска генерации в `ThreadPoolExecutor`, добавлена `generate_report_via_openai_sync()` |
 | RecursiveCharacterTextSplitter для больших текстов | ✅ | Текст разбивается на части до 10000 символов и генерируется отчёт для каждой части |
+| Удаление разделителя из конкатенации | ✅ | Убран `"\n\n---\n\n"` из конкатенации чанков отчётов |
 
 ---
 
