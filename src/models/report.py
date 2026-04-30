@@ -280,4 +280,4 @@ def generate_report_via_openai_sync(text: str, prompt: Optional[str] = None) -> 
     logger.info(f"Report generation completed in {total_elapsed:.2f} seconds")
 
     # Конкатенация результатов
-    return "\n\n---\n\n".join(all_reports)
+    return "".join(all_reports)
