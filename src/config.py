@@ -78,6 +78,12 @@ ALLOWED_URL_DOMAINS: list = [d.strip() for d in ALLOWED_URL_DOMAINS_STR.split(",
 MAX_DOWNLOAD_SIZE: int = int(os.getenv("MAX_DOWNLOAD_SIZE_MB", "2048")) * 1024 * 1024
 DOWNLOAD_TIMEOUT: int = int(os.getenv("DOWNLOAD_TIMEOUT_SECONDS", "600"))
 
+# Transcription queue settings
+TRANSCRIBER_WORKERS: int = int(os.getenv("TRANSCRIBER_WORKERS", "3"))
+QUEUE_MAX_SIZE: int = int(os.getenv("QUEUE_MAX_SIZE", "20"))
+JOB_METADATA_DIR: str = os.path.join("data", "jobs")
+os.makedirs(JOB_METADATA_DIR, exist_ok=True)
+
 # Audio extensions
 AUDIO_EXTENSIONS: set = {
     ".wav",
