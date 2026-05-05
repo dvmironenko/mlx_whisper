@@ -167,3 +167,85 @@ def test_transcribe_endpoint_submits_to_queue(client, isolated_dirs):
     assert "job_id" in body
     assert body["status"] == "queued"
     mock_qm.submit.assert_called_once()
+
+
+def test_get_job_returns_metadata(client, isolated_dirs):
+    """GET /jobs/{job_id} возвращает metadata через TranscriptionService."""
+    from src.services.job_manager import JobManager, JobStatus
+    import json
+
+    # Создаём job напрямую через JobManager
+    jm = JobManager()
+    jm.create(
+        job_id="int-get-job-1",
+        source="upload",
+        original_filename="test.mp3",
+        model="turbo",
+        language="ru",
+    )
+    jm.update_status("int-get-job-1", JobStatus.COMPLETED, transcription_duration=3.5)
+
+    # Создаём результат в data directory
+    job_dir = os.path.join(_test_dir, "data", "int-get-job-1")
+    os.makedirs(job_dir, exist_ok=True)
+    with open(os.path.join(job_dir, "transcription.txt"), "w", encoding="utf-8") as f:
+        f.write("integrated test result")
+
+    response = client.get("/api/v1/jobs/int-get-job-1")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["job_id"] == "int-get-job-1"
+    assert body["status"] == "completed"
+    assert body["text"] == "integrated test result"
+    assert body["model"] == "turbo"
+    assert body["language"] == "ru"
+
+
+def test_get_job_not_found(client, isolated_dirs):
+    """GET /jobs/{job_id} для несуществующего job возвращает 404."""
+    response = client.get("/api/v1/jobs/does-not-exist")
+    assert response.status_code == 404
+
+
+def test_list_jobs_uses_job_manager(client, isolated_dirs):
+    """GET /jobs возвращает список через JobManager.list_all()."""
+    from src.services.job_manager import JobManager
+
+    jm = JobManager()
+    jm.create(job_id="int-list-1", source="upload", original_filename="a.mp3", model="turbo")
+    jm.create(job_id="int-list-2", source="upload", original_filename="b.mp3", model="base")
+
+    response = client.get("/api/v1/jobs")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 2
+    job_ids = {j["job_id"] for j in body}
+    assert job_ids == {"int-list-1", "int-list-2"}
+
+
+def test_cancel_job_uses_queue_manager(client, isolated_dirs):
+    """DELETE /jobs/{job_id} отменяет job через queue manager."""
+    from src.services.job_manager import JobManager, JobStatus
+
+    # Создаём job в статусе processing
+    jm = JobManager()
+    jm.create(
+        job_id="int-cancel-1",
+        source="upload",
+        original_filename="cancel.mp3",
+        model="turbo",
+    )
+    jm.update_status("int-cancel-1", JobStatus.PROCESSING)
+
+    # Создаём job directory — endpoint ищет его и удаляет
+    job_dir = os.path.join(_test_dir, "data", "int-cancel-1")
+    os.makedirs(job_dir, exist_ok=True)
+
+    response = client.delete("/api/v1/jobs/int-cancel-1")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "deleted"
+    assert body["job_id"] == "int-cancel-1"
