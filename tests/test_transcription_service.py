@@ -5,6 +5,7 @@ import sys
 from unittest.mock import patch, MagicMock
 
 import pytest
+from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -33,6 +34,16 @@ def reset_managers():
     TranscriptionQueueManager.reset()
     yield
     TranscriptionQueueManager.reset()
+
+
+@pytest.fixture
+def client(monkeypatch, isolated_dirs):
+    """TestClient for the FastAPI app."""
+    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", os.path.join(_test_dir, "data"))
+    monkeypatch.setattr("src.config.UPLOADS_DIR", os.path.join(_test_dir, "uploads"))
+    os.makedirs(os.path.join(_test_dir, "uploads"), exist_ok=True)
+    from src.main import app
+    return TestClient(app)
 
 
 def test_submit_passes_payload_to_queue_manager():
@@ -123,3 +134,36 @@ def test_get_job_returns_none_for_nonexistent():
         job_manager=mock_jm,
     )
     assert service.get_job("does-not-exist") is None
+
+
+def test_transcribe_endpoint_submits_to_queue(client, isolated_dirs):
+    """POST /transcribe возвращает job_id и status queued, вместо полного результата."""
+    import os
+    from unittest.mock import patch
+
+    # Создаём тестовый аудиофайл
+    test_file = os.path.join(os.path.dirname(__file__), "test.wav")
+    if not os.path.exists(test_file):
+        pytest.skip("test.wav not available")
+
+    with patch("src.services.transcription_queue.get_transcription_manager") as mock_mgr:
+        mock_qm = mock_mgr.return_value
+        mock_qm.submit.return_value = True
+
+        with open(test_file, "rb") as f:
+            response = client.post(
+                "/api/v1/transcribe",
+                files={"file": ("test.wav", f, "audio/wav")},
+                data={
+                    "model": "turbo",
+                    "task": "transcribe",
+                    "word_timestamps": "false",
+                    "condition_on_previous_text": "true",
+                },
+            )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "job_id" in body
+    assert body["status"] == "queued"
+    mock_qm.submit.assert_called_once()

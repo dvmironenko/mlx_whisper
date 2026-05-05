@@ -116,14 +116,10 @@ async def transcribe_audio_endpoint(
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
 ):
-    """Транскрибировать аудиофайл."""
+    """Залогировать файл в очередь транскрипции."""
 
-    # Валидация расширения
     if file.filename is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid filename"
-        )
+        raise HTTPException(status_code=400, detail="Invalid filename")
 
     if not validate_file_extension(file.filename, AUDIO_EXTENSIONS):
         raise HTTPException(
@@ -131,183 +127,101 @@ async def transcribe_audio_endpoint(
             detail=f"Unsupported audio format. Supported: {', '.join(AUDIO_EXTENSIONS)}"
         )
 
-    # Валидация модели
     if model not in SUPPORTED_MODELS:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported model. Supported: {', '.join(SUPPORTED_MODELS.keys())}"
         )
 
-    # Обработка параметров, если они не были переданы (значения из .env)
-    # Если передано дефолтное значение, используем значение из .env (если задано)
-    task_value = task
-    if task == "transcribe":
-        task_value = os.getenv("DEFAULT_TASK", "transcribe")
-
-    model_value = model
-    if model == "large":
-        model_value = os.getenv("DEFAULT_MODEL", "large")
-
+    # Resolve defaults
+    task_value = os.getenv("DEFAULT_TASK", "transcribe")
+    model_value = os.getenv("DEFAULT_MODEL", "large") if model == "large" else model
     word_timestamps_value = word_timestamps.lower() == "true"
     if word_timestamps == "false":
         word_timestamps_value = os.getenv("DEFAULT_WORD_TIMESTAMPS", "false").lower() == "true"
-
     condition_on_previous_text_value = condition_on_previous_text.lower() == "true"
     if condition_on_previous_text == "true":
         condition_on_previous_text_value = os.getenv("DEFAULT_CONDITION_ON_PREVIOUS", "true").lower() == "true"
-
     remove_silence_value = REMOVE_SILENCE if remove_silence is None else remove_silence.lower() == "true"
     silence_threshold_value = SILENCE_THRESHOLD if silence_threshold is None else float(silence_threshold)
     silence_duration_value = SILENCE_DURATION if silence_duration is None else float(silence_duration)
     no_speech_threshold_value = NO_SPEECH_THRESHOLD if no_speech_threshold is None else float(no_speech_threshold)
     hallucination_silence_threshold_value = HALLUCINATION_SILENCE_THRESHOLD if hallucination_silence_threshold is None else float(hallucination_silence_threshold)
 
-    # Конвертация
+    # Validate size via Content-Length
+    content_length = request.headers.get("content-length")
+    if content_length:
+        size = int(content_length)
+        if size > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File size exceeds maximum allowed ({MAX_FILE_SIZE // (1024 * 1024)} MB)"
+            )
+
     tmp_path = f"{UPLOADS_DIR}/tmp_{file.filename}"
-    converted_wav_path = None
-    txt_path = None
     total_start_time = time.time()
 
     try:
-        # Валидация размера через Content-Length header (до сохранения)
-        content_length = request.headers.get("content-length")
-        if content_length:
-            size = int(content_length)
-            if size > MAX_FILE_SIZE:
-                raise HTTPException(
-                    status_code=413,
-                    detail=f"File size exceeds maximum allowed ({MAX_FILE_SIZE // (1024 * 1024)} MB)"
-                )
-
-        # Save file
+        # Save uploaded file
         with open(tmp_path, "wb") as f:
             while chunk := await file.read(CHUNK_SIZE):
                 f.write(chunk)
 
-        # Генерируем job_id и создаём директорию для хранения файлов
         job_id = str(uuid.uuid4())
         job_path = build_job_path(job_id)
 
-        # Сохраняем оригинал в data/uploads/{job_id}/
+        # Save original
         original_path = os.path.join(job_path, file.filename)
         shutil.copy2(tmp_path, original_path)
 
-        # Измеряем длительность аудио до конвертации
+        # Get audio duration before conversion
         audio_duration = get_audio_duration(tmp_path)
 
-        # Convert to WAV и измеряем время
+        # Convert to WAV
         wav_name = f"{os.path.splitext(file.filename)[0]}_converted.wav"
         converted_wav_path = os.path.join(job_path, wav_name)
-        convert_start_time = time.time()
         convert_to_wav(
             tmp_path,
             converted_wav_path,
             remove_silence=remove_silence_value,
             silence_threshold=silence_threshold_value,
-            silence_duration=silence_duration_value
-        )
-        convert_duration = time.time() - convert_start_time
-
-        # Transcribe и измеряем время
-        transcribe_start_time = time.time()
-        result = transcribe_audio(
-            file_path=converted_wav_path,
-            language=language,
-            task=task_value,
-            model=model_value,
-            word_timestamps=word_timestamps_value,
-            condition_on_previous_text=condition_on_previous_text_value,
-            no_speech_threshold=no_speech_threshold_value,
-            hallucination_silence_threshold=hallucination_silence_threshold_value,
-            initial_prompt=initial_prompt,
-        )
-        transcribe_duration = time.time() - transcribe_start_time
-
-        # Добавляем информацию о времени в результат
-        total_duration = time.time() - total_start_time
-        result["uploaded_file"] = file.filename
-        result["result_file"] = f"{os.path.splitext(file.filename)[0]}.txt"
-        result["job_id"] = job_id
-        result["storage_dir"] = job_path
-
-        # Сохраняем основной TXT файл (простой текст)
-        txt_name = f"{os.path.splitext(file.filename)[0]}.txt"
-        txt_path = os.path.join(job_path, txt_name)
-        with open(txt_path, "w", encoding="utf-8") as f:
-            f.write(result.get("text", ""))
-
-        # Сохраняем файлы с сегментами если word_timestamps=True
-        if word_timestamps_value and result.get("segments"):
-            # TXT с разметкой времени
-            segments_txt_name = f"{os.path.splitext(file.filename)[0]}_segments.txt"
-            segments_txt_path = os.path.join(job_path, segments_txt_name)
-            with open(segments_txt_path, "w", encoding="utf-8") as f:
-                for segment in result["segments"]:
-                    start = segment.get("start", 0)
-                    end = segment.get("end", 0)
-                    text = segment.get("text", "")
-                    f.write(f"[{format_timestamp(start)}] {text}\n")
-
-            # JSON с полной структурой
-            segments_json_name = f"{os.path.splitext(file.filename)[0]}_segments.json"
-            segments_json_path = os.path.join(job_path, segments_json_name)
-            with open(segments_json_path, "w", encoding="utf-8") as f:
-                json.dump({"segments": result["segments"]}, f, ensure_ascii=False, indent=2)
-
-        result["model"] = model_value
-        result["no_speech_threshold"] = no_speech_threshold_value
-        result["hallucination_silence_threshold"] = hallucination_silence_threshold_value
-        result["convert_duration"] = round(convert_duration, 2)
-        result["transcribe_duration"] = round(transcribe_duration, 2)
-        result["total_duration"] = round(total_duration, 2)
-        if audio_duration is not None:
-            result["audio_duration"] = round(audio_duration, 2)
-
-        # Логируем результат
-        log_transcription_result(
-            filename=os.path.basename(tmp_path),
-            model=model_value,
-            language=language,
-            task=task_value,
-            audio_duration=audio_duration,
-            convert_duration=convert_duration,
-            transcribe_duration=transcribe_duration,
-            total_duration=total_duration,
-            success=True,
+            silence_duration=silence_duration_value,
         )
 
-        # Добавляем параметр word_timestamps для фронтенда
-        result["word_timestamps"] = word_timestamps_value
+        # Submit to queue
+        from src.services.transcription_queue import get_transcription_manager
+        mgr = get_transcription_manager()
+        success = mgr.submit({
+            "job_id": job_id,
+            "source": "upload",
+            "original_filename": file.filename,
+            "wav_path": converted_wav_path,
+            "duration": round(audio_duration, 2) if audio_duration is not None else None,
+            "params": {
+                "model": model_value,
+                "language": language,
+                "task": task_value,
+                "word_timestamps": word_timestamps_value,
+                "condition_on_previous_text": condition_on_previous_text_value,
+                "no_speech_threshold": no_speech_threshold_value,
+                "hallucination_silence_threshold": hallucination_silence_threshold_value,
+                "initial_prompt": initial_prompt,
+            },
+        })
 
-        # Очистить NaN и Infinity для JSON-совместимости
-        result = sanitize_result(result)
+        if not success:
+            raise HTTPException(status_code=429, detail="Queue is full, try again later")
 
-        # Очистка памяти после транскрипции
-        from src.models.transcription import _clear_memory
-        _clear_memory()
+        return {"job_id": job_id, "status": "queued"}
 
-        return result
+    except HTTPException:
+        raise
     except Exception as e:
-        # Логируем ошибку
         total_duration = time.time() - total_start_time
         logger.error(f"Transcription API error for {os.path.basename(tmp_path)}: {e}")
-        log_transcription_result(
-            filename=os.path.basename(tmp_path),
-            model=model_value,
-            language=language,
-            task=task_value,
-            audio_duration=audio_duration if 'audio_duration' in locals() else None,
-            convert_duration=convert_duration if 'convert_duration' in locals() else None,
-            transcribe_duration=0.0,
-            total_duration=total_duration,
-            success=False,
-            error=str(e),
-        )
         raise
     finally:
-        # Удаляем только временный файл из uploads/
         delete_file(tmp_path)
-        # Converted WAV и TXT сохраняются в data/uploads/{job_id}/
 
 
 @router.get("/health")
