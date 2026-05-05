@@ -44,7 +44,18 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to preload model: {e}")
 
+    # Инициализация очереди транскрипции (ленивый singleton)
+    from src.services.transcription_queue import get_transcription_manager
+    get_transcription_manager()
+    logger.info("Transcription queue manager initialized")
+
     yield
+
+    # Shutdown очереди при остановке сервера
+    mgr = get_transcription_manager()
+    if mgr is not None:
+        mgr.shutdown()
+        logger.info("Transcription queue manager shut down")
 
 
 # Initialize FastAPI app
