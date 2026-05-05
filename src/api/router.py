@@ -391,27 +391,14 @@ async def get_job_status(job_id: str):
 
 @router.get("/jobs")
 async def list_jobs():
-    """Список всех сохранённых задач."""
-    jobs = []
-    if not os.path.exists(DATA_UPLOADS_DIR):
-        return jobs
+    """Список всех задач (metadata из JobManager)."""
+    from src.services.transcription_service import TranscriptionService
+    from src.services.transcription_queue import get_transcription_manager
+    from src.services.job_manager import JobManager
 
-    for job_id in sorted(os.listdir(DATA_UPLOADS_DIR)):
-        job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
-        if os.path.isdir(job_dir):
-            files = []
-            for f in os.listdir(job_dir):
-                fp = os.path.join(job_dir, f)
-                if os.path.isfile(fp):
-                    files.append({"name": f, "size": os.path.getsize(fp)})
-            # Дата создания папки задания
-            created_at = os.path.getctime(job_dir)
-            jobs.append({
-                "job_id": job_id,
-                "files": files,
-                "created_at": created_at
-            })
-    return jobs
+    mgr = get_transcription_manager()
+    service = TranscriptionService(queue_manager=mgr, job_manager=JobManager())
+    return service.list_jobs()
 
 
 
