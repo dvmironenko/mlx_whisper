@@ -376,9 +376,17 @@ async def get_models():
 
 @router.get("/jobs/{job_id}")
 async def get_job_status(job_id: str):
-    """Статус задачи."""
-    # TODO: Реализовать сохранение/получение из файла
-    return {"job_id": job_id, "status": "pending"}
+    """Статус задачи с результатом (если completed)."""
+    from src.services.transcription_service import TranscriptionService
+    from src.services.transcription_queue import get_transcription_manager
+    from src.services.job_manager import JobManager
+
+    mgr = get_transcription_manager()
+    service = TranscriptionService(queue_manager=mgr, job_manager=JobManager())
+    result = service.get_job(job_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return result
 
 
 @router.get("/jobs")
