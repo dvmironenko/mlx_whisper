@@ -405,11 +405,19 @@ async def list_jobs():
 
 @router.delete("/jobs/{job_id}")
 async def delete_job(job_id: str):
-    """Удалить задание и все связанные файлы."""
+    """Удалить задание: отменить через queue, удалить файлы."""
+    from src.services.transcription_service import TranscriptionService
+    from src.services.transcription_queue import get_transcription_manager
+    from src.services.job_manager import JobManager
+
+    mgr = get_transcription_manager()
+    service = TranscriptionService(queue_manager=mgr, job_manager=JobManager())
+    cancelled = service.cancel_job(job_id)
     job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
-    if not os.path.exists(job_dir):
+    if os.path.exists(job_dir):
+        shutil.rmtree(job_dir)
+    elif not cancelled:
         raise HTTPException(status_code=404, detail="Job not found")
-    shutil.rmtree(job_dir)
     return {"status": "deleted", "job_id": job_id}
 
 
