@@ -235,6 +235,27 @@
         // ====================
 
         let currentConfirmModal = null;
+        let refreshInterval = null;
+        let pollingJobs = new Set();
+        let currentResultModal = null;
+
+        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+
+        function showToast(message) {
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:var(--accent-color);color:#fff;padding:10px 20px;border-radius:8px;z-index:9999;font-size:0.9rem;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+            t.textContent = message;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        async function cancelJob(jobId) {
+            try {
+                const res = await fetch(`/api/v1/jobs/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
+                if (res.ok) { showToast('Задание отменено'); await fetchJobs(); }
+                else showToast('Ошибка отмены');
+            } catch { showToast('Ошибка сети'); }
+        }
 
         // Создание модального окна подтверждения удаления
         function createConfirmModal(jobId, callback) {
@@ -375,6 +396,10 @@
             }
         }
 
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && currentResultModal) closeResultModal();
+        });
+
         // ====================
         // Notification Modal
         // ====================
@@ -487,7 +512,20 @@
         }
 
         // Загрузка списка заданий
+        function startPolling() {
+            const activeJobs = jobsList.filter(j => j.status === 'queued' || j.status === 'processing');
+            if (activeJobs.length === 0) { stopPolling(); return; }
+            pollingJobs = new Set(activeJobs.map(j => j.job_id));
+            refreshInterval = setInterval(loadJobs, 3000);
+        }
+
+        function stopPolling() {
+            if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+            pollingJobs.clear();
+        }
+
         async function loadJobs() {
+            if (!refreshInterval) startPolling();
             const container = document.getElementById('jobsCardsContainer');
             const emptyState = document.getElementById('emptyJobsState');
 
@@ -511,17 +549,12 @@
                         container.appendChild(card);
                     });
                 }
+
+                if (refreshInterval && jobsList.filter(j => j.status === 'queued' || j.status === 'processing').length === 0) { stopPolling(); }
             } catch (error) {
                 console.error('Error loading jobs:', error);
                 container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-triangle"></i><h3>Ошибка загрузки</h3><p>' + escapeHtml(error.message) + '</p></div>';
             }
-        }
-
-        // Экранирование HTML для безопасности
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         // Кэширование DOM элементов
@@ -547,8 +580,8 @@
                 }
 
                 if (cutoffDate) {
-                    // Compare job's date with cutoff - use the earliest file date
-                    const jobDate = new Date(job.files[0]?.name?.split('_')[0] || Date.now());
+                    // Compare job's date with cutoff - use created_at timestamp
+                    const jobDate = job.created_at ? new Date(job.created_at * 1000) : new Date();
                     if (jobDate < cutoffDate) {
                         return false;
                     }
@@ -677,162 +710,79 @@
 
         // Создание DOM элемента карточки задания
         function createJobCard(job) {
-            const totalSize = formatFileSize(job.files.reduce((sum, f) => sum + f.size, 0));
             const card = document.createElement('div');
             card.className = 'job-card';
             card.setAttribute('data-job-id', job.job_id);
 
-            // Card header with job ID
+            // Header: filename (left) + status-badge (right)
             const cardHeader = document.createElement('div');
-            cardHeader.className = 'job-card-header';
-            cardHeader.innerHTML = '<i class="fas fa-list"></i> <span>Job ID: <code class="job-id">' + job.job_id + '</code></span>';
+            cardHeader.className = 'job-card-header-with-status';
 
-            // Files container
-            const filesContainer = document.createElement('div');
-            filesContainer.className = 'job-files';
+            const fileName = job.original_filename || job.job_id;
+            const fileNameEl = document.createElement('span');
+            fileNameEl.style.fontWeight = '600';
+            fileNameEl.style.color = 'var(--text-primary)';
+            fileNameEl.textContent = fileName;
 
-            job.files.forEach((file, index) => {
-                const fileRow = document.createElement('div');
-                fileRow.className = 'file-row';
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `status-badge status-${job.status}`;
+            statusBadge.innerHTML = `<span class="status-dot"></span> ${job.status}`;
 
-                // File info
-                const fileInfo = document.createElement('div');
-                fileInfo.className = 'file-info';
+            cardHeader.appendChild(fileNameEl);
+            cardHeader.appendChild(statusBadge);
 
-                const fileIcon = document.createElement('i');
-                fileIcon.className = 'fas fa-file';
-                fileIcon.style.color = getFileColor(file.name);
+            // Meta line
+            const metaEl = document.createElement('div');
+            metaEl.className = 'job-card-meta';
 
-                const fileName = document.createElement('span');
-                fileName.className = 'file-name';
-                fileName.textContent = file.name;
+            if (job.model) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-microchip"></i> ${job.model}`; metaEl.appendChild(s); }
+            if (job.language) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-language"></i> ${job.language}`; metaEl.appendChild(s); }
+            if (job.duration != null) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-clock"></i> ${Math.round(job.duration)}s`; metaEl.appendChild(s); }
+            if (job.transcription_duration != null) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-stopwatch"></i> ${job.transcription_duration.toFixed(1)}s`; metaEl.appendChild(s); }
+            if (job.word_timestamps) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-hashtag"></i> word_timestamps`; metaEl.appendChild(s); }
 
-                const fileSize = document.createElement('span');
-                fileSize.className = 'file-size';
-                fileSize.textContent = formatFileSize(file.size);
+            const jobIdSpan = document.createElement('span');
+            jobIdSpan.style.cursor = 'pointer';
+            jobIdSpan.title = 'Нажмите чтобы скопировать';
+            jobIdSpan.onclick = function() { navigator.clipboard.writeText(job.job_id).then(() => showToast('Job ID скопирован')); };
+            jobIdSpan.innerHTML = `<i class="fas fa-fingerprint"></i> ${job.job_id}`;
+            metaEl.appendChild(jobIdSpan);
 
-                fileInfo.appendChild(fileIcon);
-                fileInfo.appendChild(fileName);
-                fileInfo.appendChild(fileSize);
+            // Error line
+            let errorLine = null;
+            if (job.status === 'failed' && job.error) {
+                errorLine = document.createElement('div');
+                errorLine.className = 'job-error-line';
+                errorLine.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(job.error)}`;
+            }
 
-                // File actions
-                const fileActions = document.createElement('div');
-                fileActions.className = 'file-actions';
+            // Actions
+            const actionsEl = document.createElement('div');
+            actionsEl.className = 'job-card-actions';
 
-                const btnDownload = document.createElement('button');
-                btnDownload.className = 'btn-download-file';
-                btnDownload.title = 'Скачать файл';
-                btnDownload.setAttribute('aria-label', 'Скачать файл ' + file.name);
-                btnDownload.onclick = function() {
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = '/api/v1/files/' + encodeURIComponent(file.name) + '/download';
-                    downloadLink.download = file.name;
-                    downloadLink.style.display = 'none';
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                };
-                const iconDownload = document.createElement('i');
-                iconDownload.className = 'fas fa-download';
-                btnDownload.appendChild(iconDownload);
+            if (job.status === 'completed') {
+                const v = document.createElement('button'); v.className = 'btn-view-result'; v.innerHTML = '<i class="fas fa-eye"></i> Результат';
+                v.onclick = () => openResultModal(job.job_id);
+                actionsEl.appendChild(v);
+            }
+            if (job.status === 'queued' || job.status === 'processing') {
+                const c = document.createElement('button'); c.className = 'btn-delete-job'; c.style.backgroundColor = 'var(--warning-color)'; c.style.color = '#000'; c.innerHTML = '<i class="fas fa-ban"></i> Отменить';
+                c.onclick = async () => { const m = createConfirmModal('Отменить задание?', async () => { await cancelJob(job.job_id); }); if(m){currentConfirmModal=m;document.body.appendChild(m);document.addEventListener('keydown',handleConfirmEscape);const fb=m.querySelector('.btn-confirm-delete');if(fb)fb.focus();} };
+                actionsEl.appendChild(c);
+            }
 
-                // Кнопка Просмотр для .txt и .md файлов
-                if (file.name.toLowerCase().endsWith('.txt') || file.name.toLowerCase().endsWith('.md')) {
-                    const btnView = document.createElement('button');
-                    btnView.className = 'btn-view-file';
-                    btnView.title = 'Просмотреть содержимое';
-                    btnView.setAttribute('aria-label', 'Просмотреть содержимое файла ' + file.name);
-                    btnView.onclick = function() {
-                        viewFileContent(job.job_id, file.name);
-                    };
-                    const iconView = document.createElement('i');
-                    iconView.className = 'fas fa-eye';
-                    btnView.appendChild(iconView);
-                    fileActions.appendChild(btnView);
-                }
+            const r = document.createElement('button'); r.className = 'btn-report-job'; r.innerHTML = '<i class="fas fa-file-alt"></i> Отчет';
+            r.onclick = async () => { await generateReport(job.job_id); };
+            actionsEl.appendChild(r);
 
-                const btnDelete = document.createElement('button');
-                btnDelete.className = 'btn-delete-file';
-                btnDelete.title = 'Удалить файл';
-                btnDelete.setAttribute('aria-label', 'Удалить файл ' + file.name);
-                btnDelete.onclick = function() {
-                    const confirmModal = createConfirmModal(
-                        file.name,
-                        async () => {
-                            await deleteFile(job.job_id, file.name);
-                        }
-                    );
-                    if (confirmModal) {
-                        currentConfirmModal = confirmModal;
-                        document.body.appendChild(confirmModal);
-                        document.addEventListener('keydown', handleConfirmEscape);
-                        const focusBtn = confirmModal.querySelector('.btn-confirm-delete');
-                        if (focusBtn) focusBtn.focus();
-                    }
-                };
-                const iconDelete = document.createElement('i');
-                iconDelete.className = 'fas fa-trash';
-                btnDelete.appendChild(iconDelete);
-
-                fileActions.appendChild(btnDownload);
-                fileActions.appendChild(btnDelete);
-
-                fileRow.appendChild(fileInfo);
-                fileRow.appendChild(fileActions);
-                filesContainer.appendChild(fileRow);
-            });
-
-            // Job actions - Report button (left) and Delete button (right)
-            const jobActions = document.createElement('div');
-            jobActions.className = 'job-actions';
-
-            // Button Report Job (left)
-            const btnReport = document.createElement('button');
-            btnReport.className = 'btn-report-job';
-            btnReport.title = 'Сгенерировать отчет';
-            btnReport.setAttribute('aria-label', 'Сгенерировать отчет для задания ' + job.job_id);
-            btnReport.onclick = async () => {
-                await generateReport(job.job_id);
-            };
-            const iconReport = document.createElement('i');
-            iconReport.className = 'fas fa-file-alt';
-            btnReport.appendChild(iconReport);
-            btnReport.appendChild(document.createTextNode(' Отчет'));
-            jobActions.appendChild(btnReport);
-
-            const btnDeleteJob = document.createElement('button');
-            btnDeleteJob.className = 'btn-delete-job';
-            btnDeleteJob.title = 'Удалить задание';
-            btnDeleteJob.setAttribute('aria-label', 'Удалить задание ' + job.job_id);
-            btnDeleteJob.onclick = function() {
-                const confirmModal = createConfirmModal(job.job_id, async () => {
-                    await deleteJob(job.job_id);
-                });
-                if (confirmModal) {
-                    currentConfirmModal = confirmModal;
-                    document.body.appendChild(confirmModal);
-                    document.addEventListener('keydown', handleConfirmEscape);
-                    const focusBtn = confirmModal.querySelector('.btn-confirm-delete');
-                    if (focusBtn) focusBtn.focus();
-                }
-            };
-            const iconDeleteJob = document.createElement('i');
-            iconDeleteJob.className = 'fas fa-trash-alt';
-            btnDeleteJob.appendChild(iconDeleteJob);
-            btnDeleteJob.appendChild(document.createTextNode(' Удалить задание'));
-            jobActions.appendChild(btnDeleteJob);
-
-            // Card footer
-            const cardFooter = document.createElement('div');
-            cardFooter.className = 'job-card-footer';
-            // Используем created_at из API (unix timestamp в секундах)
-            const createdDate = job.created_at ? new Date(job.created_at * 1000) : new Date();
-            cardFooter.innerHTML = '<i class="fas fa-calendar"></i> <span class="job-date">Создано: ' + formatDate(createdDate.toISOString()) + '</span> &bull; <i class="fas fa-hdd"></i> <span class="job-size">Размер: ' + totalSize + '</span>';
+            const d = document.createElement('button'); d.className = 'btn-delete-job'; d.innerHTML = '<i class="fas fa-trash-alt"></i> Удалить';
+            d.onclick = function() { const m = createConfirmModal('Удалить задание?', async () => { await deleteJob(job.job_id); }); if(m){currentConfirmModal=m;document.body.appendChild(m);document.addEventListener('keydown',handleConfirmEscape);const fb=m.querySelector('.btn-confirm-delete');if(fb)fb.focus();} };
+            actionsEl.appendChild(d);
 
             card.appendChild(cardHeader);
-            card.appendChild(filesContainer);
-            card.appendChild(jobActions);
-            card.appendChild(cardFooter);
+            card.appendChild(metaEl);
+            if (errorLine) card.appendChild(errorLine);
+            card.appendChild(actionsEl);
 
             return card;
         }
@@ -962,6 +912,106 @@
 
         // Load jobs on page load
         document.addEventListener('DOMContentLoaded', loadJobs);
+
+        window.addEventListener('beforeunload', stopPolling);
+
+        // ===== Result Modal =====
+        function openResultModal(jobId) {
+            const loadingModal = document.createElement('div');
+            loadingModal.className = 'result-modal';
+            loadingModal.innerHTML = `<div class="result-modal-content"><div class="result-modal-body" style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--accent-color);"></i><p style="margin-top:12px;color:var(--text-secondary);">Загрузка результата...</p></div></div>`;
+            currentResultModal = loadingModal;
+            document.body.appendChild(loadingModal);
+
+            fetch(`/api/v1/jobs/${encodeURIComponent(jobId)}`)
+                .then(r => r.json())
+                .then(data => { renderResultModal(data); })
+                .catch(err => { closeResultModal(); });
+        }
+
+        function renderResultModal(job) {
+            closeResultModal();
+            const modal = document.createElement('div');
+            modal.className = 'result-modal';
+            const content = document.createElement('div');
+            content.className = 'result-modal-content';
+
+            const header = document.createElement('div');
+            header.className = 'result-modal-header';
+            header.innerHTML = `<h3><i class="fas fa-file-alt"></i> ${escapeHtml(job.original_filename || job.job_id)}</h3>`;
+            const closeBtnHeader = document.createElement('button');
+            closeBtnHeader.className = 'result-modal-close';
+            closeBtnHeader.textContent = '×';
+            closeBtnHeader.onclick = closeResultModal;
+            header.appendChild(closeBtnHeader);
+            content.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'result-modal-body';
+
+            if (job.text) {
+                const textEl = document.createElement('div');
+                textEl.className = 'result-text';
+                textEl.textContent = job.text;
+                body.appendChild(textEl);
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn-view-result';
+                copyBtn.style.marginBottom = '16px';
+                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Копировать текст';
+                copyBtn.onclick = () => { navigator.clipboard.writeText(job.text).then(() => showToast('Текст скопирован')); };
+                body.appendChild(copyBtn);
+            }
+
+            if (job.error) {
+                const errEl = document.createElement('div');
+                errEl.className = 'result-error';
+                errEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(job.error)}`;
+                body.appendChild(errEl);
+            }
+
+            if (job.files && job.files.length > 0) {
+                const ft = document.createElement('div');
+                ft.className = 'result-files-title';
+                ft.textContent = 'Файлы задания:';
+                body.appendChild(ft);
+
+                const fl = document.createElement('div');
+                fl.className = 'result-file-list';
+                job.files.forEach(f => {
+                    const tag = document.createElement('span');
+                    tag.className = 'result-file-tag';
+                    const ext = f.split('.').pop().toLowerCase();
+                    let icon = 'fa-file';
+                    if (ext === 'txt') icon = 'fa-file-alt';
+                    else if (ext === 'json') icon = 'fa-file-code';
+                    else if (['wav','mp3','flac','m4a','aac','ogg'].includes(ext)) icon = 'fa-file-audio';
+                    tag.innerHTML = `<i class="fas ${icon}"></i> ${escapeHtml(f)}`;
+                    fl.appendChild(tag);
+                });
+                body.appendChild(fl);
+            }
+
+            content.appendChild(body);
+
+            const footer = document.createElement('div');
+            footer.className = 'result-modal-footer';
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn-view-result';
+            closeBtn.textContent = 'Закрыть';
+            closeBtn.onclick = closeResultModal;
+            footer.appendChild(closeBtn);
+            content.appendChild(footer);
+
+            modal.appendChild(content);
+            currentResultModal = modal;
+            modal.onclick = (e) => { if (e.target === modal) closeResultModal(); };
+            document.body.appendChild(modal);
+        }
+
+        function closeResultModal() {
+            if (currentResultModal) { currentResultModal.remove(); currentResultModal = null; }
+        }
     </script>
 </body>
 </html>
