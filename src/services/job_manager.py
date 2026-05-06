@@ -97,7 +97,7 @@ class JobManager:
                 fpath = os.path.join(JOB_METADATA_DIR, fname)
                 with open(fpath, "r", encoding="utf-8") as f:
                     result.append(json.load(f))
-        return result
+        return sorted(result, key=lambda j: j.get("created_at", ""), reverse=True)
 
     def _save(self, job_id: str, metadata: Dict[str, Any]) -> None:
         path = _job_file(job_id)

@@ -139,8 +139,10 @@ class TestJobManagerListAll:
 
         result = job_manager.list_all()
         assert len(result) == 3
+        # Jobs sorted by created_at descending (newest first)
         ids = [r["job_id"] for r in result]
-        assert ids == sorted(ids)
+        timestamps = [r["created_at"] for r in result]
+        assert timestamps == sorted(timestamps, reverse=True)
 
     def test_list_mixed_statuses(self, job_manager):
         job_manager.create(job_id="a")
