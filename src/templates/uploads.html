@@ -396,75 +396,38 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Display the text result with proper model name
-                    let modelName = data.model || 'Неизвестная модель';
-                    // Map model codes to readable names for display
-                    const modelNames = {
-                        'tiny': 'Tiny',
-                        'base': 'Base',
-                        'small': 'Small',
-                        'medium': 'Medium',
-                        'large': 'Large',
-                        'turbo': 'Turbo'
-                    };
-                    // Extract model name if path is provided (e.g., "models/whisper-turbo" -> "turbo")
-                    if (typeof modelName === 'string' && modelName.includes('/')) {
-                        modelName = modelName.split('/').pop().replace('whisper-', '');
+                    if (data.status === "queued" || data.status === "processing") {
+                        window.location.href = 'index.html?redirect=' + data.job_id;
+                        return;
                     }
-                    const readableModelName = modelNames[modelName] || modelName;
 
-                    // Get the original filename from the form input
-                    const originalFilename = document.getElementById('audioFile').files[0].name;
+                    if (data.status === "completed" && data.text) {
+                        let modelName = data.model || 'Неизвестная модель';
+                        const modelNames = { 'tiny':'Tiny','base':'Base','small':'Small','medium':'Medium','large':'Large','turbo':'Turbo' };
+                        if (typeof modelName === 'string' && modelName.includes('/')) {
+                            modelName = modelName.split('/').pop().replace('whisper-', '');
+                        }
+                        const readableModelName = modelNames[modelName] || modelName;
+                        const originalFilename = document.getElementById('audioFile').files[0]?.name || 'Неизвестно';
 
-                    resultDiv.innerHTML = `
-                        <div class="result-box">
-                            <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
-
-                            <div class="text-content">
-                                <p>${data.text}</p>
-                            </div>
-
-                            <div class="result-actions">
-                                <button onclick="copyToClipboard()" class="action-button secondary">
-                                    <i class="fas fa-copy"></i> Копировать
-                                </button>
-                                <button onclick="downloadMainText()" class="action-button">
-                                    <i class="fas fa-download"></i> Основной текст
-                                </button>
-                                ${data.word_timestamps ? '<button onclick="downloadSegments()" class="action-button secondary">Сегменты</button>' : ''}
-                            </div>
-
-                            <div class="result-details">
-                                <div class="detail-grid">
-                                    <div class="detail-item">
-                                        <i class="fas fa-file"></i>
-                                        <span><strong>Файл:</strong> ${originalFilename || 'Неизвестно'}</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-language"></i>
-                                        <span><strong>Язык:</strong> ${data.language || 'Не определён'}</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-id-badge"></i>
-                                        <span><strong>ID задания:</strong> ${data.job_id || 'Не доступен'}</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-clock"></i>
-                                        <span><strong>Время выполнения:</strong> ${data.total_duration ? data.total_duration.toFixed(2) + ' секунд' : (data.audio_duration ? 'Приблизительно ' + data.audio_duration.toFixed(2) + ' секунд' : 'Неизвестно')}</span>
+                        resultDiv.innerHTML = `
+                            <div class="result-box">
+                                <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
+                                <div class="text-content"><p>${data.text}</p></div>
+                                <div class="result-actions">
+                                    <button onclick="copyToClipboard()" class="action-button secondary"><i class="fas fa-copy"></i> Копировать</button>
+                                </div>
+                                <div class="result-details">
+                                    <div class="detail-grid">
+                                        <div class="detail-item"><i class="fas fa-file"></i><span><strong>Файл:</strong> ${originalFilename}</span></div>
+                                        <div class="detail-item"><i class="fas fa-id-badge"></i><span><strong>ID задания:</strong> ${data.job_id}</span></div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
-
-                    // Сохраняем данные в глобальной переменной для использования в функции downloadText
-                    window.downloadData = {
-                        text: data.text,
-                        language: data.language,
-                        model: modelName,
-                        segments: data.segments || [],
-                        originalFilename: originalFilename  // Added this missing property
-                    };
+                        `;
+                        window.downloadData = { text: data.text, language: data.language, model: modelName, segments: data.segments || [], originalFilename };
+                        return;
+                    }
                 } else {
                     resultDiv.innerHTML = `<div class="error-state">
                         <i class="fas fa-exclamation-triangle"></i>
