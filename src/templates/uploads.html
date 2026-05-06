@@ -397,7 +397,7 @@
 
                 if (response.ok) {
                     if (data.status === "queued" || data.status === "processing") {
-                        window.location.href = 'index.html?redirect=' + data.job_id;
+                        window.location.href = '/?redirect=' + data.job_id;
                         return;
                     }
 
