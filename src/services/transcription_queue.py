@@ -1,6 +1,8 @@
 """Parallel transcription queue: ThreadPoolExecutor + bounded queue."""
 
+import json
 import logging
+import os
 import threading
 import time
 import uuid
@@ -11,6 +13,7 @@ from typing import Any, Dict, Optional
 
 from src.services.job_manager import JobManager, JobStatus
 from src.config import TRANSCRIBER_WORKERS, QUEUE_MAX_SIZE
+from src.utils.files import build_job_path
 
 # Module-level references for worker methods — patchable at module level
 import src.models.transcription as _transcription_module
@@ -190,6 +193,23 @@ class TranscriptionQueueManager:
             duration = time.time() - start
             result = _sanitize_result(result)
             result["transcription_duration"] = round(duration, 2)
+
+            # Сохранить результат транскрипции в файлы
+            job_dir = build_job_path(job.job_id)
+            original_filename = job.params.get("original_filename", job.job_id)
+            # Strip extension to match old naming convention (e.g. "test" not "test.wav")
+            base_name = os.path.splitext(original_filename)[0]
+            text_content = result.get("text", "")
+            if text_content:
+                txt_path = os.path.join(job_dir, f"{base_name}.txt")
+                with open(txt_path, "w", encoding="utf-8") as f:
+                    f.write(text_content)
+
+            segments = result.get("segments")
+            if segments:
+                segments_json_path = os.path.join(job_dir, f"{base_name}_segments.json")
+                with open(segments_json_path, "w", encoding="utf-8") as f:
+                    json.dump({"segments": segments}, f, ensure_ascii=False, indent=2)
 
             # Check if cancelled during processing
             status = self._meta.load(job.job_id)

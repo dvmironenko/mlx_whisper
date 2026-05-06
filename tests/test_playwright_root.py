@@ -1,115 +1,74 @@
 """
-Playwright test for MLX-Whisper root endpoint (/).
-This test verifies the web interface using actual Playwright browser automation.
+Playwright test for the "/" endpoint of MLX-Whisper API.
+This test verifies that the web interface loads correctly and contains expected elements.
 """
-
-import asyncio
+import subprocess
 import sys
 import os
+from playwright.sync_api import sync_playwright
 
 # Add project root to path for imports
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-async def test_playwright_root_endpoint():
-    """Test the root endpoint using Playwright browser automation."""
-    
-    print("Testing MLX-Whisper root endpoint (/) with Playwright")
-    print("=" * 60)
-    
-    try:
-        # Import Playwright async API
-        from playwright.async_api import async_playwright
-        
-        print("1. Starting Playwright browser...")
-        
-        # Launch Playwright browser
-        async with async_playwright() as p:
-            # Use Chromium (or you can use firefox or webkit)
-            browser = await p.chromium.launch(headless=True)
-            
-            print("2. Navigating to root endpoint...")
-            page = await browser.new_page()
-            
-            # Navigate to the root endpoint
-            await page.goto("http://localhost:8801/")
-            
-            print("3. Verifying page title...")
-            title = await page.title()
-            assert "MLX-Whisper Audio Transcription" in title
-            print("✓ Page title is correct")
-            
-            print("4. Verifying page elements...")
-            
-            # Check for main header
-            header = await page.query_selector("h1")
-            assert header is not None
-            header_text = await header.text_content()
-            assert "MLX-Whisper Audio Transcription" in header_text
-            print("✓ Main header is present")
-            
-            # Check for upload form
-            form = await page.query_selector("#uploadForm")
-            assert form is not None
-            print("✓ Upload form is present")
-            
-            # Check for file input
-            file_input = await page.query_selector("#audioFile")
-            assert file_input is not None
-            print("✓ File input element is present")
-            
-            # Check for language select
-            language_select = await page.query_selector("#language")
-            assert language_select is not None
-            print("✓ Language selection dropdown is present")
-            
-            # Check for task select
-            task_select = await page.query_selector("#task")
-            assert task_select is not None
-            print("✓ Task selection dropdown is present")
-            
-            # Check for model select
-            model_select = await page.query_selector("#model")
-            assert model_select is not None
-            print("✓ Model selection dropdown is present")
-            
-            # Check for submit button
-            submit_button = await page.query_selector("button[type='submit']")
-            assert submit_button is not None
-            button_text = await submit_button.text_content()
-            assert "Транскрибировать" in button_text
-            print("✓ Submit button is present")
-            
-            # Check for result section
-            result_section = await page.query_selector(".result-section")
-            assert result_section is not None
-            print("✓ Result section is present")
-            
-            # Check for footer
-            footer = await page.query_selector("footer")
-            assert footer is not None
-            print("✓ Footer is present")
-            
-            # Get page content for verification
-            content = await page.content()
-            assert "MLX-Whisper Audio Transcription" in content
-            print("✓ Page contains expected content")
-            
-            await browser.close()
-            
-        print("\n" + "=" * 60)
-        print("✓ PLAYWRIGHT TEST PASSED")
-        print("The root endpoint (/) is working correctly with Playwright.")
-        
-        return True
-        
-    except Exception as e:
-        print(f"✗ PLAYWRIGHT TEST FAILED: {e}")
-        return False
 
-if __name__ == "__main__":
-    # Run the async test function
-    success = asyncio.run(test_playwright_root_endpoint())
-    
-    if not success:
-        sys.exit(1)
+def test_root_endpoint():
+    """Test the root endpoint (/) to ensure web interface loads correctly."""
+
+    # Start the FastAPI server
+    server_process = subprocess.Popen(
+        [sys.executable, "src/main.py"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    # Give the server time to start
+    import time
+    time.sleep(3)
+
+    browser = None
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+
+            page.goto("http://localhost:8801/")
+
+            title = page.title()
+            assert "MLX-Whisper" in title
+
+            header = page.query_selector("h1")
+            assert header is not None
+            header_text = header.text_content()
+            assert "MLX-Whisper" in header_text
+
+            # Jobs list page elements
+            jobs_section = page.query_selector("#jobsSection")
+            assert jobs_section is not None
+
+            search = page.query_selector("#jobSearch")
+            assert search is not None
+
+            container = page.query_selector("#jobsCardsContainer")
+            assert container is not None
+
+            # Check theme toggle exists
+            theme_toggle = page.query_selector("#themeToggle")
+            assert theme_toggle is not None
+
+            # Footer
+            footer = page.query_selector("footer")
+            assert footer is not None
+
+            print(
+                "All tests passed! The root endpoint (/) loads correctly with all expected elements."
+            )
+
+    except Exception:
+        raise
+    finally:
+        server_process.terminate()
+        try:
+            server_process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            server_process.kill()
