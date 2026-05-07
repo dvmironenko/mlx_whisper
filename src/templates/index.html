@@ -170,6 +170,7 @@
 
             const copyBtn = document.createElement('button');
             copyBtn.className = 'btn-modal-copy';
+            copyBtn.type = 'button';
             copyBtn.textContent = 'Копировать';
             copyBtn.addEventListener('click', function() {
                 copyToClipboard(content);
@@ -252,13 +253,13 @@
         async function cancelJob(jobId) {
             try {
                 const res = await fetch(`/api/v1/jobs/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
-                if (res.ok) { showToast('Задание отменено'); await fetchJobs(); }
+                if (res.ok) { showToast('Задание отменено'); await loadJobs(); }
                 else showToast('Ошибка отмены');
             } catch { showToast('Ошибка сети'); }
         }
 
         // Создание модального окна подтверждения удаления
-        function createConfirmModal(jobId, callback) {
+        function createConfirmModal(title, message, callback) {
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             modal.setAttribute('role', 'dialog');
@@ -281,7 +282,7 @@
             const titleText = document.createElement('h3');
             titleText.id = 'confirm-title';
             titleText.className = 'modal-title';
-            titleText.textContent = 'Удалить задание?';
+            titleText.textContent = title;
             titleWrapper.appendChild(titleText);
 
             header.appendChild(titleWrapper);
@@ -290,13 +291,13 @@
             closeBtn.className = 'modal-close-btn';
             closeBtn.setAttribute('aria-label', 'Закрыть');
             closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-            closeBtn.addEventListener('click', () => {
+            closeBtn.onclick = () => {
                 if (currentConfirmModal) {
                     currentConfirmModal.remove();
                     currentConfirmModal = null;
                     document.removeEventListener('keydown', handleConfirmEscape);
                 }
-            });
+            };
             header.appendChild(closeBtn);
 
             contentDiv.appendChild(header);
@@ -305,26 +306,19 @@
             body.className = 'modal-body';
 
             const messageP = document.createElement('p');
-            const messageText1 = document.createTextNode('Вы уверены, что хотите удалить всё задание ');
-            messageP.appendChild(messageText1);
-
-            const jobIdSpan = document.createElement('span');
-            jobIdSpan.style.color = 'var(--primary-color)';
-            jobIdSpan.style.fontWeight = '600';
-            jobIdSpan.textContent = jobId;
-            messageP.appendChild(jobIdSpan);
-
-            const messageText2 = document.createTextNode('?');
-            messageP.appendChild(messageText2);
-
-            const break1 = document.createElement('br');
-            messageP.appendChild(break1);
-
-            const break2 = document.createElement('br');
-            messageP.appendChild(break2);
-
-            const messageText3 = document.createTextNode('Все файлы будут удалены без возможности восстановления.');
-            messageP.appendChild(messageText3);
+            if (message) {
+                // Split on \n for multiline messages
+                const lines = message.split('\n');
+                lines.forEach((lineText, i) => {
+                    if (i > 0) messageP.appendChild(document.createElement('br'));
+                    // Support inline <span> for colored text
+                    const span = document.createElement('span');
+                    span.innerHTML = lineText;
+                    messageP.appendChild(span);
+                });
+            } else {
+                messageP.textContent = 'Вы уверены?';
+            }
 
             body.appendChild(messageP);
 
@@ -336,13 +330,13 @@
             const btnCancel = document.createElement('button');
             btnCancel.className = 'btn-cancel-delete';
             btnCancel.textContent = 'Нет';
-            btnCancel.addEventListener('click', () => {
+            btnCancel.onclick = () => {
                 if (currentConfirmModal) {
                     currentConfirmModal.remove();
                     currentConfirmModal = null;
                     document.removeEventListener('keydown', handleConfirmEscape);
                 }
-            });
+            };
 
             const btnDelete = document.createElement('button');
             btnDelete.className = 'btn-confirm-delete';
@@ -351,14 +345,14 @@
             btnDelete.appendChild(btnDeleteIcon);
             const btnDeleteText = document.createTextNode(' Да, удалить');
             btnDelete.appendChild(btnDeleteText);
-            btnDelete.addEventListener('click', async () => {
+            btnDelete.onclick = async () => {
                 if (currentConfirmModal) {
                     currentConfirmModal.remove();
                     currentConfirmModal = null;
                     document.removeEventListener('keydown', handleConfirmEscape);
                 }
                 await callback();
-            });
+            };
 
             footer.appendChild(btnCancel);
             footer.appendChild(btnDelete);
@@ -528,7 +522,6 @@
             if (!refreshInterval) startPolling();
             const container = document.getElementById('jobsCardsContainer');
             const emptyState = document.getElementById('emptyJobsState');
-
             try {
                 const response = await fetch('/api/v1/jobs');
                 if (!response.ok) {
@@ -615,17 +608,19 @@
         // Удаление задания (всей папки)
         async function deleteJob(jobId) {
             try {
+                // Stop polling to prevent loadJobs from re-adding the card
+                stopPolling();
                 const response = await fetch('/api/v1/jobs/' + jobId, {
                     method: 'DELETE'
                 });
 
                 if (response.ok) {
+                    const card = document.querySelector('.job-card[data-job-id="' + jobId + '"]');
+                    if (card) card.remove();
                     const notification = createNotificationModal(
                         'Задание удалено',
                         'Задание "' + jobId + '" успешно удалено. Все файлы удалены.',
-                        () => {
-                            loadJobs();
-                        }
+                        null
                     );
                     if (notification) {
                         notification.querySelector('.modal-content').classList.add('modal-success');
@@ -635,6 +630,8 @@
                         const focusBtn = notification.querySelector('.btn-confirm-delete');
                         if (focusBtn) focusBtn.focus();
                     }
+                    // Re-sync UI (empty state, restart polling for active jobs)
+                    await loadJobs();
                 } else {
                     const data = await response.json();
                     const errorNotification = createNotificationModal(
@@ -726,7 +723,14 @@
 
             const statusBadge = document.createElement('span');
             statusBadge.className = `status-badge status-${job.status}`;
-            statusBadge.innerHTML = `<span class="status-dot"></span> ${job.status}`;
+            const STATUS_LABELS = {
+                'queued': 'В очереди',
+                'processing': 'Обработка',
+                'completed': 'Готово',
+                'failed': 'Ошибка',
+                'cancelled': 'Отменён'
+            };
+            statusBadge.innerHTML = `<span class="status-dot"></span> ${STATUS_LABELS[job.status] || job.status}`;
 
             cardHeader.appendChild(fileNameEl);
             cardHeader.appendChild(statusBadge);
@@ -756,6 +760,85 @@
                 errorLine.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(job.error)}`;
             }
 
+            // Add header, meta, error to card BEFORE files (files appended later)
+            card.appendChild(cardHeader);
+            card.appendChild(metaEl);
+            if (errorLine) card.appendChild(errorLine);
+
+            // Files list
+            if (job.files && job.files.length > 0) {
+                const ft = document.createElement('div');
+                ft.className = 'result-files-title';
+                ft.textContent = 'Файлы задания:';
+                card.appendChild(ft);
+
+                const fl = document.createElement('div');
+                fl.className = 'result-file-list';
+                job.files.forEach(f => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'result-file-row';
+
+                    const tag = document.createElement('span');
+                    tag.className = 'result-file-tag';
+                    const ext = f.split('.').pop().toLowerCase();
+                    let icon = 'fa-file';
+                    if (ext === 'txt') icon = 'fa-file-alt';
+                    else if (ext === 'json') icon = 'fa-file-code';
+                    else if (['wav','mp3','flac','m4a','aac','ogg'].includes(ext)) icon = 'fa-file-audio';
+                    tag.innerHTML = `<i class="fas ${icon}"></i> ${escapeHtml(f)}`;
+                    wrapper.appendChild(tag);
+
+                    const btns = document.createElement('div');
+                    btns.style.marginLeft = 'auto';
+                    btns.style.display = 'flex';
+                    btns.style.gap = '4px';
+
+                    if (ext === 'txt' || ext === 'md') {
+                        const viewBtn = document.createElement('button');
+                        viewBtn.className = 'btn-view-file';
+                        viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                        viewBtn.title = 'Просмотр';
+                        viewBtn.onclick = () => viewFileContent(job.job_id, f);
+                        btns.appendChild(viewBtn);
+                    }
+
+                    const dlBtn = document.createElement('button');
+                    dlBtn.className = 'btn-download-file';
+                    dlBtn.innerHTML = '<i class="fas fa-download"></i>';
+                    dlBtn.title = 'Скачать';
+                    dlBtn.onclick = () => {
+                        window.open(`/api/v1/jobs/${encodeURIComponent(job.job_id)}/files/${encodeURIComponent(f)}/download`, '_blank');
+                    };
+                    btns.appendChild(dlBtn);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'btn-delete-file';
+                    delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    delBtn.title = 'Удалить';
+                    delBtn.onclick = function() {
+                        const m = createConfirmModal('Удалить файл?', 'Вы уверены, что хотите удалить файл "' + f + '"?', async () => {
+                            try {
+                                await fetch(`/api/v1/jobs/${encodeURIComponent(job.job_id)}/files/${encodeURIComponent(f)}`, { method: 'DELETE' });
+                                wrapper.remove();
+                                if (fl.querySelectorAll('.result-file-row').length === 0) {
+                                    ft.remove();
+                                    fl.remove();
+                                }
+                            } catch (e) {
+                                showToast('Ошибка при удалении файла');
+                            }
+                        });
+                        if (m) { currentConfirmModal = m; document.body.appendChild(m); document.addEventListener('keydown', handleConfirmEscape); const fb = m.querySelector('.btn-confirm-delete'); if (fb) fb.focus(); }
+                    };
+                    btns.appendChild(delBtn);
+
+                    wrapper.appendChild(btns);
+
+                    fl.appendChild(wrapper);
+                });
+                card.appendChild(fl);
+            }
+
             // Actions
             const actionsEl = document.createElement('div');
             actionsEl.className = 'job-card-actions';
@@ -767,7 +850,7 @@
             }
             if (job.status === 'queued' || job.status === 'processing') {
                 const c = document.createElement('button'); c.className = 'btn-delete-job'; c.style.backgroundColor = 'var(--warning-color)'; c.style.color = '#000'; c.innerHTML = '<i class="fas fa-ban"></i> Отменить';
-                c.onclick = async () => { const m = createConfirmModal('Отменить задание?', async () => { await cancelJob(job.job_id); }); if(m){currentConfirmModal=m;document.body.appendChild(m);document.addEventListener('keydown',handleConfirmEscape);const fb=m.querySelector('.btn-confirm-delete');if(fb)fb.focus();} };
+                c.onclick = async () => { const m = createConfirmModal('Отменить задание?', 'Вы уверены, что хотите отменить задание? Оно больше не будет обрабатываться.', async () => { await cancelJob(job.job_id); }); if(m){currentConfirmModal=m;document.body.appendChild(m);document.addEventListener('keydown',handleConfirmEscape);const fb=m.querySelector('.btn-confirm-delete');if(fb)fb.focus();} };
                 actionsEl.appendChild(c);
             }
 
@@ -776,12 +859,9 @@
             actionsEl.appendChild(r);
 
             const d = document.createElement('button'); d.className = 'btn-delete-job'; d.innerHTML = '<i class="fas fa-trash-alt"></i> Удалить';
-            d.onclick = function() { const m = createConfirmModal('Удалить задание?', async () => { await deleteJob(job.job_id); }); if(m){currentConfirmModal=m;document.body.appendChild(m);document.addEventListener('keydown',handleConfirmEscape);const fb=m.querySelector('.btn-confirm-delete');if(fb)fb.focus();} };
+            d.onclick = function() { const m = createConfirmModal('Удалить задание?', 'Вы уверены, что хотите удалить всё задание "' + job.job_id + '"?\n\nВсе файлы будут удалены без возможности восстановления.', async () => { await deleteJob(job.job_id); }); if(m){currentConfirmModal=m;document.body.appendChild(m);document.addEventListener('keydown',handleConfirmEscape);const fb=m.querySelector('.btn-confirm-delete');if(fb)fb.focus();} };
             actionsEl.appendChild(d);
 
-            card.appendChild(cardHeader);
-            card.appendChild(metaEl);
-            if (errorLine) card.appendChild(errorLine);
             card.appendChild(actionsEl);
 
             return card;
@@ -968,28 +1048,6 @@
                 errEl.className = 'result-error';
                 errEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(job.error)}`;
                 body.appendChild(errEl);
-            }
-
-            if (job.files && job.files.length > 0) {
-                const ft = document.createElement('div');
-                ft.className = 'result-files-title';
-                ft.textContent = 'Файлы задания:';
-                body.appendChild(ft);
-
-                const fl = document.createElement('div');
-                fl.className = 'result-file-list';
-                job.files.forEach(f => {
-                    const tag = document.createElement('span');
-                    tag.className = 'result-file-tag';
-                    const ext = f.split('.').pop().toLowerCase();
-                    let icon = 'fa-file';
-                    if (ext === 'txt') icon = 'fa-file-alt';
-                    else if (ext === 'json') icon = 'fa-file-code';
-                    else if (['wav','mp3','flac','m4a','aac','ogg'].includes(ext)) icon = 'fa-file-audio';
-                    tag.innerHTML = `<i class="fas ${icon}"></i> ${escapeHtml(f)}`;
-                    fl.appendChild(tag);
-                });
-                body.appendChild(fl);
             }
 
             content.appendChild(body);

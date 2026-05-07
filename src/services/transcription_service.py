@@ -55,13 +55,46 @@ class TranscriptionService:
         return job_id, success
 
     def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
-        """Get job metadata + result if completed."""
+        """Get job metadata + result if completed. Falls back to orphaned directories."""
         metadata = self._jm.load(job_id)
-        if metadata is None:
-            return None
+        if metadata is not None:
+            result: Dict[str, Any] = dict(metadata)
+            status = JobStatus(metadata["status"])
+        else:
+            # Check for orphaned directory
+            import os as _os
+            import uuid as _uuid
+            data_dir = src.config.DATA_UPLOADS_DIR
+            try:
+                _uuid.UUID(job_id, version=4)
+            except ValueError:
+                return None
+            if not _os.path.isdir(_os.path.join(data_dir, job_id)):
+                return None
+            files = [
+                f for f in _os.listdir(_os.path.join(data_dir, job_id))
+                if _os.path.isfile(_os.path.join(data_dir, job_id, f))
+            ]
+            result = {
+                "job_id": job_id,
+                "status": JobStatus.COMPLETED.value,
+                "source": "upload",
+                "created_at": "",
+                "updated_at": "",
+                "original_filename": None,
+                "model": None,
+                "language": None,
+                "task": None,
+                "word_timestamps": False,
+                "duration": None,
+                "transcription_duration": None,
+                "result_file": None,
+                "error": None,
+                "files": files,
+                "_orphaned": True,
+            }
 
-        result: Dict[str, Any] = dict(metadata)
-        status = JobStatus(metadata["status"])
+        status = JobStatus(result["status"])
 
         if status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
             import os
@@ -82,14 +115,29 @@ class TranscriptionService:
                         data = json.load(f)
                         result["segments"] = data.get("segments", [])
 
-                # List all files
+                # List all files (may already be set for orphaned)
                 result["files"] = [f for f in os.listdir(job_dir) if os.path.isfile(os.path.join(job_dir, f))]
 
         return result
 
     def list_jobs(self) -> List[Dict[str, Any]]:
-        """List all jobs via JobManager."""
-        return self._jm.list_all()
+        """List all jobs from UUID folders (metadata or orphaned)."""
+        import os as _os
+
+        jobs = self._jm.list_all()
+        terminal = {JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED}
+        for job in jobs:
+            status = JobStatus(job.get("status", ""))
+            if status in terminal:
+                job_id = job["job_id"]
+                job_dir = _os.path.join(src.config.DATA_UPLOADS_DIR, job_id)
+                if _os.path.isdir(job_dir) and "files" not in job:
+                    job["files"] = [
+                        f for f in _os.listdir(job_dir)
+                        if _os.path.isfile(_os.path.join(job_dir, f))
+                    ]
+
+        return jobs
 
     def cancel_job(self, job_id: str) -> bool:
         """Cancel a queued or processing job via queue manager."""

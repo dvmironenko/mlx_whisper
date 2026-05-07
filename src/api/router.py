@@ -405,19 +405,25 @@ async def list_jobs():
 
 @router.delete("/jobs/{job_id}")
 async def delete_job(job_id: str):
-    """Удалить задание: отменить через queue, удалить файлы."""
+    """Удалить задание: отменить через queue, удалить файлы и метаданные."""
     from src.services.transcription_service import TranscriptionService
     from src.services.transcription_queue import get_transcription_manager
     from src.services.job_manager import JobManager
 
+    job_manager = JobManager()
     mgr = get_transcription_manager()
-    service = TranscriptionService(queue_manager=mgr, job_manager=JobManager())
+    service = TranscriptionService(queue_manager=mgr, job_manager=job_manager)
     cancelled = service.cancel_job(job_id)
     job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
-    if os.path.exists(job_dir):
-        shutil.rmtree(job_dir)
-    elif not cancelled:
+    job_exists = os.path.isdir(job_dir) or job_manager.load(job_id) is not None
+    if not job_exists and not cancelled:
         raise HTTPException(status_code=404, detail="Job not found")
+    # Always delete metadata if it exists
+    if job_manager.load(job_id) is not None:
+        job_manager.delete(job_id)
+    # Delete job directory if it exists
+    if os.path.isdir(job_dir):
+        shutil.rmtree(job_dir)
     return {"status": "deleted", "job_id": job_id}
 
 
@@ -434,6 +440,23 @@ async def delete_file_from_job(job_id: str, filename: str):
 
     os.remove(file_path)
     return {"status": "deleted", "job_id": job_id, "filename": filename}
+
+
+@router.get("/jobs/{job_id}/files/{filename}/download")
+async def download_file_from_job(job_id: str, filename: str):
+    """Скачивание конкретного файла из директории задания."""
+    job_dir = os.path.join(DATA_UPLOADS_DIR, job_id)
+    if not os.path.exists(job_dir):
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    file_path = os.path.realpath(os.path.join(job_dir, filename))
+    base = os.path.realpath(job_dir)
+    if not file_path.startswith(base):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(file_path, filename=filename)
 
 
 @router.get("/files/{filename}/download")
@@ -526,7 +549,6 @@ async def generate_report(job_id: str):
         "job_id": job_id,
         "message": "Генерация отчёта запущена. Проверьте директорию задания для скачивания report.md после завершения."
     }
-
 
 @router.get("/cache/models")
 async def get_cached_models():

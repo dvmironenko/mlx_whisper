@@ -1,5 +1,6 @@
 """Генерация Markdown отчётов по расшифровке через OpenAI API."""
 
+import json
 import os
 import time
 from typing import Optional, List
@@ -17,7 +18,11 @@ except ImportError:
 
 def load_segments_file(job_path: str) -> Optional[str]:
     """
-    Загрузить segments.txt из директории job_id.
+    Загрузить текст транскрипции из директории job_id.
+
+    Ищет в порядке приоритета:
+    1. *_segments.txt — готовый текст
+    2. *_segments.json — извлекает text из каждого сегмента
 
     Parameters
     ----------
@@ -29,24 +34,40 @@ def load_segments_file(job_path: str) -> Optional[str]:
     Optional[str]
         Содержимое файла или None если не найден
     """
+    # 1. Ищем *_segments.txt
     segments_file = None
     for filename in os.listdir(job_path):
         if filename.endswith("_segments.txt"):
             segments_file = os.path.join(job_path, filename)
             break
 
-    if segments_file is None:
-        logger.warning(f"No segments.txt found in {job_path}")
-        return None
+    if segments_file is not None:
+        try:
+            with open(segments_file, "r", encoding="utf-8") as f:
+                content = f.read()
+                logger.info(f"Loaded segments file: {segments_file}, length: {len(content)} chars")
+                return content
+        except Exception as e:
+            logger.error(f"Failed to load segments file {segments_file}: {e}")
 
-    try:
-        with open(segments_file, "r", encoding="utf-8") as f:
-            content = f.read()
-            logger.info(f"Loaded segments file: {segments_file}, length: {len(content)} chars")
+    # 2. Ищем *_segments.json
+    json_files = [f for f in os.listdir(job_path) if f.endswith("_segments.json")]
+    if json_files:
+        json_path = os.path.join(job_path, json_files[0])
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            segments = data.get("segments", [])
+            texts = [seg.get("text", "") for seg in sorted(segments, key=lambda s: s.get("id", 0))]
+            content = "\n".join(texts)
+            logger.info(f"Loaded segments from JSON: {json_path}, {len(segments)} segments, {len(content)} chars")
             return content
-    except Exception as e:
-        logger.error(f"Failed to load segments file {segments_file}: {e}")
-        return None
+        except Exception as e:
+            logger.error(f"Failed to load segments from JSON {json_path}: {e}")
+            return None
+
+    logger.warning(f"No segments file found in {job_path}")
+    return None
 
 
 def split_text(text: str, max_chunk: Optional[int] = None) -> List[str]:

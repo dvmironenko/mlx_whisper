@@ -73,3 +73,9 @@ test-results/.last-run.json
 test-jobs.mjs
 test-screenshot.png
 .claude/settings.local.json
+job-card-buttons-fixed.png
+job-card-buttons-full.png
+job-card-buttons.png
+*.ogg
+*.wav
+*.webm

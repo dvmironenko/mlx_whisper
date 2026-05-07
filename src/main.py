@@ -67,7 +67,7 @@ app = FastAPI(
 )
 
 # Templates (must be defined before use)
-templates = Jinja2Templates(directory="src/templates")
+templates = Jinja2Templates(directory="src/templates", auto_reload=True)
 
 # Mount static files (must be after routes)
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
