@@ -129,7 +129,10 @@ class JobManager:
                     "transcription_duration": None,
                     "result_file": None,
                     "error": None,
-                    "files": job_dir_files,
+                    "files": [
+                        {"name": fn, "size": os.path.getsize(os.path.join(job_dir, fn))}
+                        for fn in job_dir_files
+                    ],
                     "_orphaned": True,
                 })
         return sorted(result, key=lambda j: j.get("created_at", ""), reverse=True)
