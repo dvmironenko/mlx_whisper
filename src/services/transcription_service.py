@@ -135,11 +135,20 @@ class TranscriptionService:
             if status in terminal:
                 job_id = job["job_id"]
                 job_dir = _os.path.join(src.config.DATA_UPLOADS_DIR, job_id)
-                if _os.path.isdir(job_dir) and "files" not in job:
-                    job["files"] = [
-                        f for f in _os.listdir(job_dir)
-                        if _os.path.isfile(_os.path.join(job_dir, f))
-                    ]
+                if _os.path.isdir(job_dir):
+                    current_files = job.get("files", [])
+                    if current_files and isinstance(current_files[0], str):
+                        # Rebuild string list with sizes
+                        job["files"] = [
+                            {"name": fn, "size": _os.path.getsize(_os.path.join(job_dir, fn))}
+                            for fn in current_files
+                        ]
+                    elif not current_files:
+                        job["files"] = [
+                            {"name": fn, "size": _os.path.getsize(_os.path.join(job_dir, fn))}
+                            for fn in _os.listdir(job_dir)
+                            if _os.path.isfile(_os.path.join(job_dir, fn))
+                        ]
 
         return jobs
 
