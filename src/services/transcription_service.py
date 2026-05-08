@@ -115,8 +115,12 @@ class TranscriptionService:
                         data = json.load(f)
                         result["segments"] = data.get("segments", [])
 
-                # List all files (may already be set for orphaned)
-                result["files"] = [f for f in os.listdir(job_dir) if os.path.isfile(os.path.join(job_dir, f))]
+                # List all files with sizes
+                raw_files = [f for f in os.listdir(job_dir) if os.path.isfile(os.path.join(job_dir, f))]
+                result["files"] = [
+                    {"name": fn, "size": os.path.getsize(os.path.join(job_dir, fn))}
+                    for fn in raw_files
+                ]
 
         return result
 
