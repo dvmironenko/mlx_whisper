@@ -172,7 +172,8 @@
             copyBtn.className = 'btn-modal-copy';
             copyBtn.type = 'button';
             copyBtn.textContent = 'Копировать';
-            copyBtn.addEventListener('click', function() {
+            copyBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
                 copyToClipboard(content);
             });
             footer.appendChild(copyBtn);
@@ -198,21 +199,47 @@
 
         // Копирование текста в буфер обмена
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(function() {
-                // Успешное копирование
-                const copyBtn = currentModal.querySelector('.btn-modal-copy');
-                const originalText = copyBtn.textContent;
+            console.log('copyToClipboard called, text length:', text.length);
+            var success = false;
+
+            // Пробуем современный Clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    success = true;
+                }).catch(function(err) {
+                    console.error('Ошибка Clipboard API:', err);
+                });
+            }
+
+            // Fallback через execCommand
+            if (!success) {
+                var textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    success = document.execCommand('copy');
+                } catch (err) {
+                    console.error('Ошибка execCommand:', err);
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+            }
+
+            if (success) {
+                var copyBtn = currentModal.querySelector('.btn-modal-copy');
+                var originalText = copyBtn.textContent;
                 copyBtn.textContent = 'Скопировано!';
                 copyBtn.disabled = true;
-
                 setTimeout(function() {
                     copyBtn.textContent = originalText;
                     copyBtn.disabled = false;
                 }, 2000);
-            }).catch(function(err) {
-                console.error('Ошибка копирования:', err);
+            } else {
                 alert('Не удалось скопировать текст');
-            });
+            }
         }
 
         // Закрытие модального окна
@@ -660,10 +687,13 @@
         }
 
         // Генерация отчета через API
-        async function generateReport(jobId) {
+        async function generateReport(jobId, reportType) {
             try {
+                const body = reportType ? { report_type: reportType } : {};
                 const response = await fetch('/api/v1/report/' + jobId, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
                 });
 
                 if (response.ok) {
@@ -780,12 +810,14 @@
 
                     const tag = document.createElement('span');
                     tag.className = 'result-file-tag';
-                    const ext = f.split('.').pop().toLowerCase();
+                    const fileName = typeof f === 'string' ? f : f.name;
+                    const fileSize = typeof f === 'object' && f.size !== undefined ? f.size : 0;
+                    const ext = fileName.split('.').pop().toLowerCase();
                     let icon = 'fa-file';
                     if (ext === 'txt') icon = 'fa-file-alt';
                     else if (ext === 'json') icon = 'fa-file-code';
                     else if (['wav','mp3','flac','m4a','aac','ogg'].includes(ext)) icon = 'fa-file-audio';
-                    tag.innerHTML = `<i class="fas ${icon}"></i> ${escapeHtml(f)}`;
+                    tag.innerHTML = `<i class="fas ${icon}"></i> ${escapeHtml(fileName)} <span class="file-size">${formatFileSize(fileSize)}</span>`;
                     wrapper.appendChild(tag);
 
                     const btns = document.createElement('div');
@@ -798,7 +830,7 @@
                         viewBtn.className = 'btn-view-file';
                         viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
                         viewBtn.title = 'Просмотр';
-                        viewBtn.onclick = () => viewFileContent(job.job_id, f);
+                        viewBtn.onclick = () => viewFileContent(job.job_id, fileName);
                         btns.appendChild(viewBtn);
                     }
 
@@ -807,7 +839,7 @@
                     dlBtn.innerHTML = '<i class="fas fa-download"></i>';
                     dlBtn.title = 'Скачать';
                     dlBtn.onclick = () => {
-                        window.open(`/api/v1/jobs/${encodeURIComponent(job.job_id)}/files/${encodeURIComponent(f)}/download`, '_blank');
+                        window.open(`/api/v1/jobs/${encodeURIComponent(job.job_id)}/files/${encodeURIComponent(fileName)}/download`, '_blank');
                     };
                     btns.appendChild(dlBtn);
 
@@ -816,9 +848,9 @@
                     delBtn.innerHTML = '<i class="fas fa-trash"></i>';
                     delBtn.title = 'Удалить';
                     delBtn.onclick = function() {
-                        const m = createConfirmModal('Удалить файл?', 'Вы уверены, что хотите удалить файл "' + f + '"?', async () => {
+                        const m = createConfirmModal('Удалить файл?', 'Вы уверены, что хотите удалить файл "' + fileName + '"?', async () => {
                             try {
-                                await fetch(`/api/v1/jobs/${encodeURIComponent(job.job_id)}/files/${encodeURIComponent(f)}`, { method: 'DELETE' });
+                                await fetch(`/api/v1/jobs/${encodeURIComponent(job.job_id)}/files/${encodeURIComponent(fileName)}`, { method: 'DELETE' });
                                 wrapper.remove();
                                 if (fl.querySelectorAll('.result-file-row').length === 0) {
                                     ft.remove();
@@ -854,9 +886,44 @@
                 actionsEl.appendChild(c);
             }
 
-            const r = document.createElement('button'); r.className = 'btn-report-job'; r.innerHTML = '<i class="fas fa-file-alt"></i> Отчет';
-            r.onclick = async () => { await generateReport(job.job_id); };
-            actionsEl.appendChild(r);
+            // Dropdown выбора типа отчета
+            if (job.status === 'completed' && reportTypes.length > 0) {
+                const select = document.createElement('select');
+                select.className = 'report-type-select';
+                const defaultOpt = document.createElement('option');
+                defaultOpt.value = '';
+                defaultOpt.textContent = 'Выберите тип';
+                select.appendChild(defaultOpt);
+                reportTypes.forEach(function(rt) {
+                    const opt = document.createElement('option');
+                    opt.value = rt.id;
+                    opt.textContent = rt.name;
+                    select.appendChild(opt);
+                });
+                // Report button
+                const r = document.createElement('button');
+                r.className = 'btn-report-job';
+                r.innerHTML = '<i class="fas fa-file-alt"></i> Отчет';
+                r.disabled = true;
+                select.onchange = function() { r.disabled = !select.value; };
+                r.onclick = async function() { await generateReport(job.job_id, select.value); };
+                actionsEl.appendChild(select);
+                actionsEl.appendChild(r);
+            } else if (job.status === 'completed') {
+                // reportTypes пуст (конфиг не найден), fallback на стандартный отчет
+                const r = document.createElement('button');
+                r.className = 'btn-report-job';
+                r.innerHTML = '<i class="fas fa-file-alt"></i> Отчет';
+                r.onclick = async () => { await generateReport(job.job_id); };
+                actionsEl.appendChild(r);
+            } else {
+                // Для невыполненных заданий — кнопка disabled
+                const r = document.createElement('button');
+                r.className = 'btn-report-job';
+                r.innerHTML = '<i class="fas fa-file-alt"></i> Отчет';
+                r.disabled = true;
+                actionsEl.appendChild(r);
+            }
 
             const d = document.createElement('button'); d.className = 'btn-delete-job'; d.innerHTML = '<i class="fas fa-trash-alt"></i> Удалить';
             d.onclick = function() { const m = createConfirmModal('Удалить задание?', 'Вы уверены, что хотите удалить всё задание "' + job.job_id + '"?\n\nВсе файлы будут удалены без возможности восстановления.', async () => { await deleteJob(job.job_id); }); if(m){currentConfirmModal=m;document.body.appendChild(m);document.addEventListener('keydown',handleConfirmEscape);const fb=m.querySelector('.btn-confirm-delete');if(fb)fb.focus();} };
@@ -990,9 +1057,6 @@
             themeLabel.textContent = newTheme === 'dark' ? 'Тёмная' : 'Светлая';
         });
 
-        // Load jobs on page load
-        document.addEventListener('DOMContentLoaded', loadJobs);
-
         window.addEventListener('beforeunload', stopPolling);
 
         // ===== Result Modal =====
@@ -1070,6 +1134,26 @@
         function closeResultModal() {
             if (currentResultModal) { currentResultModal.remove(); currentResultModal = null; }
         }
+
+        // Загрузка типов отчетов при загрузке страницы
+        let reportTypes = [];
+
+        async function loadReportTypes() {
+            try {
+                const response = await fetch('/api/v1/report-types');
+                if (response.ok) {
+                    const data = await response.json();
+                    reportTypes = data.types || [];
+                }
+            } catch (e) {
+                console.error('Failed to load report types:', e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadReportTypes();
+            loadJobs();
+        });
     </script>
 </body>
 </html>
