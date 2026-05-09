@@ -12,15 +12,20 @@ from src.services.job_manager import JobManager, JobStatus
 
 
 @pytest.fixture
-def job_manager(tmp_path):
+def job_manager(tmp_path, monkeypatch):
     """Временная директория для job metadata."""
-    os.environ["JOB_METADATA_DIR_OVERRIDE"] = str(tmp_path)
-    import src.services.job_manager as jm
-
-    jm.JOB_METADATA_DIR = str(tmp_path)
+    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", str(tmp_path))
+    monkeypatch.setattr("src.services.job_manager.DATA_UPLOADS_DIR", str(tmp_path))
+    # Сбрасываем синглтон, чтобы он пересоздался с новым DATA_UPLOADS_DIR
+    JobManager.reset()
     yield JobManager()
-    jm.JOB_METADATA_DIR = os.path.join("data", "jobs")
-    del os.environ["JOB_METADATA_DIR_OVERRIDE"]
+    # Очистка job файлов после теста
+    JobManager.reset()
+    job_dir = os.path.join(str(tmp_path), "jobs")
+    if os.path.exists(job_dir):
+        import shutil
+        shutil.rmtree(job_dir, ignore_errors=True)
+    monkeypatch.undo()
 
 
 class TestJobManagerCreate:
@@ -45,7 +50,7 @@ class TestJobManagerCreate:
     def test_create_persists_to_disk(self, job_manager, tmp_path):
         meta = job_manager.create(job_id="disk-test")
 
-        job_file = tmp_path / "disk-test.json"
+        job_file = tmp_path / "disk-test" / "disk-test.json"
         assert job_file.exists()
 
         with open(job_file, "r") as f:
@@ -125,6 +130,31 @@ class TestJobManagerCancel:
     def test_cancel_nonexistent(self, job_manager):
         meta = job_manager.cancel("nope")
         assert meta is None
+
+
+class TestJobManagerMechanism:
+    def test_create_includes_mechanism(self, job_manager):
+        meta = job_manager.create(mechanism="vibevoice")
+
+        assert meta["mechanism"] == "vibevoice"
+
+    def test_create_default_mechanism_is_none(self, job_manager):
+        meta = job_manager.create()
+
+        assert meta["mechanism"] is None
+
+    def test_create_mechanism_whisper(self, job_manager):
+        meta = job_manager.create(mechanism="whisper")
+
+        assert meta["mechanism"] == "whisper"
+
+    def test_update_preserves_mechanism(self, job_manager):
+        job_manager.create(job_id="mech-preserve", mechanism="vibevoice", model="turbo")
+        job_manager.update_status("mech-preserve", JobStatus.COMPLETED)
+        meta = job_manager.load("mech-preserve")
+
+        assert meta["mechanism"] == "vibevoice"
+        assert meta["model"] == "turbo"
 
 
 class TestJobManagerListAll:

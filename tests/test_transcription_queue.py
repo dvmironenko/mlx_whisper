@@ -2,7 +2,7 @@
 
 import os
 import sys
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -16,7 +16,7 @@ _test_dir: str | None = None
 def isolated_dirs(monkeypatch, tmp_path):
     global _test_dir
     _test_dir = str(tmp_path)
-    monkeypatch.setattr("src.services.job_manager.JOB_METADATA_DIR", os.path.join(_test_dir, "jobs"))
+    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", _test_dir)
     os.makedirs(os.path.join(_test_dir, "jobs"), exist_ok=True)
     monkeypatch.setenv("TRANSCRIBER_WORKERS", "1")
     monkeypatch.setenv("QUEUE_MAX_SIZE", "5")
@@ -57,14 +57,15 @@ def test_submit_and_process():
     mgr = TranscriptionQueueManager(workers=1, max_size=5)
     try:
         # Моки применяем ДО submit, чтобы воркер поймал их при обработке
+        mock_engine = MagicMock()
+        mock_engine.transcribe.return_value = {"text": "mock result", "segments": []}
         with (
-            patch("src.models.transcription.transcribe_audio") as mock_transcribe,
+            patch("src.services.transcription_queue.get_engine", return_value=mock_engine),
             patch(
                 "src.services.transcription_queue._sanitize_result",
                 side_effect=lambda r: r,
             ),
         ):
-            mock_transcribe.return_value = {"text": "mock result", "segments": []}
 
             result = mgr.submit({
                 "job_id": "test-job-1",
@@ -133,14 +134,15 @@ def test_worker_process_cancelled():
             {"model": "turbo"},
         )
 
+        mock_engine = MagicMock()
+        mock_engine.transcribe.return_value = {"text": "cancelled result", "segments": []}
         with (
-            patch("src.models.transcription.transcribe_audio") as mock_transcribe,
+            patch("src.services.transcription_queue.get_engine", return_value=mock_engine),
             patch(
                 "src.services.transcription_queue._sanitize_result",
                 side_effect=lambda r: r,
             ),
         ):
-            mock_transcribe.return_value = {"text": "cancelled result", "segments": []}
             mgr._worker_process(job_payload)
 
         status = meta_mgr.load("cancel-job-1")
@@ -162,6 +164,47 @@ def test_singleton():
     assert mgr2._workers == 1
     assert mgr2._max_size == 5
     mgr2.shutdown()
+
+
+def test_submit_persists_mechanism():
+    """Submit с mechanism сохраняет поле в метаданные."""
+    from src.services.transcription_queue import TranscriptionQueueManager
+
+    mgr = TranscriptionQueueManager(workers=1, max_size=5)
+    try:
+        result = mgr.submit({
+            "job_id": "mech-job-1",
+            "wav_path": "/tmp/test.wav",
+            "params": {"mechanism": "vibevoice", "model": "turbo"},
+        })
+        assert result is True
+
+        meta = mgr._meta.load("mech-job-1")
+        assert meta is not None
+        assert meta["mechanism"] == "vibevoice"
+        assert meta["model"] == "turbo"
+    finally:
+        mgr.shutdown()
+
+
+def test_submit_default_mechanism_is_none():
+    """Submit без mechanism устанавливает mechanism в None."""
+    from src.services.transcription_queue import TranscriptionQueueManager
+
+    mgr = TranscriptionQueueManager(workers=1, max_size=5)
+    try:
+        result = mgr.submit({
+            "job_id": "mech-job-2",
+            "wav_path": "/tmp/test.wav",
+            "params": {"model": "base"},
+        })
+        assert result is True
+
+        meta = mgr._meta.load("mech-job-2")
+        assert meta is not None
+        assert meta["mechanism"] is None
+    finally:
+        mgr.shutdown()
 
 
 def test_cancel_nonexistent():
