@@ -142,11 +142,76 @@ def _save_segment(segment: AudioSegment) -> str:
     return path
 
 
-def _parse_segments_from_json(raw_text: str) -> Optional[List[Dict[str, Any]]]:
-    """Попытаться распарсить результат как JSON-массив сегментов.
+def _split_concatenated_json(text: str) -> List[str]:
+    """Разбить строку на отдельные JSON-объекты (возможно, склеенные)."""
+    decoder = json.JSONDecoder()
+    text = text.strip()
+    objects: List[str] = []
+    idx = 0
+    while idx < len(text):
+        # Пропуск пробелов/переносов строк
+        while idx < len(text) and text[idx] in (" ", "\t", "\n", "\r"):
+            idx += 1
+        if idx >= len(text):
+            break
+        if text[idx] != "{":
+            # Не JSON-объект, ищем следующий '{'
+            next_brace = text.find("{", idx + 1)
+            if next_brace == -1:
+                break
+            idx = next_brace
+            continue
+        try:
+            _, end_idx = decoder.raw_decode(text, idx)
+            objects.append(text[idx:end_idx])
+            idx = end_idx
+        except (json.JSONDecodeError, ValueError):
+            # Ищем следующий '{' и пробуем снова
+            next_brace = text.find("{", idx + 1)
+            if next_brace == -1:
+                break
+            idx = next_brace
+    return objects
 
-    oMLX возвращает {"text": "[{...}]"} — нужно извлечь поле text и
-    распарсить его как JSON-массив сегментов.
+
+def _extract_segments_from_truncated_text(text_field: str) -> List[Dict[str, Any]]:
+    """Извлечь сегменты из текстового поля, даже если оно обрезано.
+
+    text_field содержит JSON-массив сегментов, например:
+    '[{"Start":0,"End":1.22,"Speaker":0,"Content":"..."}, ...]'
+    Последний сегмент может быть обрезан (без закрывающей скобки).
+    """
+    segments: List[Dict[str, Any]] = []
+    # Ищем все объекты сегментов по паттерну {"Start":...
+    seg_pattern = re.compile(
+        r'\{"Start"\s*:\s*([\d.]+)'
+        r'(?:\s*,\s*"End"\s*:\s*([\d.]+))?'
+        r'(?:\s*,\s*"Speaker"\s*:\s*(\d+))?'
+        r'(?:\s*,\s*"Content"\s*:\s*"([^"]*(?:\\"[^"]*)*)")?'
+        r"\s*\}"
+    )
+    for m in seg_pattern.finditer(text_field):
+        start = float(m.group(1))
+        end = float(m.group(2)) if m.group(2) else start
+        speaker = int(m.group(3)) if m.group(3) else 0
+        content = m.group(4) if m.group(4) else ""
+        content = content.replace('\\"', '"')
+        segments.append({
+            "start": start,
+            "end": end,
+            "speaker": speaker,
+            "text": content,
+        })
+    return segments
+
+
+def _parse_segments_from_json(raw_text: str) -> Optional[List[Dict[str, Any]]]:
+    """Парсить JSON-массив сегментов или конкатенированные JSON-объекты от oMLX API.
+
+    Поддерживаемые форматы:
+    1. Прямой JSON-массив: [{\"Start\":...}]
+    2. Конкатенированные объекты oMLX: {\"text\":\"[{...}]\"}{\"text\":\"[{...}]\"}
+    3. JSON в code block: ```json\n...\n```
     """
     # Иногда oMLX возвращает JSON в строке с escape-символами
     for wrapper in ["```json\n", "```"]:
@@ -155,40 +220,74 @@ def _parse_segments_from_json(raw_text: str) -> Optional[List[Dict[str, Any]]]:
 
     raw_text = raw_text.strip()
 
-    # Сначала пытаемся извлечь поле "text" из JSON-объекта {"text": "..."}
-    if raw_text.startswith("{"):
-        try:
-            obj = json.loads(raw_text)
-            if isinstance(obj, dict) and "text" in obj:
-                raw_text = str(obj["text"])
-        except (json.JSONDecodeError, ValueError, TypeError):
-            return None
-
-    if not raw_text.startswith("["):
-        return None
-
+    # 1. Пробуем напрямую распарсить как JSON-массив сегментов
     try:
         items = json.loads(raw_text)
-        if not isinstance(items, list):
-            return None
-
-        segments = []
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            start = float(item.get("Start", item.get("start", 0)))
-            end = float(item.get("End", item.get("end", 0)))
-            speaker = int(item.get("Speaker", item.get("speaker", 0)))
-            content = str(item.get("Content", item.get("content", "")))
-            segments.append({
-                "start": start,
-                "end": end,
-                "speaker": speaker,
-                "text": content,
-            })
-        return segments if segments else None
+        if isinstance(items, list):
+            return _normalize_segments(items)
     except (json.JSONDecodeError, ValueError, TypeError):
-        return None
+        pass
+
+    # 2. Пробуем распарсить как конкатенированные JSON-объекты oMLX
+    json_objects = _split_concatenated_json(raw_text)
+    if json_objects:
+        all_segments: List[Dict[str, Any]] = []
+        for obj_str in json_objects:
+            try:
+                obj = json.loads(obj_str)
+            except (json.JSONDecodeError, ValueError, TypeError):
+                continue
+
+            if not isinstance(obj, dict):
+                continue
+
+            # Извлекаем поле "text" — содержит JSON-массив сегментов
+            text_field = obj.get("text", "")
+            if not text_field:
+                continue
+
+            text_field = str(text_field)
+
+            # Сначала пробуем стандартный парсинг
+            try:
+                items = json.loads(text_field)
+                if isinstance(items, list):
+                    norm = _normalize_segments(items)
+                    if norm:
+                        all_segments.extend(norm)
+                    continue
+            except (json.JSONDecodeError, ValueError, TypeError):
+                pass
+
+            # Если стандартный парсинг не удался (обрезанный текст),
+            # используем regex-извлечение сегментов
+            segments = _extract_segments_from_truncated_text(text_field)
+            if segments:
+                all_segments.extend(segments)
+
+        if all_segments:
+            return all_segments
+
+    return None
+
+
+def _normalize_segments(items: List[Any]) -> Optional[List[Dict[str, Any]]]:
+    """Нормализовать список сырых сегментов в единый формат."""
+    segments: List[Dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        start = float(item.get("Start", item.get("start", 0)))
+        end = float(item.get("End", item.get("end", 0)))
+        speaker = int(item.get("Speaker", item.get("speaker", 0)))
+        content = str(item.get("Content", item.get("content", "")))
+        segments.append({
+            "start": start,
+            "end": end,
+            "speaker": speaker,
+            "text": content,
+        })
+    return segments if segments else None
 
 
 def _parse_segments_from_raw_text(raw_text: str) -> List[Dict[str, Any]]:
@@ -231,6 +330,7 @@ class VibeVoiceEngine(TranscriptionEngine):
         segments_files = _split_audio_by_silence(file_path)
         all_segments: List[Dict[str, Any]] = []
         full_text_parts: List[str] = []
+        raw_responses: List[str] = []
 
         for seg_start_samples, _, seg_path in segments_files:
             try:
@@ -249,6 +349,10 @@ class VibeVoiceEngine(TranscriptionEngine):
             all_segments.extend(seg_result["segments"])
             full_text_parts.append(seg_result.get("text", ""))
 
+            raw_resp = seg_result.get("raw_response")
+            if raw_resp:
+                raw_responses.append(raw_resp)
+
         duration = time.time() - start_time
 
         return {
@@ -258,6 +362,7 @@ class VibeVoiceEngine(TranscriptionEngine):
                 all_segments and any(s.get("speaker", 0) != 0 for s in all_segments)
             ),
             "transcription_duration": round(duration, 2),
+            "raw_response": "\n".join(raw_responses) if raw_responses else None,
         }
 
     def _transcribe_segment(self, file_path: str, language: Optional[str]) -> Dict[str, Any]:
@@ -285,9 +390,16 @@ class VibeVoiceEngine(TranscriptionEngine):
         if segments is None:
             segments = _parse_segments_from_raw_text(raw_text)
 
-        text = "\n".join(s["text"] for s in segments) if segments else raw_text
+        # Формируем чистый текст с метками спикеров
+        speaker_labels = {0: "Клиент", 1: "Терапевт"}
+        text_lines = []
+        for seg in segments:
+            spk = seg.get("speaker", 0)
+            label = speaker_labels.get(spk, f"Speaker {spk}")
+            text_lines.append(f"{label}: {seg['text']}")
 
         return {
-            "segments": segments or [],
-            "text": text,
+            "segments": segments,
+            "text": "\n".join(text_lines) if text_lines else raw_text,
+            "raw_response": raw_text,
         }

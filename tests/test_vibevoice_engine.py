@@ -263,6 +263,7 @@ class TestVibeVoiceEngineTranscribe:
         mock_result = {
             "segments": [{"start": 0.0, "end": 1.0, "speaker": 1, "text": "test"}],
             "text": "test",
+            "raw_response": '[{"Start": 0.0, "End": 1.0, "Speaker": 1, "Content": "test"}]',
         }
 
         with (
