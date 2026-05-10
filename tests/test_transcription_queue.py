@@ -58,7 +58,9 @@ def test_submit_and_process():
     try:
         # Моки применяем ДО submit, чтобы воркер поймал их при обработке
         mock_engine = MagicMock()
-        mock_engine.transcribe.return_value = {"text": "mock result", "segments": []}
+        mock_engine.transcribe.return_value = {
+            "text": "mock result", "segments": [], "raw_response": None
+        }
         with (
             patch("src.services.transcription_queue.get_engine", return_value=mock_engine),
             patch(
@@ -135,7 +137,9 @@ def test_worker_process_cancelled():
         )
 
         mock_engine = MagicMock()
-        mock_engine.transcribe.return_value = {"text": "cancelled result", "segments": []}
+        mock_engine.transcribe.return_value = {
+            "text": "cancelled result", "segments": [], "raw_response": None
+        }
         with (
             patch("src.services.transcription_queue.get_engine", return_value=mock_engine),
             patch(

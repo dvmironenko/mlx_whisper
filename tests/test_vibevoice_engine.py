@@ -289,6 +289,7 @@ class TestVibeVoiceEngineTranscribe:
         mock_result = {
             "segments": [{"start": 0.0, "end": 1.0, "speaker": 1, "text": "test"}],
             "text": "test",
+            "raw_response": None,
         }
 
         with (
@@ -310,6 +311,7 @@ class TestVibeVoiceEngineTranscribe:
         mock_result = {
             "segments": [{"start": 0.0, "end": 1.0, "speaker": 0, "text": "test"}],
             "text": "test",
+            "raw_response": None,
         }
 
         with (
@@ -338,6 +340,7 @@ class TestVibeVoiceEngineTranscribe:
             engine._transcribe_segment = MagicMock(return_value={
                 "segments": [],
                 "text": "",
+                "raw_response": None,
             })
 
             result = engine.transcribe("/tmp/test.wav")
