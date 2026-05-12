@@ -37,6 +37,11 @@ class JobManager:
 
     _instance: Optional["JobManager"] = None
 
+    @classmethod
+    def reset(cls) -> None:
+        """Сбросить синглтон (для тестов)."""
+        cls._instance = None
+
     def __new__(cls) -> "JobManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -62,6 +67,7 @@ class JobManager:
             "language": None,
             "task": None,
             "word_timestamps": False,
+            "mechanism": None,
             "duration": None,
             "transcription_duration": None,
             "result_file": None,
@@ -98,8 +104,6 @@ class JobManager:
         if not os.path.exists(DATA_UPLOADS_DIR):
             return result
         for entry in sorted(os.listdir(DATA_UPLOADS_DIR)):
-            if not _UUID_RE.match(entry):
-                continue
             job_dir = os.path.join(DATA_UPLOADS_DIR, entry)
             if not os.path.isdir(job_dir):
                 continue
@@ -109,7 +113,7 @@ class JobManager:
                     with open(metadata_path, "r", encoding="utf-8") as f:
                         result.append(json.load(f))
                 except (json.JSONDecodeError, OSError):
-                    continue
+                    pass
             else:
                 # No metadata — folder exists, treat as orphaned
                 job_dir_files = os.listdir(job_dir)
@@ -125,6 +129,7 @@ class JobManager:
                     "language": None,
                     "task": None,
                     "word_timestamps": False,
+                    "mechanism": None,
                     "duration": None,
                     "transcription_duration": None,
                     "result_file": None,

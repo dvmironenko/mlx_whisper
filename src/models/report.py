@@ -187,9 +187,9 @@ async def generate_report_via_openai(text: str, prompt: Optional[str] = None) ->
         raise
 
 
-def save_report(job_path: str, job_id: str, content: str) -> str:
+def save_report(job_path: str, job_id: str, content: str, report_type: str | None = None) -> str:
     """
-    Сохранить "Отчет по заданию [Job Id].md" в директории задания.
+    Сохранить файл отчёта в директории задания.
 
     Parameters
     ----------
@@ -199,13 +199,19 @@ def save_report(job_path: str, job_id: str, content: str) -> str:
         ID задания для именования файла
     content: str
         Содержимое Markdown отчёта
+    report_type: str, optional
+        ID типа отчёта для уникального именования (например, "summary").
+        Если не указан, используется стандартное имя.
 
     Returns
     -------
     str
         Путь к сохраненному файлу
     """
-    report_filename = f"Отчет по заданию {job_id}.md"
+    if report_type:
+        report_filename = f"Отчет_{report_type}_{job_id}.md"
+    else:
+        report_filename = f"Отчет по заданию {job_id}.md"
     report_path = os.path.join(job_path, report_filename)
 
     try:

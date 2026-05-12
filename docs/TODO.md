@@ -96,6 +96,22 @@
 
 ---
 
+### 2026-05-08 / 2026-05-11
+
+| Задача | Статус | Описание |
+|--------|--------|----------|
+| VibeVoiceEngine интеграция | ✅ | `VibeVoiceEngine` как механизм транскрипции через oMLX API, параметр `mechanism=vibevoice` |
+| Автоматическое разбиение аудио | ✅ | Разбиение по тишине (librosa), группировка интервалов, лимит 50 мин / 100 MB |
+| Определение спикеров VibeVoice | ✅ | 0 → "Клиент", 1 → "Терапевт", автоматический fallback на текстовый парсинг |
+| Типы отчётов | ✅ | Endpoint `GET /api/v1/report-types`, конфигурация в `src/services/report_types.py` |
+| Кэш моделей — preload/clear/stats | ✅ | Endpoints `POST /cache/preload`, `POST /cache/clear`, `GET /cache/models` |
+| Сохранение raw ответа API | ✅ | `{base_name}_raw.json` для Whisper и VibeVoice, endpoint `GET /files/{filename}/content` |
+| Размер файла в карточках заданий | ✅ | `size` поле в метаданных, отображение в UI |
+| Удаление отдельных файлов | ✅ | `DELETE /jobs/{job_id}/files/{filename}`, `GET /jobs/{job_id}/files/{filename}/download` |
+| Единый формат результата | ✅ | `{segments, text, speaker_detected, transcription_duration, raw_response}` для всех механизмов |
+
+---
+
 ## План задач
 
 ### Приоритет высокий

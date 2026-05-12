@@ -18,6 +18,7 @@ from src.utils.files import build_job_path
 # Module-level references for worker methods — patchable at module level
 import src.models.transcription as _transcription_module
 from src.api.router import sanitize_result as _sanitize_result
+from src.services.transcription_engines import get_engine
 
 logger = logging.getLogger("mlx_whisper")
 
@@ -84,6 +85,7 @@ class TranscriptionQueueManager:
             language=params.get("language"),
             task=params.get("task"),
             word_timestamps=params.get("word_timestamps", False),
+            mechanism=params.get("mechanism"),
             duration=params.get("duration"),
         )
 
@@ -169,13 +171,15 @@ class TranscriptionQueueManager:
         logger.info(f"Worker {worker_id} stopped")
 
     def _worker_process(self, job: JobPayload) -> None:
-        """Process one job: call transcribe_audio with lock."""
+        """Process one job: call engine.transcribe() with lock."""
         import time
 
+        mechanism = job.params.get("mechanism", "whisper")
         start = time.time()
         try:
             with self._transcription_lock:
-                result = _transcription_module.transcribe_audio(
+                engine = get_engine(mechanism)
+                result = engine.transcribe(
                     file_path=job.wav_path,
                     language=job.params.get("language"),
                     task=job.params.get("task", "transcribe"),
@@ -211,6 +215,15 @@ class TranscriptionQueueManager:
                 with open(segments_json_path, "w", encoding="utf-8") as f:
                     json.dump({"segments": segments}, f, ensure_ascii=False, indent=2)
 
+            # Save raw API response
+            raw_response = result.get("raw_response")
+            if raw_response:
+                raw_path = os.path.join(job_dir, f"{base_name}_raw.json")
+                if isinstance(raw_response, dict):
+                    raw_response = json.dumps(raw_response, ensure_ascii=False, indent=2)
+                with open(raw_path, "w", encoding="utf-8") as f:
+                    f.write(raw_response)
+
             # Check if cancelled during processing
             status = self._meta.load(job.job_id)
             final_status = (
@@ -231,7 +244,8 @@ class TranscriptionQueueManager:
             self._meta.update_status(job.job_id, JobStatus.FAILED, error=str(e))
             raise
         finally:
-            _transcription_module._clear_memory()
+            if mechanism == "whisper":
+                _transcription_module._clear_memory()
 
 
 # Module-level singleton accessor

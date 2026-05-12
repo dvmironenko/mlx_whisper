@@ -6,7 +6,7 @@ import shutil
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import APIRouter, UploadFile, Form, HTTPException, Request
+from fastapi import APIRouter, UploadFile, Form, HTTPException, Request, Body
 from fastapi.responses import FileResponse, PlainTextResponse
 from typing import Optional
 
@@ -19,9 +19,17 @@ def format_timestamp(seconds: float) -> str:
     ms = int((seconds % 1) * 1000)
     return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
 
-from src.config import AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR, MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT, logger, log_transcription_result
+from src.config import (
+    AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE,
+    NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE,
+    SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR,
+    MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT,
+    logger, log_transcription_result, OMLX_ENABLED, OMLX_BASE_URL,
+    OMLX_MODEL,
+)
 from src.models.transcription import transcribe_audio
 from src.models.report import load_segments_file, generate_report_via_openai, save_report, generate_report_via_openai_sync
+from src.services.report_types import load_report_types, get_prompt_for_report_type
 from src.models.model_cache import ModelCache
 from src.utils.download import download_from_url, validate_url
 
@@ -30,11 +38,12 @@ _report_executor = ThreadPoolExecutor(max_workers=3)
 
 from src.utils.audio import convert_to_wav, get_audio_duration
 from src.utils.files import generate_unique_filename, delete_file, validate_file_extension, validate_file_size, build_job_path
+import requests as _requests
 
 router = APIRouter(prefix="/api/v1", tags=["transcription"])
 
 
-def _start_report_generation(job_id: str):
+def _start_report_generation(job_id: str, report_type: Optional[str] = None):
     """Запустить генерацию отчёта в фоновом потоке."""
     import os
 
@@ -42,7 +51,7 @@ def _start_report_generation(job_id: str):
 
     def run():
         try:
-            logger.info(f"Report generation started for job: {job_id}")
+            logger.info(f"Report generation started for job: {job_id}, type: {report_type}")
 
             if not os.path.exists(job_path):
                 logger.warning(f"Job directory not found: {job_id}")
@@ -54,9 +63,15 @@ def _start_report_generation(job_id: str):
                 logger.error(f"No segments.txt found for job: {job_id}")
                 return
 
+            # Определяем промт: из конфига по report_type или дефолтный
+            prompt = None
+            if report_type:
+                prompt = get_prompt_for_report_type(report_type)
+                if prompt is None:
+                    logger.warning(f"Report type '{report_type}' not found, using default prompt")
             try:
-                logger.info(f"Calling OpenAI API for report generation (job: {job_id})")
-                report_content = generate_report_via_openai_sync(segments_content)
+                logger.info(f"Calling OpenAI API for report generation (job: {job_id}, type: {report_type})")
+                report_content = generate_report_via_openai_sync(segments_content, prompt=prompt)
             except ValueError as e:
                 logger.error(f"OpenAI configuration error for job {job_id}: {e}")
                 return
@@ -65,7 +80,7 @@ def _start_report_generation(job_id: str):
                 return
 
             try:
-                report_path = save_report(job_path, job_id, report_content)
+                report_path = save_report(job_path, job_id, report_content, report_type=report_type)
                 logger.info(f"Report generation completed for job: {job_id}")
             except Exception as e:
                 logger.error(f"Failed to save report for job {job_id}: {e}")
@@ -115,6 +130,7 @@ async def transcribe_audio_endpoint(
     remove_silence: str = Form(None),  # Используем None для определения, что параметр не задан
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
+    mechanism: str = Form("whisper"),
 ):
     """Залогировать файл в очередь транскрипции."""
 
@@ -206,6 +222,7 @@ async def transcribe_audio_endpoint(
                 "no_speech_threshold": no_speech_threshold_value,
                 "hallucination_silence_threshold": hallucination_silence_threshold_value,
                 "initial_prompt": initial_prompt,
+                "mechanism": mechanism,
             },
         })
 
@@ -240,7 +257,10 @@ async def get_config():
         SILENCE_DURATION,
         DEFAULT_LANGUAGE,
         NO_SPEECH_THRESHOLD,
-        HALLUCINATION_SILENCE_THRESHOLD
+        HALLUCINATION_SILENCE_THRESHOLD,
+        OMLX_ENABLED,
+        OMLX_BASE_URL,
+        OMLX_MODEL,
     )
     return {
         "initial_prompt": INITIAL_PROMPT,
@@ -253,6 +273,9 @@ async def get_config():
         "allowed_url_domains": ALLOWED_URL_DOMAINS,
         "max_download_size_mb": MAX_DOWNLOAD_SIZE // (1024 * 1024),
         "download_timeout": DOWNLOAD_TIMEOUT,
+        "omlx_enabled": OMLX_ENABLED,
+        "omlx_base_url": OMLX_BASE_URL,
+        "omlx_model": OMLX_MODEL,
     }
 
 
@@ -270,6 +293,7 @@ async def transcribe_url_endpoint(
     remove_silence: str = Form(None),
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
+    mechanism: str = Form("whisper"),
 ):
     """Транскрибировать аудио по URL (YouTube, Vimeo, прямые ссылки)."""
 
@@ -347,8 +371,10 @@ async def transcribe_url_endpoint(
                 "no_speech_threshold": no_speech_threshold_value,
                 "hallucination_silence_threshold": hallucination_silence_threshold_value,
                 "initial_prompt": initial_prompt,
+                "mechanism": mechanism,
             },
         })
+
         if not success:
             raise HTTPException(status_code=429, detail="Queue is full, try again later")
 
@@ -366,6 +392,33 @@ async def transcribe_url_endpoint(
             delete_file(tmp_download)
         if converted_wav_path and converted_wav_path != tmp_download and os.path.exists(converted_wav_path):
             delete_file(converted_wav_path)
+
+
+@router.get("/omlx/health")
+async def omlx_health():
+    """Проверка доступности oMLX API (VibeVoice-ASR)."""
+    if not OMLX_ENABLED or not OMLX_BASE_URL:
+        return {
+            "omlx": "disabled",
+            "base_url": OMLX_BASE_URL,
+            "model": OMLX_MODEL,
+        }
+    try:
+        response = _requests.get(f"{OMLX_BASE_URL}/health", timeout=5)
+        status = "connected" if response.status_code == 200 else "error"
+        return {
+            "omlx": status,
+            "base_url": OMLX_BASE_URL,
+            "model": OMLX_MODEL,
+            "health_status_code": response.status_code,
+        }
+    except Exception as e:
+        return {
+            "omlx": "unreachable",
+            "base_url": OMLX_BASE_URL,
+            "model": OMLX_MODEL,
+            "error": str(e),
+        }
 
 
 @router.get("/models")
@@ -535,15 +588,31 @@ async def get_file_content(filename: str):
     return PlainTextResponse(content=content, media_type=media_type)
 
 
+@router.get("/report-types")
+async def list_report_types():
+    """
+    Вернуть список доступных типов отчетов (без промптов).
+
+    Возвращает {types: [{id, name}, ...]}.
+    """
+    types = load_report_types()
+    result = [{"id": t["id"], "name": t["name"]} for t in types]
+    return {"types": result}
+
+
 @router.post("/report/{job_id}")
-async def generate_report(job_id: str):
+async def generate_report(job_id: str, body: Optional[dict] = Body(default=None)):
     """
     Запустить генерацию Markdown отчёта по расшифровке в фоновом потоке.
 
-    Возвращает сразу после запуска генерации. Проверьте директорию задания
-    для скачивания report.md после завершения генерации.
+    Тело запроса (опционально): {"report_type": "summary"}
+    Если report_type не передан — используется первый тип из конфига или дефолтный промт.
     """
-    _start_report_generation(job_id)
+    report_type = None
+    if body and isinstance(body, dict):
+        report_type = body.get("report_type")
+
+    _start_report_generation(job_id, report_type=report_type)
     return {
         "status": "started",
         "job_id": job_id,

@@ -72,6 +72,19 @@ OPENAI_REPORT_PROMPT: Optional[str] = os.getenv(
 # Report generation chunk size (for large texts)
 MAX_REPORT_CHUNK_SIZE: int = int(os.getenv("MAX_REPORT_CHUNK_SIZE", "10000"))
 
+# OMLX / VibeVoice Configuration
+OMLX_BASE_URL: str = os.getenv("OMLX_BASE_URL", "")
+OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-4bit")
+OMLX_API_KEY: Optional[str] = os.getenv("OMLX_API_KEY") or None
+OMLX_ENABLED: bool = os.getenv("OMLX_ENABLED", "true").lower() == "true"
+
+
+def omlx_available() -> bool:
+    """Check if oMLX is configured and enabled."""
+    if not OMLX_ENABLED:
+        return False
+    return bool(OMLX_BASE_URL)
+
 # URL download settings
 ALLOWED_URL_DOMAINS_STR: str = os.getenv("ALLOWED_URL_DOMAINS", "youtube.com,youtu.be,vimeo.com")
 ALLOWED_URL_DOMAINS: list = [d.strip() for d in ALLOWED_URL_DOMAINS_STR.split(",") if d.strip()]

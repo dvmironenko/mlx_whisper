@@ -362,7 +362,7 @@ class VibeVoiceEngine(TranscriptionEngine):
                 all_segments and any(s.get("speaker", 0) != 0 for s in all_segments)
             ),
             "transcription_duration": round(duration, 2),
-            "raw_response": "\n".join(raw_responses) if raw_responses else None,
+            "raw_response": "\n".join(full_text_parts).strip() if full_text_parts else None,
         }
 
     def _transcribe_segment(self, file_path: str, language: Optional[str]) -> Dict[str, Any]:

@@ -16,9 +16,9 @@ _test_dir: str | None = None
 def isolated_dirs(monkeypatch, tmp_path):
     global _test_dir
     _test_dir = str(tmp_path)
-    monkeypatch.setattr("src.services.job_manager.JOB_METADATA_DIR", os.path.join(_test_dir, "jobs"))
+    monkeypatch.setattr("src.services.job_manager.DATA_UPLOADS_DIR", _test_dir)
+    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", _test_dir)
     os.makedirs(os.path.join(_test_dir, "jobs"), exist_ok=True)
-    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", os.path.join(_test_dir, "data"))
     yield
     # Cleanup
     try:
@@ -26,22 +26,31 @@ def isolated_dirs(monkeypatch, tmp_path):
         shutil.rmtree(_test_dir, ignore_errors=True)
     except Exception:
         pass
+        # Reset singleton after cleanup
+        from src.services.job_manager import JobManager
+        JobManager.reset()
 
 
 @pytest.fixture(autouse=True)
 def reset_managers():
+    from src.services.job_manager import JobManager
     from src.services.transcription_queue import TranscriptionQueueManager
+    JobManager.reset()
     TranscriptionQueueManager.reset()
     yield
+    JobManager.reset()
     TranscriptionQueueManager.reset()
 
 
 @pytest.fixture
 def client(monkeypatch, isolated_dirs):
     """TestClient for the FastAPI app."""
-    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", os.path.join(_test_dir, "data"))
+    data_dir = os.path.join(_test_dir, "data")
+    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", data_dir)
+    monkeypatch.setattr("src.services.job_manager.DATA_UPLOADS_DIR", data_dir)
     monkeypatch.setattr("src.config.UPLOADS_DIR", os.path.join(_test_dir, "uploads"))
     os.makedirs(os.path.join(_test_dir, "uploads"), exist_ok=True)
+    os.makedirs(data_dir, exist_ok=True)
     from src.main import app
     return TestClient(app)
 
@@ -101,7 +110,7 @@ def test_get_job_returns_metadata_and_result_when_completed(tmp_path):
     jm.update_status("get-job-1", JobStatus.COMPLETED, transcription_duration=5.2)
 
     # Создаём job directory и файлы результатов
-    job_dir = os.path.join(_test_dir, "data", "get-job-1")
+    job_dir = os.path.join(_test_dir, "get-job-1")
     os.makedirs(job_dir, exist_ok=True)
     with open(os.path.join(job_dir, "transcription.txt"), "w", encoding="utf-8") as f:
         f.write("Hello world")
@@ -119,8 +128,8 @@ def test_get_job_returns_metadata_and_result_when_completed(tmp_path):
     assert result["status"] == "completed"
     assert result["text"] == "Hello world"
     assert result["segments"] == [{"start": 0.0, "end": 1.0, "text": "Hello world"}]
-    assert "transcription.txt" in result["files"]
-    assert "segments.json" in result["files"]
+    assert {"name": "transcription.txt", "size": 11} in result["files"]
+    assert {"name": "segments.json", "size": 65} in result["files"]
 
 
 def test_get_job_returns_none_for_nonexistent():

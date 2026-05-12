@@ -770,6 +770,7 @@
             metaEl.className = 'job-card-meta';
 
             if (job.model) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-microchip"></i> ${job.model}`; metaEl.appendChild(s); }
+            if (job.mechanism) { const s = document.createElement('span'); const icon = job.mechanism === 'vibevoice' ? 'fa-bolt' : 'fa-microchip'; const label = job.mechanism === 'vibevoice' ? 'VibeVoice' : 'Whisper'; s.innerHTML = `<i class="fas ${icon}"></i> ${label}`; metaEl.appendChild(s); }
             if (job.language) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-language"></i> ${job.language}`; metaEl.appendChild(s); }
             if (job.duration != null) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-clock"></i> ${Math.round(job.duration)}s`; metaEl.appendChild(s); }
             if (job.transcription_duration != null) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-stopwatch"></i> ${job.transcription_duration.toFixed(1)}s`; metaEl.appendChild(s); }

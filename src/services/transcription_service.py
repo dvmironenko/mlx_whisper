@@ -86,6 +86,7 @@ class TranscriptionService:
                 "language": None,
                 "task": None,
                 "word_timestamps": False,
+                "mechanism": None,
                 "duration": None,
                 "transcription_duration": None,
                 "result_file": None,
@@ -108,12 +109,14 @@ class TranscriptionService:
                         result["text"] = f.read()
 
                 # Read segments JSON
-                json_files = [f for f in os.listdir(job_dir) if f.endswith(".json")]
-                if json_files:
-                    with open(os.path.join(job_dir, json_files[0]), "r", encoding="utf-8") as f:
+                segments_path = os.path.join(job_dir, "segments.json")
+                if os.path.isfile(segments_path):
+                    with open(segments_path, "r", encoding="utf-8") as f:
                         import json
                         data = json.load(f)
                         result["segments"] = data.get("segments", [])
+                else:
+                    result["segments"] = []
 
                 # List all files with sizes
                 raw_files = [f for f in os.listdir(job_dir) if os.path.isfile(os.path.join(job_dir, f))]

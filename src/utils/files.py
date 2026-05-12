@@ -3,7 +3,7 @@ import os
 import uuid
 from typing import Optional
 
-from src.config import MAX_FILE_SIZE, CHUNK_SIZE
+from src.config import DATA_UPLOADS_DIR, MAX_FILE_SIZE, CHUNK_SIZE
 
 
 def generate_unique_filename(original_filename: str) -> str:
@@ -14,7 +14,7 @@ def generate_unique_filename(original_filename: str) -> str:
 
 def build_job_path(job_id: str) -> str:
     """Создать путь директории для job_id."""
-    path = os.path.join("data", job_id)
+    path = os.path.join(DATA_UPLOADS_DIR, job_id)
     os.makedirs(path, exist_ok=True)
     return path
 

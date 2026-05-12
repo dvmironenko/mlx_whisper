@@ -16,8 +16,8 @@ _test_dir: str | None = None
 def isolated_dirs(monkeypatch, tmp_path):
     global _test_dir
     _test_dir = str(tmp_path)
-    monkeypatch.setattr("src.config.DATA_UPLOADS_DIR", _test_dir)
-    os.makedirs(os.path.join(_test_dir, "jobs"), exist_ok=True)
+    monkeypatch.setattr("src.utils.files.DATA_UPLOADS_DIR", _test_dir)
+    os.makedirs(_test_dir, exist_ok=True)
     monkeypatch.setenv("TRANSCRIBER_WORKERS", "1")
     monkeypatch.setenv("QUEUE_MAX_SIZE", "5")
     yield
@@ -219,5 +219,76 @@ def test_cancel_nonexistent():
     try:
         result = mgr.cancel_job("does-not-exist")
         assert result is False
+    finally:
+        mgr.shutdown()
+
+
+def test_worker_saves_raw_response():
+    """Worker сохраняет raw_response в {name}_raw.json."""
+    from src.services.transcription_queue import TranscriptionQueueManager
+    from src.services.job_manager import JobStatus
+
+    mgr = TranscriptionQueueManager(workers=1, max_size=5)
+    try:
+        mock_engine = MagicMock()
+        raw_json = '{"segments": [{"start": 0, "end": 1}], "text": "test"}'
+        mock_engine.transcribe.return_value = {
+            "text": "test",
+            "segments": [{"start": 0, "end": 1}],
+            "raw_response": raw_json,
+        }
+
+        with (
+            patch("src.services.transcription_queue.get_engine", return_value=mock_engine),
+            patch("src.services.transcription_queue._sanitize_result", side_effect=lambda r: r),
+        ):
+            mgr.submit({
+                "job_id": "raw-test-job",
+                "wav_path": "/tmp/test.wav",
+                "params": {"model": "turbo", "original_filename": "test.wav"},
+            })
+            mgr._queue.join()
+
+        # Проверить наличие raw.json
+        assert _test_dir is not None
+        job_dir = os.path.join(_test_dir, "raw-test-job")
+        raw_files = [f for f in os.listdir(job_dir) if f.endswith("_raw.json")]
+        assert len(raw_files) == 1
+        with open(os.path.join(job_dir, raw_files[0])) as f:
+            content = f.read()
+        assert '"segments"' in content
+    finally:
+        mgr.shutdown()
+
+
+def test_worker_skips_raw_response_when_none():
+    """Worker не создаёт raw.json при raw_response=None."""
+    from src.services.transcription_queue import TranscriptionQueueManager
+
+    mgr = TranscriptionQueueManager(workers=1, max_size=5)
+    try:
+        mock_engine = MagicMock()
+        mock_engine.transcribe.return_value = {
+            "text": "test",
+            "segments": [{"start": 0, "end": 1}],
+            "raw_response": None,
+        }
+
+        with (
+            patch("src.services.transcription_queue.get_engine", return_value=mock_engine),
+            patch("src.services.transcription_queue._sanitize_result", side_effect=lambda r: r),
+        ):
+            mgr.submit({
+                "job_id": "no-raw-job",
+                "wav_path": "/tmp/test.wav",
+                "params": {"model": "turbo", "original_filename": "test.wav"},
+            })
+            mgr._queue.join()
+
+        # Проверить что нет файлов *_raw.json
+        assert _test_dir is not None
+        job_dir = os.path.join(_test_dir, "no-raw-job")
+        raw_files = [f for f in os.listdir(job_dir) if f.endswith("_raw.json")]
+        assert len(raw_files) == 0
     finally:
         mgr.shutdown()

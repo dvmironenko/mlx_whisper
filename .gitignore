@@ -1,7 +1,4 @@
 # Allow specs/ subdirectory
-docs/superpowers/
-!docs/superpowers/specs/
-!docs/superpowers/specs/*.md
 .playwright-mcp
 
 # Continue configuration

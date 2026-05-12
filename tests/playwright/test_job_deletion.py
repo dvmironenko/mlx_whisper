@@ -146,9 +146,14 @@ def test_delete_job():
             assert len(job_cards) > 0, "No job cards found"
             print(f"  Found {len(job_cards)} job card(s)")
 
-            delete_btn = page.query_selector(".btn-delete-job")
+            # Find delete button by text content (cancel button also has .btn-delete-job class)
+            delete_btn = None
+            for btn in page.query_selector_all(".btn-delete-job"):
+                if "Удалить" in (btn.inner_text() or ""):
+                    delete_btn = btn
+                    break
             assert delete_btn is not None, "Delete job button not found"
-            print("  [OK] Delete job button (.btn-delete-job) found")
+            print("  [OK] Delete job button (.btn-delete-job with 'Удалить') found")
 
             # Record initial card count
             initial_card_count = len(page.query_selector_all(".job-card"))
@@ -173,7 +178,7 @@ def test_delete_job():
             # Verify modal title
             modal_title = confirm_modal.query_selector("#confirm-title")
             if modal_title:
-                title_text = modal_title.text_content()
+                title_text = modal_title.text_content() or ""
                 print(f"  Modal title: '{title_text}'")
                 assert "Удалить задание?" in title_text, f"Wrong title: {title_text}"
 
@@ -255,20 +260,8 @@ def test_delete_file_from_job():
             page.wait_for_load_state("networkidle")
             page.wait_for_timeout(1000)
 
-            # 4. Set up dialog handler for native confirm()
-            print("5. Setting up dialog handler...")
-            dialog_accepted = False
-
-            def handle_dialog(dialog):
-                nonlocal dialog_accepted
-                print(f"  Dialog message: {dialog.message}")
-                dialog_accepted = True
-                dialog.accept()
-
-            page.on("dialog", handle_dialog)
-
             # 5. Find the job card with file listing
-            print("6. Finding job card with file delete button...")
+            print("5. Finding job card with file delete button...")
             job_cards = page.query_selector_all(".job-card")
             assert len(job_cards) > 0, "No job cards found"
 
@@ -280,17 +273,26 @@ def test_delete_file_from_job():
             initial_file_rows = len(page.query_selector_all(".result-file-row"))
             print(f"  Initial file row count: {initial_file_rows}")
 
-            # 6. Click file delete button (triggers native confirm)
-            print("7. Clicking file delete button...")
+            # 6. Click file delete button (triggers custom createConfirmModal)
+            print("6. Clicking file delete button...")
             file_delete_btn.click()
             page.wait_for_timeout(500)
 
-            # 7. Verify dialog was triggered and accepted
-            print("8. Verifying confirm dialog was handled...")
-            assert dialog_accepted, "Native confirm dialog was not triggered"
-            print("  [OK] Confirm dialog accepted")
+            # 7. Verify custom confirm modal appears (not native confirm)
+            print("7. Verifying confirm modal appears...")
+            page.wait_for_timeout(500)
+            confirm_modal = page.query_selector(".modal-overlay .modal-confirm")
+            assert confirm_modal is not None, "Custom confirm modal not found"
+            print("  [OK] Custom confirm modal present")
 
-            # 8. Wait for file row to be removed from DOM
+            # 8. Click confirm delete button
+            print("8. Clicking confirm delete button...")
+            btn_confirm = confirm_modal.query_selector(".btn-confirm-delete")
+            assert btn_confirm is not None, "Confirm delete button not found"
+            btn_confirm.click()
+            page.wait_for_timeout(1000)
+
+            # 9. Wait for file row to be removed from DOM
             print("9. Verifying file row is removed...")
             page.wait_for_timeout(1000)
 
@@ -301,7 +303,7 @@ def test_delete_file_from_job():
                 f"Expected {expected_count} file rows after deletion, found {len(remaining_file_rows)}"
             print(f"  [OK] File row count: {initial_file_rows} -> {len(remaining_file_rows)} (deleted 1)")
 
-            # 9. Verify notification modal (success) appears
+            # 10. Verify notification modal (success) appears
             print("10. Verifying success notification appears...")
             # The notification modal should appear - click to dismiss
             success_modal = page.query_selector(".modal-overlay")
