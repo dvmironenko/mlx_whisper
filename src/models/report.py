@@ -21,8 +21,9 @@ def load_segments_file(job_path: str) -> Optional[str]:
     Загрузить текст транскрипции из директории job_id.
 
     Ищет в порядке приоритета:
-    1. *_segments.txt — готовый текст
-    2. *_segments.json — извлекает text из каждого сегмента
+    1. {job_id}.txt — отформатированный текст транскрипции
+    2. *_segments.txt — готовый текст
+    3. *_segments.json — извлекает text из каждого сегмента
 
     Parameters
     ----------
@@ -34,6 +35,18 @@ def load_segments_file(job_path: str) -> Optional[str]:
     Optional[str]
         Содержимое файла или None если не найден
     """
+    # 0. Ищем {job_id}.txt (отформатированный текст транскрипции)
+    job_id = os.path.basename(job_path)
+    job_txt = os.path.join(job_path, f"{job_id}.txt")
+    if os.path.isfile(job_txt):
+        try:
+            with open(job_txt, "r", encoding="utf-8") as f:
+                content = f.read()
+                logger.info(f"Loaded job text file: {job_txt}, length: {len(content)} chars")
+                return content
+        except Exception as e:
+            logger.error(f"Failed to load job text file {job_txt}: {e}")
+
     # 1. Ищем *_segments.txt
     segments_file = None
     for filename in os.listdir(job_path):
