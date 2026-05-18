@@ -76,6 +76,44 @@ def load_report_types() -> List[Dict[str, Any]]:
         return []
 
 
+def save_report_prompt(report_type_id: str, prompt: str) -> None:
+    """
+    Сохранить промт для заданного report_type_id в config/reports.json.
+
+    Parameters
+    ----------
+    report_type_id: str
+        ID типа отчета.
+    prompt: str
+        Новый текст промпта.
+
+    Raises
+    ------
+    ValueError
+        Если тип отчета не найден или файл не существует.
+    """
+    path = _find_reports_json()
+    if path is None:
+        raise ValueError("config/reports.json не найден")
+
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    for item in data:
+        if isinstance(item, dict) and item.get("id") == report_type_id:
+            item["prompt"] = prompt
+            break
+    else:
+        raise ValueError(f"Тип отчета '{report_type_id}' не найден")
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    # Обновить кэш
+    global _report_types_cache
+    _report_types_cache = data
+
+
 def get_prompt_for_report_type(report_type_id: str) -> str | None:
     """
     Вернуть промт для заданного report_type_id.

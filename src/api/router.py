@@ -25,11 +25,11 @@ from src.config import (
     SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR,
     MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT,
     logger, log_transcription_result, OMLX_ENABLED, OMLX_BASE_URL,
-    OMLX_MODEL,
+    OMLX_MODEL, DEFAULT_MODEL,
 )
 from src.models.transcription import transcribe_audio
 from src.models.report import load_segments_file, generate_report_via_openai, save_report, generate_report_via_openai_sync
-from src.services.report_types import load_report_types, get_prompt_for_report_type
+from src.services.report_types import load_report_types, get_prompt_for_report_type, save_report_prompt
 from src.models.model_cache import ModelCache
 from src.utils.download import download_from_url, validate_url
 
@@ -143,7 +143,7 @@ async def transcribe_audio_endpoint(
             detail=f"Unsupported audio format. Supported: {', '.join(AUDIO_EXTENSIONS)}"
         )
 
-    if model not in SUPPORTED_MODELS:
+    if mechanism != "vibevoice" and model not in SUPPORTED_MODELS:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported model. Supported: {', '.join(SUPPORTED_MODELS.keys())}"
@@ -151,7 +151,10 @@ async def transcribe_audio_endpoint(
 
     # Resolve defaults
     task_value = os.getenv("DEFAULT_TASK", "transcribe")
-    model_value = os.getenv("DEFAULT_MODEL", "large") if model == "large" else model
+    if mechanism == "vibevoice":
+        model_value = OMLX_MODEL
+    else:
+        model_value = os.getenv("DEFAULT_MODEL", "large") if model == "large" else model
     word_timestamps_value = word_timestamps.lower() == "true"
     if word_timestamps == "false":
         word_timestamps_value = os.getenv("DEFAULT_WORD_TIMESTAMPS", "false").lower() == "true"
@@ -305,9 +308,12 @@ async def transcribe_url_endpoint(
         )
 
     # Обработка параметров
-    model_value = model
-    if model == "large":
-        model_value = DEFAULT_MODEL
+    if mechanism == "vibevoice":
+        model_value = OMLX_MODEL
+    else:
+        model_value = model
+        if model == "large":
+            model_value = DEFAULT_MODEL
 
     word_timestamps_value = word_timestamps.lower() == "true"
     if word_timestamps == "false":
@@ -404,7 +410,7 @@ async def omlx_health():
             "model": OMLX_MODEL,
         }
     try:
-        response = _requests.get(f"{OMLX_BASE_URL}/health", timeout=5)
+        response = _requests.get(f"{OMLX_BASE_URL}/admin/", timeout=5)
         status = "connected" if response.status_code == 200 else "error"
         return {
             "omlx": status,
@@ -598,6 +604,42 @@ async def list_report_types():
     types = load_report_types()
     result = [{"id": t["id"], "name": t["name"]} for t in types]
     return {"types": result}
+
+
+@router.get("/settings")
+async def get_settings():
+    """
+    Вернуть список типов отчетов с их промптами.
+
+    Возвращает {types: [{id, name, prompt}, ...]}.
+    """
+    types = load_report_types()
+    result = [{"id": t["id"], "name": t["name"], "prompt": t.get("prompt", "")} for t in types]
+    return {"types": result}
+
+
+@router.post("/settings")
+async def save_settings(body: dict):
+    """
+    Сохранить изменённый промпт для типа отчета.
+
+    Тело запроса: {"report_type": "summary", "prompt": "новый промпт"}
+    Записывает изменения в config/reports.json.
+    """
+    report_type = body.get("report_type")
+    prompt = body.get("prompt")
+
+    if not report_type or prompt is None:
+        raise HTTPException(status_code=400, detail="report_type и prompt обязательны")
+
+    try:
+        save_report_prompt(report_type, prompt)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка записи: {e}")
+
+    return {"status": "ok"}
 
 
 @router.post("/report/{job_id}")
