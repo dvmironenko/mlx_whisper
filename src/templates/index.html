@@ -18,14 +18,16 @@
                 <p class="app-subtitle">Список заданий транскрипции</p>
             </div>
         </header>
-        <!-- Theme Switcher - in right top corner -->
-        <div class="theme-switch-container" id="themeSwitchContainer" aria-label="Переключить тему">
-            <label class="theme-switch-label" id="themeLabel" for="themeToggle">Светлая</label>
-            <div class="theme-switch-wrapper">
-            <input type="checkbox" id="themeToggle" class="theme-toggle">
-                <span class="theme-switch-track">
-                    <span class="theme-switch-thumb"></span>
-                </span>
+        <!-- Control bar: theme switcher + actions -->
+        <div class="app-controls">
+            <div class="theme-switch-container" id="themeSwitchContainer" aria-label="Переключить тему">
+                <label class="theme-switch-label" id="themeLabel" for="themeToggle">Светлая</label>
+                <div class="theme-switch-wrapper">
+                <input type="checkbox" id="themeToggle" class="theme-toggle">
+                    <span class="theme-switch-track">
+                        <span class="theme-switch-thumb"></span>
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -42,6 +44,10 @@
                     <a href="/uploads" class="btn-new-job">
                         <i class="fas fa-plus"></i>
                         <span>Новое задание</span>
+                    </a>
+                    <a href="/settings" class="btn-new-job">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
                     </a>
                 </div>
 
@@ -537,7 +543,7 @@
             const activeJobs = jobsList.filter(j => j.status === 'queued' || j.status === 'processing');
             if (activeJobs.length === 0) { stopPolling(); return; }
             pollingJobs = new Set(activeJobs.map(j => j.job_id));
-            refreshInterval = setInterval(loadJobs, 3000);
+            refreshInterval = setInterval(loadJobs, 5000);
         }
 
         function stopPolling() {
@@ -774,7 +780,16 @@
             if (job.language) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-language"></i> ${job.language}`; metaEl.appendChild(s); }
             if (job.duration != null) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-clock"></i> ${Math.round(job.duration)}s`; metaEl.appendChild(s); }
             if (job.transcription_duration != null) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-stopwatch"></i> ${job.transcription_duration.toFixed(1)}s`; metaEl.appendChild(s); }
-            if (job.word_timestamps) { const s = document.createElement('span'); s.innerHTML = `<i class="fas fa-hashtag"></i> word_timestamps`; metaEl.appendChild(s); }
+            if (job.created_at) {
+                const date = new Date(job.created_at);
+                const formatted = date.toLocaleString('ru-RU', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                });
+                const s = document.createElement('span');
+                s.innerHTML = `<i class="fas fa-calendar"></i> ${formatted}`;
+                metaEl.appendChild(s);
+            }
 
             const jobIdSpan = document.createElement('span');
             jobIdSpan.style.cursor = 'pointer';

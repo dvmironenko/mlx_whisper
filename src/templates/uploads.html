@@ -43,6 +43,10 @@
                         <i class="fas fa-home"></i>
                         <span>Список заданий</span>
                     </a>
+                    <a href="/settings" class="btn-new-job">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                    </a>
                 </div>
 
                 <form id="uploadForm" enctype="multipart/form-data" class="upload-form">
@@ -185,23 +189,6 @@
                         </button>
                     </div>
                 </form>
-            <div class="result-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-file-alt"></i> Результат</h2>
-                    <div class="section-description">
-                        <p>Результат транскрибации будет отображаться здесь</p>
-                    </div>
-                </div>
-
-                <div id="result" class="result-content">
-                    <div class="empty-state">
-                        <i class="fas fa-file-medical"></i>
-                        <h3>Загрузите файл для транскрибации</h3>
-                        <p>Выберите аудиофайл и нажмите "Транскрибировать" для начала процесса</p>
-                    </div>
-                </div>
-            </div>
-
             </div>
 
         </main>
@@ -391,7 +378,6 @@
             clearError();
 
             const formData = new FormData(this);
-            const resultDiv = document.getElementById('result');
             const submitButton = document.getElementById('submitButton');
 
             // Показываем состояние загрузки
@@ -400,14 +386,6 @@
             submitButton.disabled = true;
 
             try {
-                resultDiv.innerHTML = `
-                    <div class="loading-state">
-                        <i class="fas fa-cog fa-spin"></i>
-                        <h3>Обработка файла</h3>
-                        <p>Пожалуйста, подождите...</p>
-                    </div>
-                `;
-
                 const response = await fetch('/api/v1/transcribe', {
                     method: 'POST',
                     body: formData
@@ -415,210 +393,27 @@
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    if (data.status === "queued" || data.status === "processing") {
-                        window.location.href = '/?redirect=' + data.job_id;
-                        return;
-                    }
+                if (response.ok && (data.status === "queued" || data.status === "processing")) {
+                    window.location.href = '/?redirect=' + data.job_id;
+                    return;
+                }
 
-                    if (data.status === "completed" && data.text) {
-                        let modelName = data.model || 'Неизвестная модель';
-                        const modelNames = { 'tiny':'Tiny','base':'Base','small':'Small','medium':'Medium','large':'Large','turbo':'Turbo' };
-                        if (typeof modelName === 'string' && modelName.includes('/')) {
-                            modelName = modelName.split('/').pop().replace('whisper-', '');
-                        }
-                        const readableModelName = modelNames[modelName] || modelName;
-                        const originalFilename = document.getElementById('audioFile').files[0]?.name || 'Неизвестно';
+                if (response.ok && data.status === "completed" && data.text) {
+                    // Синхронное завершение — редирект на index.html для просмотра
+                    window.location.href = '/?redirect=' + data.job_id;
+                    return;
+                }
 
-                        resultDiv.innerHTML = `
-                            <div class="result-box">
-                                <h3><i class="fas fa-check-circle"></i> Распознанный текст</h3>
-                                <div class="text-content"><p>${data.text}</p></div>
-                                <div class="result-actions">
-                                    <button onclick="copyToClipboard()" class="action-button secondary"><i class="fas fa-copy"></i> Копировать</button>
-                                </div>
-                                <div class="result-details">
-                                    <div class="detail-grid">
-                                        <div class="detail-item"><i class="fas fa-file"></i><span><strong>Файл:</strong> ${originalFilename}</span></div>
-                                        <div class="detail-item"><i class="fas fa-id-badge"></i><span><strong>ID задания:</strong> ${data.job_id}</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        window.downloadData = { text: data.text, language: data.language, model: modelName, segments: data.segments || [], originalFilename };
-                        return;
-                    }
-                } else {
-                    resultDiv.innerHTML = `<div class="error-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Ошибка обработки</h3>
-                        <p>${data.error}</p>
-                    </div>`;
+                if (!response.ok) {
+                    showError(data.error || 'Ошибка обработки');
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Ошибка соединения</h3>
-                    <p>${error.message}</p>
-                </div>`;
+                showError('Ошибка соединения: ' + error.message);
             } finally {
                 submitButton.innerHTML = originalText;
                 submitButton.disabled = false;
             }
         });
-
-        function copyToClipboard() {
-            if (window.downloadData && window.downloadData.text) {
-                const text = window.downloadData.text;
-
-                // Современный Clipboard API
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text)
-                        .then(() => alert('Текст скопирован!'))
-                        .catch(err => {
-                            console.log('Clipboard API not available, using fallback:', err);
-                            copyToClipboardFallback(text);
-                        });
-                } else {
-                    // Fallback для старых браузеров (Firefox Linux)
-                    copyToClipboardFallback(text);
-                }
-            } else {
-                console.error('downloadData is not defined');
-                alert('Ошибка: данные для копирования не найдены');
-            }
-        }
-
-        // Fallback метод для Firefox и других браузеров
-        function copyToClipboardFallback(text) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-
-            try {
-                const success = document.execCommand('copy');
-                if (success) {
-                    alert('Текст скопирован!');
-                } else {
-                    throw new Error('execCommand failed');
-                }
-            } catch (err) {
-                // Если execCommand не работает, пробуем Selection API
-                try {
-                    const selection = window.getSelection();
-                    if (selection) {
-                        selection.removeAllRanges();
-                        const range = document.createRange();
-                        range.selectNodeContents(textarea);
-                        selection.addRange(range);
-                        const selSuccess = document.execCommand('copy');
-                        if (selSuccess) {
-                            alert('Текст скопирован!');
-                        } else {
-                            throw new Error('Selection API fallback failed');
-                        }
-                    }
-                } catch (e) {
-                    console.error('Fallback copy error:', e);
-                    alert('Ошибка при копировании: ' + err);
-                }
-            } finally {
-                document.body.removeChild(textarea);
-            }
-        }
-
-        function downloadMainText() {
-            if (window.downloadData) {
-                const blob = new Blob([window.downloadData.text], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-
-                // Use the original filename but change extension to .txt
-                let fileName = 'transcription.txt';
-                if (window.downloadData.originalFilename) {
-                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
-                    fileName = `${baseName}.txt`;
-                }
-
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            } else {
-                console.error('downloadData is not defined');
-                alert('Ошибка: данные для скачивания не найдены');
-            }
-        }
-
-        function downloadSegments() {
-            if (window.downloadData && window.downloadData.segments && window.downloadData.segments.length > 0) {
-                let segmentsContent = '--- Сегменты с временным кодом ---\n';
-                window.downloadData.segments.forEach(segment => {
-                    segmentsContent += `[${formatTime(segment.start)} - ${formatTime(segment.end)}] ${segment.text}\n`;
-                });
-
-                const blob = new Blob([segmentsContent], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-
-                // Use the original filename but change extension to _segments.txt
-                let fileName = 'transcription_segments.txt';
-                if (window.downloadData.originalFilename) {
-                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
-                    fileName = `${baseName}_segments.txt`;
-                }
-
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            } else {
-                console.error('No segments data available');
-                alert('Ошибка: данные о сегментах отсутствуют');
-            }
-        }
-
-        function downloadText() {
-            if (window.downloadData) {
-                let textContent = window.downloadData.text;
-
-                // If segments are available, include them in the download
-                if (window.downloadData.segments && window.downloadData.segments.length > 0) {
-                    textContent += '\n\n--- Сегменты с временным кодом ---\n';
-                    window.downloadData.segments.forEach(segment => {
-                        textContent += `[${formatTime(segment.start)} - ${formatTime(segment.end)}] ${segment.text}\n`;
-                    });
-                }
-
-                const blob = new Blob([textContent], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-
-                // Use the original filename but change extension to .txt
-                let fileName = 'transcription.txt';
-                if (window.downloadData.originalFilename) {
-                    const baseName = window.downloadData.originalFilename.replace(/\.[^/.]+$/, "");
-                    fileName = `${baseName}.txt`;
-                }
-
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            } else {
-                console.error('downloadData is not defined');
-                alert('Ошибка: данные для скачивания не найдены');
-            }
-        }
 
         // Theme switcher initialization
         const themeToggle = document.getElementById('themeToggle');
@@ -829,13 +624,6 @@
 
         // Initialize mechanism UI (expand for Whisper, collapse for VibeVoice)
         updateMechanismUI();
-
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            const ms = Math.floor((seconds % 1) * 1000);
-            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
-        }
     </script>
 </body>
 </html>

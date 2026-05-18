@@ -88,6 +88,12 @@ async def uploads_page(request: Request):
     return templates.TemplateResponse("uploads.html", {"request": request})
 
 
+@app.get("/settings", include_in_schema=False)
+async def settings_page(request: Request):
+    """Settings endpoint with settings interface."""
+    return templates.TemplateResponse("settings.html", {"request": request})
+
+
 if __name__ == "__main__":
     import uvicorn
 
