@@ -114,17 +114,18 @@
 
         let originalPrompts = {}; // {id: prompt} — для сравнения
         let selectedOriginal = null; // оригинальный промпт выбранного отчета
+        let reportTypesData = null; // данные отчетов для хендлера
 
         // Загрузить отчеты
         try {
             const resp = await fetch('/api/v1/settings');
-            const data = await resp.json();
-            if (!data.types || data.types.length === 0) {
+            reportTypesData = await resp.json();
+            if (!reportTypesData.types || reportTypesData.types.length === 0) {
                 select.innerHTML = '<option value="" disabled selected>Нет типов отчетов</option>';
                 return;
             }
             select.innerHTML = '';
-            data.types.forEach(function(t) {
+            reportTypesData.types.forEach(function(t) {
                 const opt = document.createElement('option');
                 opt.value = t.id;
                 opt.textContent = t.name;
@@ -140,7 +141,7 @@
         select.addEventListener('change', function() {
             const id = this.value;
             if (!id) return;
-            const type = data.types.find(t => t.id === id);
+            const type = reportTypesData.types.find(t => t.id === id);
             if (type) {
                 nameLabel.textContent = type.name;
             }
@@ -151,6 +152,12 @@
 
         // При ручном редактировании промпта
         textarea.addEventListener('input', checkChanged);
+
+        // Автовыбор первого отчета
+        if (!reportTypesData || !reportTypesData.types || reportTypesData.types.length === 0) return;
+        const firstId = reportTypesData.types[0].id;
+        select.value = firstId;
+        select.dispatchEvent(new Event('change'));
 
         function checkChanged() {
             saveBtn.disabled = (textarea.value === selectedOriginal);
