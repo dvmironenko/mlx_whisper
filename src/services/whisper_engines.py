@@ -130,14 +130,42 @@ class WhisperEngine(TranscriptionEngine):
         except (TypeError, ValueError):
             logger.warning("Failed to serialize Whisper raw response")
 
+        # Форматируем текст из сегментов: [MM:SS]: Текст
+        segments = result.get("segments")
+        if not isinstance(segments, list):
+            segments = []
+        formatted_text = _build_formatted_text_from_segments(segments)
+
         # Normalize to unified format
         return {
             "segments": result.get("segments", []),
-            "text": result.get("text", ""),
+            "text": formatted_text,
             "speaker_detected": False,
             "transcription_duration": round(transcribe_duration, 2),
             "raw_response": raw_json,
         }
+
+
+def _build_formatted_text_from_segments(
+    segments: list[dict],
+    *,
+    include_speaker: bool = False,
+) -> str:
+    """Собрать текст из сегментов в формате [MM:SS]: Текст или [MM:SS] Спикер N : Текст."""
+    lines: list[str] = []
+    for seg in segments:
+        start = seg.get("start", 0)
+        speaker = seg.get("speaker", 0)
+        text = seg.get("text", "").strip()
+        if not text:
+            continue
+        minutes = int(start) // 60
+        seconds = int(start) % 60
+        if include_speaker:
+            lines.append(f"[{minutes:02d}:{seconds:02d}] Спикер {speaker} : {text}")
+        else:
+            lines.append(f"[{minutes:02d}:{seconds:02d}]: {text}")
+    return "\n".join(lines)
 
 
 def get_engine(mechanism: str = "whisper") -> TranscriptionEngine:

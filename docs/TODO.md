@@ -102,7 +102,7 @@
 |--------|--------|----------|
 | VibeVoiceEngine интеграция | ✅ | `VibeVoiceEngine` как механизм транскрипции через oMLX API, параметр `mechanism=vibevoice` |
 | Автоматическое разбиение аудио | ✅ | Разбиение по тишине (librosa), группировка интервалов, лимит 50 мин / 100 MB |
-| Определение спикеров VibeVoice | ✅ | 0 → "Клиент", 1 → "Терапевт", автоматический fallback на текстовый парсинг |
+| Определение спикеров VibeVoice | ✅ | ID спикеров из ответа oMLX, автоматический fallback на текстовый парсинг |
 | Типы отчётов | ✅ | Endpoint `GET /api/v1/report-types`, конфигурация в `src/services/report_types.py` |
 | Кэш моделей — preload/clear/stats | ✅ | Endpoints `POST /cache/preload`, `POST /cache/clear`, `GET /cache/models` |
 | Сохранение raw ответа API | ✅ | `{base_name}_raw.json` для Whisper и VibeVoice, endpoint `GET /files/{filename}/content` |
@@ -118,6 +118,13 @@
 
 - [ ] Добавить тесты с реальными аудиофайлами
 - [ ] Оптимизировать скорость транскрипции для больших файлов
+
+### 2026-05-13
+
+| Задача | Статус | Описание |
+|--------|--------|----------|
+| Формат текстовых файлов | ✅ | Whisper: `[MM:SS]: Текст`, VibeVoice: `[MM:00] Спикер N : Текст` |
+| Сохранение raw ответа | ✅ | `{base_name}_raw.json` для обоих механизмов |
 
 ### Приоритет средний
 

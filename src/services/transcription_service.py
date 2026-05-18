@@ -1,5 +1,6 @@
 """Сервисный слой для очереди транскрипции."""
 
+import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import src.config
@@ -109,10 +110,13 @@ class TranscriptionService:
                         result["text"] = f.read()
 
                 # Read segments JSON
+                # Whisper saves as "segments.json", VibeVoice as "{job_id}_segments.json"
                 segments_path = os.path.join(job_dir, "segments.json")
+                if not os.path.isfile(segments_path):
+                    vibevoice_segments = f"{job_id}_segments.json"
+                    segments_path = os.path.join(job_dir, vibevoice_segments)
                 if os.path.isfile(segments_path):
                     with open(segments_path, "r", encoding="utf-8") as f:
-                        import json
                         data = json.load(f)
                         result["segments"] = data.get("segments", [])
                 else:

@@ -1,6 +1,5 @@
 """Тесты для функций парсинга vibevoice_engine.py."""
 
-import json
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -15,15 +14,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 # =============================================================================
 
 @pytest.fixture
-def parse_func():
-    from src.services.vibevoice_engine import _parse_segments_from_json
-    return _parse_segments_from_json
-
-
-@pytest.fixture
-def raw_parse_func():
-    from src.services.vibevoice_engine import _parse_segments_from_raw_text
-    return _parse_segments_from_raw_text
+def normalize_func():
+    from src.services.vibevoice_engine import _normalize_segments
+    return _normalize_segments
 
 
 @pytest.fixture
@@ -37,14 +30,14 @@ def group_func():
 # =============================================================================
 
 class TestParseSegmentsFromJson:
-    """Тесты _parse_segments_from_json()."""
+    """Тесты _normalize_segments()."""
 
-    def test_parses_valid_json(self, parse_func):
+    def test_parses_valid_json(self, normalize_func):
         segments = [
             {"Start": 0.0, "End": 1.5, "Speaker": 1, "Content": "Привет"},
             {"Start": 1.5, "End": 3.0, "Speaker": 2, "Content": "Пока"},
         ]
-        result = parse_func(json.dumps(segments))
+        result = normalize_func(segments)
 
         assert result is not None
         assert len(result) == 2
@@ -53,54 +46,39 @@ class TestParseSegmentsFromJson:
         assert result[0]["speaker"] == 1
         assert result[0]["text"] == "Привет"
 
-    def test_parses_lowercase_keys(self, parse_func):
+    def test_parses_lowercase_keys(self, normalize_func):
         segments = [
             {"start": 0.0, "end": 1.5, "speaker": 1, "content": "Привет"},
         ]
-        result = parse_func(json.dumps(segments))
+        result = normalize_func(segments)
 
         assert result is not None
         assert result[0]["start"] == 0.0
         assert result[0]["text"] == "Привет"
 
-    def test_returns_none_for_non_array_json(self, parse_func):
-        result = parse_func('{"key": "value"}')
+    def test_returns_none_for_non_array_json(self, normalize_func):
+        result = normalize_func({"key": "value"})
         assert result is None
 
-    def test_returns_none_for_plain_text(self, parse_func):
-        result = parse_func("Просто текст без JSON")
+    def test_returns_none_for_plain_text(self, normalize_func):
+        result = normalize_func("Просто текст без JSON")
         assert result is None
 
-    def test_returns_none_for_empty_list(self, parse_func):
-        result = parse_func("[]")
+    def test_returns_none_for_empty_list(self, normalize_func):
+        result = normalize_func([])
         assert result is None
 
-    def test_handles_json_in_code_block(self, parse_func):
-        raw = "```json\n[{\"Start\": 0.0, \"End\": 1.0, \"Speaker\": 1, \"Content\": \"test\"}]\n```"
-        result = parse_func(raw)
-
-        assert result is not None
-        assert len(result) == 1
-        assert result[0]["text"] == "test"
-
-    def test_handles_json_without_code_block(self, parse_func):
-        raw = "[{\"Start\": 0.0, \"End\": 1.0, \"Speaker\": 1, \"Content\": \"test\"}]"
-        result = parse_func(raw)
-
-        assert result is not None
-        assert len(result) == 1
-
-    def test_skips_non_dict_items(self, parse_func):
+    def test_skips_non_dict_items(self, normalize_func):
         segments = ["string_item", {"Start": 0.0, "End": 1.0, "Speaker": 1, "Content": "valid"}]
-        result = parse_func(json.dumps(segments))
+        result = normalize_func(segments)
 
         assert result is not None
         assert len(result) == 1
         assert result[0]["text"] == "valid"
 
-    def test_default_values_for_missing_keys(self, parse_func):
+    def test_default_values_for_missing_keys(self, normalize_func):
         segments = [{"Content": "test"}]
-        result = parse_func(json.dumps(segments))
+        result = normalize_func(segments)
 
         assert result is not None
         assert result[0]["start"] == 0.0
@@ -108,61 +86,29 @@ class TestParseSegmentsFromJson:
         assert result[0]["speaker"] == 0
         assert result[0]["text"] == "test"
 
-    def test_handles_invalid_json(self, parse_func):
-        result = parse_func("{invalid json[")
-        assert result is None
+    def test_handles_api_dict_response(self, normalize_func):
+        """API возвращает dict с JSON-строкой в поле 'text'."""
+        api_response = {
+            "text": '[{"Start": 0.0, "End": 1.0, "Speaker": 1, "Content": "test"}]',
+            "language": "ru",
+        }
+        result = normalize_func(api_response)
 
-
-# =============================================================================
-# TestParseSegmentsFromRawText
-# =============================================================================
-
-class TestParseSegmentsFromRawText:
-    """Тесты _parse_segments_from_raw_text()."""
-
-    def test_parses_speaker_format(self, raw_parse_func):
-        raw = "[00:01] Speaker 1: Привет\n[00:02] Speaker 2: Пои"
-        result = raw_parse_func(raw)
-
-        assert len(result) == 2
-        assert result[0]["start"] == 1.0
-        assert result[0]["speaker"] == 1
-        assert result[0]["text"] == "Привет"
-        assert result[1]["start"] == 2.0
-        assert result[1]["speaker"] == 2
-        assert result[1]["text"] == "Пои"
-
-    def test_parses_mixed_timestamps(self, raw_parse_func):
-        raw = "[01:30] Speaker 0: Тест\n[02:45] Speaker 3: Ещё текст"
-        result = raw_parse_func(raw)
-
-        assert len(result) == 2
-        assert result[0]["start"] == 90.0  # 1*60 + 30
-        assert result[1]["start"] == 165.0  # 2*60 + 45
-        assert result[1]["speaker"] == 3
-
-    def test_skips_empty_lines(self, raw_parse_func):
-        raw = "\n[00:01] Speaker 1: Текст\n\n"
-        result = raw_parse_func(raw)
-
+        assert result is not None
         assert len(result) == 1
+        assert result[0]["text"] == "test"
 
-    def test_skips_non_matching_lines(self, raw_parse_func):
-        raw = "Some random text\n[00:01] Speaker 1: Valid\nNo match here"
-        result = raw_parse_func(raw)
+    def test_handles_api_dict_with_segments(self, normalize_func):
+        """API возвращает dict с полем 'segments' — игнорируем, парсим 'text'."""
+        api_response = {
+            "text": '[{"Start": 0.0, "End": 2.0, "Speaker": 0, "Content": "hello"}]',
+            "segments": [{"start": 0, "end": 2, "speaker_id": 0, "text": "hello"}],
+        }
+        result = normalize_func(api_response)
 
+        assert result is not None
         assert len(result) == 1
-        assert result[0]["text"] == "Valid"
-
-    def test_empty_string(self, raw_parse_func):
-        result = raw_parse_func("")
-        assert result == []
-
-    def test_end_time_is_zero_for_all(self, raw_parse_func):
-        raw = "[00:01] Speaker 1: Текст"
-        result = raw_parse_func(raw)
-
-        assert result[0]["end"] == 1.0
+        assert result[0]["text"] == "hello"
 
 
 # =============================================================================
@@ -242,7 +188,7 @@ class TestVibeVoiceEngineTranscribe:
             patch("src.services.vibevoice_engine.OMLX_BASE_URL", "http://test"),
         ):
             # Один сегмент, который упадёт при транскрипции
-            mock_split.return_value = [(0, -1, "/tmp/seg.wav")]
+            mock_split.return_value = ([(0, -1, "/tmp/seg.wav")], 16000)
 
             original_transcribe_segment = engine._transcribe_segment
             engine._transcribe_segment = MagicMock(side_effect=RuntimeError("API down"))
@@ -272,7 +218,7 @@ class TestVibeVoiceEngineTranscribe:
             patch("src.services.vibevoice_engine.OMLX_BASE_URL", "http://test"),
         ):
             # Начальный сдвиг 8000 сэмплов = 0.5 сек при 16kHz
-            mock_split.return_value = [(8000, -1, "/tmp/seg.wav")]
+            mock_split.return_value = ([(8000, -1, "/tmp/seg.wav")], 16000)
 
             engine._transcribe_segment = MagicMock(return_value=mock_result)
             result = engine.transcribe("/tmp/test.wav")
@@ -297,7 +243,7 @@ class TestVibeVoiceEngineTranscribe:
             patch("src.services.vibevoice_engine.OMLX_ENABLED", True),
             patch("src.services.vibevoice_engine.OMLX_BASE_URL", "http://test"),
         ):
-            mock_split.return_value = [(0, -1, "/tmp/seg.wav")]
+            mock_split.return_value = ([(0, -1, "/tmp/seg.wav")], 16000)
             engine._transcribe_segment = MagicMock(return_value=mock_result)
 
             result = engine.transcribe("/tmp/test.wav")
@@ -319,7 +265,7 @@ class TestVibeVoiceEngineTranscribe:
             patch("src.services.vibevoice_engine.OMLX_ENABLED", True),
             patch("src.services.vibevoice_engine.OMLX_BASE_URL", "http://test"),
         ):
-            mock_split.return_value = [(0, -1, "/tmp/seg.wav")]
+            mock_split.return_value = ([(0, -1, "/tmp/seg.wav")], 16000)
             engine._transcribe_segment = MagicMock(return_value=mock_result)
 
             result = engine.transcribe("/tmp/test.wav")
@@ -336,7 +282,7 @@ class TestVibeVoiceEngineTranscribe:
             patch("src.services.vibevoice_engine.OMLX_ENABLED", True),
             patch("src.services.vibevoice_engine.OMLX_BASE_URL", "http://test"),
         ):
-            mock_split.return_value = [(0, -1, "/tmp/seg.wav")]
+            mock_split.return_value = ([(0, -1, "/tmp/seg.wav")], 16000)
             engine._transcribe_segment = MagicMock(return_value={
                 "segments": [],
                 "text": "",
@@ -452,11 +398,13 @@ class TestTranscribeSegment:
 
         assert captured_headers["headers"] is None or "Authorization" not in captured_headers["headers"]
 
-    def test_fallback_to_text_parser(self):
+    def test_parses_json_api_response(self):
         from src.services.vibevoice_engine import VibeVoiceEngine
 
         engine = VibeVoiceEngine()
-        mock_response = self._make_mock_response("[00:01] Speaker 1: Hello world")
+        mock_response = self._make_mock_response(
+            '[{"Start": 0.0, "End": 1.0, "Speaker": 1, "Content": "Hello world"}]'
+        )
 
         with (
             patch("builtins.open", MagicMock(return_value=MagicMock())),

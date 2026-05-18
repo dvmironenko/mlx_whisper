@@ -83,7 +83,7 @@ mlx-whisper/
 
 - **`TranscriptionEngine` (ABC)** — определяет единый интерфейс `transcribe(file_path, **params) -> dict`
 - **`WhisperEngine`** — реализация через MLX Whisper, поддержка 6 моделей (tiny/base/small/medium/turbo/large), кэширование моделей в памяти
-- **`VibeVoiceEngine`** — реализация через oMLX HTTP API, автоматическое разбиение длинного аудио по тишине (librosa, порог 40 dB, лимит 50 мин), определение спикеров (0→"Клиент", 1→"Терапевт"), парсинг JSON сегментов (прямой массив, конкатенированные oMLX объекты, code blocks, regex fallback)
+- **`VibeVoiceEngine`** — реализация через oMLX HTTP API, автоматическое разбиение длинного аудио по тишине (librosa, порог 40 dB, лимит 50 мин), определение спикеров (ID из ответа oMLX), парсинг JSON сегментов (прямой массив, конкатенированные oMLX объекты, code blocks, regex fallback)
 
 **Единый формат результата транскрипции:**
 
@@ -158,7 +158,7 @@ mlx-whisper/
 - Группировка интервалов с паузой < 2 секунд
 - Максимальная длительность сегмента: 50 минут
 - Максимальный размер загрузки: 100 MB
-- Определение спикеров: 0 → "Клиент", 1 → "Терапевт"
+- Определение спикеров: ID спикеров из ответа oMLX API
 - Парсинг JSON сегментов из ответа oMLX API
 
 ### Функции веб‑интерфейса
@@ -516,10 +516,16 @@ POST /api/v1/report/{job_id}
 ## Ссылки
 
 1. [MLX-Whisper GitHub](https://github.com/ml-explore/mlx-whisper)
-2. [Фреймворк Apple MLX](https://github.com/ml-explore/mlx)
-3. [Документация FastAPI](https://fastapi.tiangolo.com/)
-4. [Документация FFmpeg](https://ffmpeg.org/documentation.html)
-5. [OpenAI Whisper Paper](https://arxiv.org/abs/2212.04356)
+2. [OpenAI Whisper GitHub](https://github.com/openai/whisper)
+3. [OpenAI API Speech-to-Text](https://developers.openai.com/api/docs/guides/speech-to-text)
+4. [OpenAI Whisper Paper](https://arxiv.org/abs/2212.04356)
+5. [Фреймворк Apple MLX](https://github.com/ml-explore/mlx)
+6. [Документация FastAPI](https://fastapi.tiangolo.com/)
+7. [Документация FFmpeg](https://ffmpeg.org/documentation.html)
+8. [Microsoft VibeVoice GitHub](https://github.com/microsoft/VibeVoice)
+9. [VibeVoice-ASR на Hugging Face](https://huggingface.co/microsoft/VibeVoice-ASR)
+10. [VibeVoice-ASR Technical Report (arXiv)](https://arxiv.org/abs/2601.18184)
+11. [VibeVoice ASR Transformers Docs](https://huggingface.co/docs/transformers/main/en/model_doc/vibevoice_asr)
 
 ## О MLX (Apple Machine Learning Framework)
 

@@ -18,7 +18,7 @@ from src.utils.files import build_job_path
 # Module-level references for worker methods — patchable at module level
 import src.models.transcription as _transcription_module
 from src.api.router import sanitize_result as _sanitize_result
-from src.services.transcription_engines import get_engine
+from src.services.whisper_engines import get_engine
 
 logger = logging.getLogger("mlx_whisper")
 
@@ -214,15 +214,6 @@ class TranscriptionQueueManager:
                 segments_json_path = os.path.join(job_dir, f"{base_name}_segments.json")
                 with open(segments_json_path, "w", encoding="utf-8") as f:
                     json.dump({"segments": segments}, f, ensure_ascii=False, indent=2)
-
-            # Save raw API response
-            raw_response = result.get("raw_response")
-            if raw_response:
-                raw_path = os.path.join(job_dir, f"{base_name}_raw.json")
-                if isinstance(raw_response, dict):
-                    raw_response = json.dumps(raw_response, ensure_ascii=False, indent=2)
-                with open(raw_path, "w", encoding="utf-8") as f:
-                    f.write(raw_response)
 
             # Check if cancelled during processing
             status = self._meta.load(job.job_id)

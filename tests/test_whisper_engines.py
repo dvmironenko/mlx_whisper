@@ -1,4 +1,4 @@
-"""Тесты для src/services/transcription_engines.py."""
+"""Тесты для src/services/whisper_engines.py."""
 
 import os
 import sys
@@ -13,25 +13,25 @@ class TestGetEngine:
     """Тесты factory функции get_engine()."""
 
     def test_default_returns_whisper_engine(self):
-        from src.services.transcription_engines import get_engine
+        from src.services.whisper_engines import get_engine
 
         engine = get_engine()
         assert type(engine).__name__ == "WhisperEngine"
 
     def test_explicit_whisper(self):
-        from src.services.transcription_engines import get_engine
+        from src.services.whisper_engines import get_engine
 
         engine = get_engine("whisper")
         assert type(engine).__name__ == "WhisperEngine"
 
     def test_vibevoice_returns_vibevoice_engine(self):
-        from src.services.transcription_engines import get_engine
+        from src.services.whisper_engines import get_engine
 
         engine = get_engine("vibevoice")
         assert type(engine).__name__ == "VibeVoiceEngine"
 
     def test_unknown_mechanism_returns_whisper(self):
-        from src.services.transcription_engines import get_engine
+        from src.services.whisper_engines import get_engine
 
         engine = get_engine("unknown")
         assert type(engine).__name__ == "WhisperEngine"
@@ -46,7 +46,7 @@ class TestWhisperEngineTranscribe:
         cache = MagicMock()
         cache.get_model.return_value = None
         cache.load_model.return_value = None
-        monkeypatch.setattr("src.services.transcription_engines.ModelCache.get_instance", lambda: cache)
+        monkeypatch.setattr("src.services.whisper_engines.ModelCache.get_instance", lambda: cache)
         return cache
 
     @pytest.fixture
@@ -59,21 +59,21 @@ class TestWhisperEngineTranscribe:
                 {"start": 1.0, "end": 2.0, "text": "мир"},
             ],
         })
-        monkeypatch.setattr("src.services.transcription_engines._mlx_transcribe", mock)
+        monkeypatch.setattr("src.services.whisper_engines._mlx_transcribe", mock)
         return mock
 
     @pytest.fixture
     def mock_audio_duration(self, monkeypatch):
         """Мокаем получение длительности аудио."""
         monkeypatch.setattr(
-            "src.services.transcription_engines.get_audio_duration",
+            "src.services.whisper_engines.get_audio_duration",
             lambda _: 2.0,
         )
 
     def test_returns_normalized_format(
         self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration
     ):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         result = engine.transcribe("/tmp/test.wav")
@@ -82,13 +82,13 @@ class TestWhisperEngineTranscribe:
         assert "text" in result
         assert "speaker_detected" in result
         assert "transcription_duration" in result
-        assert result["text"] == "Привет мир"
+        assert result["text"] == "[00:00]: Привет\n[00:01]: мир"
         assert result["speaker_detected"] is False
         assert isinstance(result["transcription_duration"], float)
         assert isinstance(result["segments"], list)
 
     def test_passes_language_parameter(self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", language="ru")
@@ -98,7 +98,7 @@ class TestWhisperEngineTranscribe:
         assert call_kwargs.kwargs["language"] == "ru"
 
     def test_passes_task_parameter(self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", task="translate")
@@ -107,7 +107,7 @@ class TestWhisperEngineTranscribe:
         assert call_kwargs.kwargs["task"] == "translate"
 
     def test_passes_word_timestamps(self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", word_timestamps=True)
@@ -116,7 +116,7 @@ class TestWhisperEngineTranscribe:
         assert call_kwargs.kwargs["word_timestamps"] is True
 
     def test_passes_initial_prompt(self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", initial_prompt="Контекстный промпт")
@@ -127,7 +127,7 @@ class TestWhisperEngineTranscribe:
     def test_no_speech_threshold_none_not_passed(
         self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration
     ):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav")
@@ -138,7 +138,7 @@ class TestWhisperEngineTranscribe:
     def test_no_speech_threshold_passed_when_set(
         self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration
     ):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", no_speech_threshold=0.6)
@@ -149,7 +149,7 @@ class TestWhisperEngineTranscribe:
     def test_hallucination_silence_threshold_passed(
         self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration
     ):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", hallucination_silence_threshold=0.5)
@@ -160,7 +160,7 @@ class TestWhisperEngineTranscribe:
     def test_condition_on_previous_text_default_true(
         self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration
     ):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav")
@@ -171,7 +171,7 @@ class TestWhisperEngineTranscribe:
     def test_condition_on_previous_text_false(
         self, mock_model_cache, mock_mlx_transcribe, mock_audio_duration
     ):
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", condition_on_previous_text=False)
@@ -202,7 +202,7 @@ class TestWhisperEngineTranscribe:
             duration = time.time() - start
 
             # Call the mocked _mlx_transcribe
-            import src.services.transcription_engines as te
+            import src.services.whisper_engines as te
             raw_result = te._mlx_transcribe(
                 path_or_hf_repo=str(model_dir),
                 audio_path=file_path,
@@ -225,10 +225,10 @@ class TestWhisperEngineTranscribe:
             }
 
         monkeypatch.setattr(
-            "src.services.transcription_engines.WhisperEngine.transcribe", patched_transcribe
+            "src.services.whisper_engines.WhisperEngine.transcribe", patched_transcribe
         )
 
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", model="turbo")
@@ -250,7 +250,7 @@ class TestWhisperEngineTranscribe:
                 cache.load_model(params.get("model", "large"), "mlx-community/whisper-turbo")
             duration = time.time() - start
 
-            import src.services.transcription_engines as te
+            import src.services.whisper_engines as te
             raw_result = te._mlx_transcribe(
                 path_or_hf_repo="mlx-community/whisper-turbo",
                 audio_path=file_path,
@@ -273,10 +273,10 @@ class TestWhisperEngineTranscribe:
             }
 
         monkeypatch.setattr(
-            "src.services.transcription_engines.WhisperEngine.transcribe", patched_transcribe
+            "src.services.whisper_engines.WhisperEngine.transcribe", patched_transcribe
         )
 
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         engine.transcribe("/tmp/test.wav", model="turbo")
@@ -289,11 +289,11 @@ class TestWhisperEngineTranscribe:
     ):
         """Ошибка получения длительности не ломает транскрипцию."""
         monkeypatch.setattr(
-            "src.services.transcription_engines.get_audio_duration",
+            "src.services.whisper_engines.get_audio_duration",
             lambda _: (_ for _ in ()).throw(RuntimeError("ffmpeg error")),
         )
 
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         result = engine.transcribe("/tmp/test.wav")
@@ -306,11 +306,11 @@ class TestWhisperEngineTranscribe:
     ):
         """Ошибка mlx транскрипции пробрасывается вверх."""
         monkeypatch.setattr(
-            "src.services.transcription_engines._mlx_transcribe",
+            "src.services.whisper_engines._mlx_transcribe",
             lambda **kwargs: (_ for _ in ()).throw(RuntimeError("MLX error")),
         )
 
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         with pytest.raises(RuntimeError, match="MLX error"):
@@ -319,11 +319,11 @@ class TestWhisperEngineTranscribe:
     def test_empty_segments_returned(self, mock_model_cache, mock_audio_duration, monkeypatch):
         """Пустые сегменты — пустой список."""
         monkeypatch.setattr(
-            "src.services.transcription_engines._mlx_transcribe",
+            "src.services.whisper_engines._mlx_transcribe",
             lambda **kwargs: {"text": "", "segments": []},
         )
 
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         result = engine.transcribe("/tmp/test.wav")
@@ -337,9 +337,9 @@ class TestTranscribeAudioBackwardCompat:
 
     def test_wraps_whisper_engine(self, monkeypatch):
         mock = MagicMock(return_value={"text": "hello", "segments": [], "transcription_duration": 1.0})
-        monkeypatch.setattr("src.services.transcription_engines.WhisperEngine.transcribe", mock)
+        monkeypatch.setattr("src.services.whisper_engines.WhisperEngine.transcribe", mock)
 
-        from src.services.transcription_engines import transcribe_audio
+        from src.services.whisper_engines import transcribe_audio
 
         transcribe_audio("/tmp/test.wav", language="en")
 
@@ -347,11 +347,11 @@ class TestTranscribeAudioBackwardCompat:
 
     def test_returns_dict(self, monkeypatch):
         monkeypatch.setattr(
-            "src.services.transcription_engines.WhisperEngine.transcribe",
+            "src.services.whisper_engines.WhisperEngine.transcribe",
             lambda self, *a, **k: {"text": "test", "segments": [], "transcription_duration": 1.0},
         )
 
-        from src.services.transcription_engines import transcribe_audio
+        from src.services.whisper_engines import transcribe_audio
 
         result = transcribe_audio("/tmp/test.wav")
         assert isinstance(result, dict)
@@ -370,11 +370,11 @@ class TestWhisperEngineIntegration:
         audio.export(wav_path, format="wav")
 
         monkeypatch.setattr(
-            "src.services.transcription_engines.get_audio_duration",
+            "src.services.whisper_engines.get_audio_duration",
             lambda _: 1.0,
         )
 
-        from src.services.transcription_engines import WhisperEngine
+        from src.services.whisper_engines import WhisperEngine
 
         engine = WhisperEngine()
         result = engine.transcribe(wav_path, language="en", model="tiny")
@@ -398,7 +398,7 @@ class TestClearMemory:
         monkeypatch.setattr("mlx.core.clear_cache", mx_clear)
         monkeypatch.setattr("gc.collect", gc_collect)
 
-        from src.services.transcription_engines import _clear_memory
+        from src.services.whisper_engines import _clear_memory
 
         _clear_memory()
 
