@@ -75,11 +75,12 @@ GET /api/v1/report-status/{job_id}
 2. При завершении (finally блок): убрать `job_id` из `generating_reports` Set
 
 ```python
-# В _start_report_generation():
+# В _start_report_generation() — router.py, функция run():
 def run():
     generating_reports.add(job_id)  # Добавляем при старте
     try:
-        # ... existing report generation logic ...
+        # существующая логика: load_segments_file, generate_report_via_openai_sync, save_report
+        # (router.py:~46-91)
     finally:
         generating_reports.discard(job_id)  # Убираем при завершении
 ```
@@ -114,8 +115,22 @@ pollReportStatuses();
 ### Новая функция `pollReportStatuses()`
 
 ```javascript
+let reportStatusInterval = null;
+
 async function pollReportStatuses() {
-    if (reportingJobs.size === 0) return;
+    if (reportingJobs.size === 0) {
+        // Остановить интервал если нет активных генераций
+        if (reportStatusInterval) {
+            clearInterval(reportStatusInterval);
+            reportStatusInterval = null;
+        }
+        return;
+    }
+
+    // Запустить интервал если ещё не запущен
+    if (!reportStatusInterval) {
+        reportStatusInterval = setInterval(pollReportStatuses, 3000);
+    }
 
     const promises = Array.from(reportingJobs).map(async (jobId) => {
         try {
@@ -143,7 +158,7 @@ async function pollReportStatuses() {
 }
 ```
 
-Интервал опроса: 3 секунды (через `setInterval` внутри `pollReportStatuses`).
+Интервал опроса: 3 секунды. Интервал запускается автоматически при первой генерации и останавливается когда все отчеты сгенерированы.
 
 ### Изменение `createJobCard(job)`
 
