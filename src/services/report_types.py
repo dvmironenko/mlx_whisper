@@ -76,9 +76,9 @@ def load_report_types() -> List[Dict[str, Any]]:
         return []
 
 
-def save_report_prompt(report_type_id: str, prompt: str) -> None:
+def save_report_prompt(report_type_id: str, prompt: str, *, name: str | None = None) -> None:
     """
-    Сохранить промт для заданного report_type_id в config/reports.json.
+    Сохранить промт (и опционально название) для заданного report_type_id.
 
     Parameters
     ----------
@@ -86,6 +86,8 @@ def save_report_prompt(report_type_id: str, prompt: str) -> None:
         ID типа отчета.
     prompt: str
         Новый текст промпта.
+    name: str | None
+        Новое название отчета (опционально).
 
     Raises
     ------
@@ -102,6 +104,8 @@ def save_report_prompt(report_type_id: str, prompt: str) -> None:
     for item in data:
         if isinstance(item, dict) and item.get("id") == report_type_id:
             item["prompt"] = prompt
+            if name is not None:
+                item["name"] = name
             break
     else:
         raise ValueError(f"Тип отчета '{report_type_id}' не найден")

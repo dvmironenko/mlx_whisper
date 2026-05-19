@@ -627,19 +627,20 @@ async def get_settings():
 @router.post("/settings")
 async def save_settings(body: dict):
     """
-    Сохранить изменённый промпт для типа отчета.
+    Сохранить изменённый промпт (и название) для типа отчета.
 
-    Тело запроса: {"report_type": "summary", "prompt": "новый промпт"}
+    Тело запроса: {"report_type": "summary", "name": "новое название", "prompt": "новый промпт"}
     Записывает изменения в config/reports.json.
     """
     report_type = body.get("report_type")
     prompt = body.get("prompt")
+    name = body.get("name")
 
     if not report_type or prompt is None:
         raise HTTPException(status_code=400, detail="report_type и prompt обязательны")
 
     try:
-        save_report_prompt(report_type, prompt)
+        save_report_prompt(report_type, prompt, name=name)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

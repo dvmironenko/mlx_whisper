@@ -19,7 +19,7 @@
             </div>
         </header>
 
-        <!-- Theme Switcher -->
+        <!-- Control bar: theme switcher + actions -->
         <div class="app-controls">
             <div class="theme-switch-container" id="themeSwitchContainer" aria-label="Переключить тему">
                 <label class="theme-switch-label" id="themeLabel" for="themeToggle">Светлая</label>
@@ -30,6 +30,12 @@
                     </span>
                 </div>
             </div>
+            <div class="app-controls-actions">
+                <a href="/" class="btn-new-job">
+                    <i class="fas fa-home"></i>
+                    <span>Список заданий</span>
+                </a>
+            </div>
         </div>
 
         <main class="app-main">
@@ -39,12 +45,6 @@
                 </div>
                 <div class="section-description">
                     <p>Редактирование промптов для типов отчетов</p>
-                </div>
-                <div class="section-actions">
-                    <a href="/" class="btn-new-job">
-                        <i class="fas fa-home"></i>
-                        <span>Список заданий</span>
-                    </a>
                 </div>
 
                 <!-- Settings form -->
@@ -57,8 +57,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="reportNameLabel" class="form-label">Название</label>
-                        <span id="reportNameLabel" class="report-name">—</span>
+                        <label for="reportNameTextarea" class="form-label">Название</label>
+                        <textarea id="reportNameTextarea" class="form-input" rows="2" placeholder="Название отчета..."></textarea>
                     </div>
 
                     <div class="form-group">
@@ -107,13 +107,15 @@
     // Settings logic
     (async function() {
         const select = document.getElementById('reportTypeSelect');
-        const nameLabel = document.getElementById('reportNameLabel');
+        const nameTextarea = document.getElementById('reportNameTextarea');
         const textarea = document.getElementById('promptTextarea');
         const saveBtn = document.getElementById('saveButton');
         const notif = document.getElementById('notificationZone');
 
         let originalPrompts = {}; // {id: prompt} — для сравнения
+        let originalNames = {}; // {id: name} — для сравнения
         let selectedOriginal = null; // оригинальный промпт выбранного отчета
+        let selectedOriginalName = null; // оригинальное название выбранного отчета
         let reportTypesData = null; // данные отчетов для хендлера
 
         // Загрузить отчеты
@@ -130,6 +132,7 @@
                 opt.value = t.id;
                 opt.textContent = t.name;
                 originalPrompts[t.id] = t.prompt || '';
+                originalNames[t.id] = t.name || '';
                 select.appendChild(opt);
             });
         } catch (e) {
@@ -143,15 +146,17 @@
             if (!id) return;
             const type = reportTypesData.types.find(t => t.id === id);
             if (type) {
-                nameLabel.textContent = type.name;
+                nameTextarea.value = type.name;
             }
             textarea.value = originalPrompts[id] || '';
             selectedOriginal = originalPrompts[id] || '';
+            selectedOriginalName = originalNames[id] || '';
             checkChanged();
         });
 
-        // При ручном редактировании промпта
+        // При ручном редактировании промпта или названия
         textarea.addEventListener('input', checkChanged);
+        nameTextarea.addEventListener('input', checkChanged);
 
         // Автовыбор первого отчета
         if (!reportTypesData || !reportTypesData.types || reportTypesData.types.length === 0) return;
@@ -160,13 +165,14 @@
         select.dispatchEvent(new Event('change'));
 
         function checkChanged() {
-            saveBtn.disabled = (textarea.value === selectedOriginal);
+            saveBtn.disabled = (textarea.value === selectedOriginal && nameTextarea.value === selectedOriginalName);
         }
 
         // Сохранить
         saveBtn.addEventListener('click', async function() {
             const id = select.value;
             if (!id) return;
+            const name = nameTextarea.value;
             const prompt = textarea.value;
 
             saveBtn.disabled = true;
@@ -176,17 +182,19 @@
                 const resp = await fetch('/api/v1/settings', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({report_type: id, prompt: prompt})
+                    body: JSON.stringify({report_type: id, name: name, prompt: prompt})
                 });
                 const result = await resp.json();
                 if (!resp.ok) {
                     throw new Error(result.detail || 'Ошибка сохранения');
                 }
                 // Обновить кэш оригиналов
+                originalNames[id] = name;
                 originalPrompts[id] = prompt;
+                selectedOriginalName = name;
                 selectedOriginal = prompt;
                 checkChanged();
-                showNotification('Промпт сохранён', 'success');
+                showNotification('Настройки сохранены', 'success');
             } catch (e) {
                 showNotification(e.message, 'error');
                 checkChanged();
