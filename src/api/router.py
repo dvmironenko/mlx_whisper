@@ -36,6 +36,9 @@ from src.utils.download import download_from_url, validate_url
 # ThreadPoolExecutor для фоновой генерации отчётов
 _report_executor = ThreadPoolExecutor(max_workers=3)
 
+# Трекинг активных генераций отчётов
+generating_reports: set[str] = set()
+
 from src.utils.audio import convert_to_wav, get_audio_duration
 from src.utils.files import generate_unique_filename, delete_file, validate_file_extension, validate_file_size, build_job_path
 import requests as _requests
@@ -50,6 +53,7 @@ def _start_report_generation(job_id: str, report_type: Optional[str] = None):
     job_path = os.path.join(DATA_UPLOADS_DIR, job_id)
 
     def run():
+        generating_reports.add(job_id)
         try:
             logger.info(f"Report generation started for job: {job_id}, type: {report_type}")
 
@@ -87,6 +91,8 @@ def _start_report_generation(job_id: str, report_type: Optional[str] = None):
 
         except Exception as e:
             logger.error(f"Unexpected error in report generation for job {job_id}: {e}")
+        finally:
+            generating_reports.discard(job_id)
 
     _report_executor.submit(run)
 
@@ -660,6 +666,13 @@ async def generate_report(job_id: str, body: Optional[dict] = Body(default=None)
         "job_id": job_id,
         "message": "Генерация отчёта запущена. Проверьте директорию задания для скачивания report.md после завершения."
     }
+
+
+@router.get("/report-status/{job_id}")
+async def get_report_status(job_id: str):
+    """Статус генерации отчёта: generating | idle."""
+    return {"job_id": job_id, "status": "generating" if job_id in generating_reports else "idle"}
+
 
 @router.get("/cache/models")
 async def get_cached_models():

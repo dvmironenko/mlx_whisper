@@ -268,6 +268,8 @@
         let currentConfirmModal = null;
         let refreshInterval = null;
         let pollingJobs = new Set();
+        let reportingJobs = new Set();
+        let reportPollInterval = null;
         let currentResultModal = null;
 
         function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
@@ -548,6 +550,72 @@
             pollingJobs.clear();
         }
 
+        // Независимый поллинг статусов генерации отчётов
+        function startReportPolling() {
+            if (reportPollInterval) return;
+            reportPollInterval = setInterval(pollReportStatuses, 5000);
+        }
+
+        function stopReportPolling() {
+            if (reportPollInterval) { clearInterval(reportPollInterval); reportPollInterval = null; }
+        }
+
+        // Polling статусов генерации отчётов
+        async function pollReportStatuses() {
+            if (reportingJobs.size === 0) { stopReportPolling(); return; }
+            try {
+                const responses = await Promise.all(
+                    [...reportingJobs].map(id =>
+                        fetch(`/api/v1/report-status/${encodeURIComponent(id)}`).then(r => r.json()).catch(() => null)
+                    )
+                );
+                const stillGenerating = new Set();
+                responses.forEach((data, i) => {
+                    const jobId = [...reportingJobs][i];
+                    if (data && data.status === 'generating') {
+                        stillGenerating.add(jobId);
+                    }
+                });
+                reportingJobs = stillGenerating;
+                updateReportBadges();
+                if (reportingJobs.size === 0) { stopReportPolling(); }
+            } catch { /* ignore */ }
+        }
+
+        function updateReportBadges() {
+            document.querySelectorAll('.job-card').forEach(card => {
+                const jobId = card.getAttribute('data-job-id');
+                const isGenerating = reportingJobs.has(jobId);
+                let badge = card.querySelector('.report-status-badge');
+                if (isGenerating) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'report-status-badge';
+                        badge.innerHTML = '<i class="fas fa-file-circle-notch fa-spin"></i> Создание отчета';
+                        const header = card.querySelector('.job-card-header-with-status');
+                        if (header) {
+                            const statusBadge = header.querySelector('.status-badge');
+                            header.insertBefore(badge, statusBadge);
+                        }
+                    }
+                    badge.style.display = 'inline-flex';
+                } else if (badge) {
+                    badge.remove();
+                }
+                const reportBtn = card.querySelector('.btn-report-job');
+                if (reportBtn && isGenerating) reportBtn.disabled = true;
+                else if (reportBtn && !isGenerating) {
+                    // Restore default state: enable if completed, keep select-dependent otherwise
+                    const hasSelect = card.querySelector('select');
+                    if (hasSelect) {
+                        reportBtn.disabled = !hasSelect.value;
+                    } else {
+                        reportBtn.disabled = false;
+                    }
+                }
+            });
+        }
+
         async function loadJobs() {
             if (!refreshInterval) startPolling();
             const container = document.getElementById('jobsCardsContainer');
@@ -574,6 +642,9 @@
                 }
 
                 if (refreshInterval && jobsList.filter(j => j.status === 'queued' || j.status === 'processing').length === 0) { stopPolling(); }
+
+                // Обновить бейджи статусов генерации отчётов
+                pollReportStatuses();
             } catch (error) {
                 console.error('Error loading jobs:', error);
                 container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-triangle"></i><h3>Ошибка загрузки</h3><p>' + escapeHtml(error.message) + '</p></div>';
@@ -700,41 +771,15 @@
                 });
 
                 if (response.ok) {
-                    const notification = createNotificationModal(
-                        'Отчет генерируется',
-                        'Отчет для задания "' + jobId + '" начат генерироваться. Вы сможете скачать его после завершения.',
-                        null
-                    );
-                    if (notification) {
-                        notification.querySelector('.modal-content').classList.add('modal-success');
-                        currentNotificationModal = notification;
-                        document.body.appendChild(notification);
-                        document.addEventListener('keydown', handleNotificationEscape);
-                    }
+                    reportingJobs.add(jobId);
+                    startReportPolling();
+                    updateReportBadges();
                 } else {
                     const data = await response.json();
-                    const errorNotification = createNotificationModal(
-                        'Ошибка генерации',
-                        data.detail || 'Не удалось запустить генерацию отчета',
-                        null
-                    );
-                    if (errorNotification) {
-                        currentNotificationModal = errorNotification;
-                        document.body.appendChild(errorNotification);
-                        document.addEventListener('keydown', handleNotificationEscape);
-                    }
+                    showToast(data.detail || 'Не удалось запустить генерацию отчета');
                 }
             } catch (error) {
-                const errorNotification = createNotificationModal(
-                    'Ошибка соединения',
-                    error.message,
-                    null
-                );
-                if (errorNotification) {
-                    currentNotificationModal = errorNotification;
-                    document.body.appendChild(errorNotification);
-                    document.addEventListener('keydown', handleNotificationEscape);
-                }
+                showToast(error.message);
             }
         }
 
@@ -766,6 +811,17 @@
             statusBadge.innerHTML = `<span class="status-dot"></span> ${STATUS_LABELS[job.status] || job.status}`;
 
             cardHeader.appendChild(fileNameEl);
+
+            // Бейдж статуса генерации отчёта (скрыт по умолчанию)
+            let reportBadge = null;
+            if (job.status === 'completed') {
+                reportBadge = document.createElement('span');
+                reportBadge.className = 'report-status-badge';
+                reportBadge.style.display = 'none';
+                reportBadge.innerHTML = '<i class="fas fa-file-circle-notch fa-spin"></i> Создание отчета';
+                cardHeader.appendChild(reportBadge);
+            }
+
             cardHeader.appendChild(statusBadge);
 
             // Meta line
