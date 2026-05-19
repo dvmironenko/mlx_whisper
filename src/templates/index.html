@@ -576,9 +576,16 @@
                         stillGenerating.add(jobId);
                     }
                 });
+                const hadJobs = reportingJobs.size > 0;
                 reportingJobs = stillGenerating;
                 updateReportBadges();
-                if (reportingJobs.size === 0) { stopReportPolling(); }
+                if (reportingJobs.size === 0) {
+                    if (hadJobs) {
+                        // Все отчёты сгенерированы — обновить карточки, чтобы показать новые файлы
+                        loadJobs();
+                    }
+                    stopReportPolling();
+                }
             } catch { /* ignore */ }
         }
 

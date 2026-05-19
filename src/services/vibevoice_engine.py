@@ -29,6 +29,12 @@ from src.services.whisper_engines import (
 
 logger = logging.getLogger("mlx_whisper")
 
+
+class OMLXModelNotFoundError(Exception):
+    """Модель не найдена в oMLX API."""
+    pass
+
+
 # Константы splitting
 MAX_AUDIO_DURATION_SEC: int = 50 * 60  # 50 минут
 SILENCE_THRESHOLD_DB: int = 40
@@ -261,6 +267,9 @@ class VibeVoiceEngine(TranscriptionEngine):
         for seg_start_samples, _, seg_path in segments_files:
             try:
                 seg_result = self._transcribe_segment(seg_path, language)
+            except OMLXModelNotFoundError:
+                # Модель не найдена — все сегменты упадут с той же ошибкой
+                raise
             except Exception as e:
                 logger.error(f"Segment transcription failed: {e}")
                 continue
@@ -305,6 +314,19 @@ class VibeVoiceEngine(TranscriptionEngine):
             response = _requests.post(
                 url, files=files, data=data, headers=headers, timeout=(10, 3600)
             )
+
+            # Явная обработка 404 not_found_error от OMLX — до raise_for_status()
+            if response.status_code == 404:
+                try:
+                    error_body = response.json()
+                    if error_body.get("error", {}).get("type") == "not_found_error":
+                        raise OMLXModelNotFoundError(
+                            f"Модель '{OMLX_MODEL}' не найдена в oMLX API. "
+                            f"Проверьте конфигурацию OMLX_MODEL."
+                        )
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+
             response.raise_for_status()
 
         raw_text = response.text
