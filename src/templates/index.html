@@ -231,7 +231,6 @@
         let pollingJobs = new Set();
         let reportingJobs = new Set();
         let reportPollInterval = null;
-        let currentResultModal = null;
 
         function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
@@ -382,10 +381,6 @@
                 closeConfirmModal();
             }
         }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && currentResultModal) closeResultModal();
-        });
 
         // ====================
         // Notification Modal
@@ -1111,82 +1106,6 @@
         });
 
         window.addEventListener('beforeunload', stopPolling);
-
-        // ===== Result Modal =====
-        function openResultModal(jobId) {
-            const loadingModal = document.createElement('div');
-            loadingModal.className = 'result-modal';
-            loadingModal.innerHTML = `<div class="result-modal-content"><div class="result-modal-body" style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--accent-color);"></i><p style="margin-top:12px;color:var(--text-secondary);">Загрузка результата...</p></div></div>`;
-            currentResultModal = loadingModal;
-            document.body.appendChild(loadingModal);
-
-            fetch(`/api/v1/jobs/${encodeURIComponent(jobId)}`)
-                .then(r => r.json())
-                .then(data => { renderResultModal(data); })
-                .catch(err => { closeResultModal(); });
-        }
-
-        function renderResultModal(job) {
-            closeResultModal();
-            const modal = document.createElement('div');
-            modal.className = 'result-modal';
-            const content = document.createElement('div');
-            content.className = 'result-modal-content';
-
-            const header = document.createElement('div');
-            header.className = 'result-modal-header';
-            header.innerHTML = `<h3><i class="fas fa-file-alt"></i> ${escapeHtml(job.original_filename || job.job_id)}</h3>`;
-            const closeBtnHeader = document.createElement('button');
-            closeBtnHeader.className = 'result-modal-close';
-            closeBtnHeader.textContent = '×';
-            closeBtnHeader.onclick = closeResultModal;
-            header.appendChild(closeBtnHeader);
-            content.appendChild(header);
-
-            const body = document.createElement('div');
-            body.className = 'result-modal-body';
-
-            if (job.text) {
-                const textEl = document.createElement('div');
-                textEl.className = 'result-text';
-                textEl.textContent = job.text;
-                body.appendChild(textEl);
-
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'btn-view-result';
-                copyBtn.style.marginBottom = '16px';
-                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Копировать текст';
-                copyBtn.onclick = () => { navigator.clipboard.writeText(job.text).then(() => showToast('Текст скопирован')); };
-                body.appendChild(copyBtn);
-            }
-
-            if (job.error) {
-                const errEl = document.createElement('div');
-                errEl.className = 'result-error';
-                errEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(job.error)}`;
-                body.appendChild(errEl);
-            }
-
-            content.appendChild(body);
-
-            const footer = document.createElement('div');
-            footer.className = 'result-modal-footer';
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'btn-view-result';
-            closeBtn.textContent = 'Закрыть';
-            closeBtn.onclick = closeResultModal;
-            footer.appendChild(closeBtn);
-            content.appendChild(footer);
-
-            modal.appendChild(content);
-            currentResultModal = modal;
-            modal.onclick = (e) => { if (e.target === modal) closeResultModal(); };
-            document.body.appendChild(modal);
-        }
-
-        function closeResultModal() {
-            if (currentResultModal) { currentResultModal.remove(); currentResultModal = null; }
-        }
 
         // Загрузка типов отчетов при загрузке страницы
         let reportTypes = [];
