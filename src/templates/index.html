@@ -867,7 +867,15 @@
                         viewBtn.className = 'btn-view-file';
                         viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
                         viewBtn.title = 'Просмотр';
-                        viewBtn.onclick = () => viewFileContent(job.job_id, fileName);
+                        viewBtn.onclick = async () => {
+                            try {
+                                const r = await fetch('/api/v1/files/' + encodeURIComponent(fileName) + '/content');
+                                const text = await r.text();
+                                showTextView(fileName, text);
+                            } catch (e) {
+                                alert('Ошибка загрузки: ' + e.message);
+                            }
+                        };
                         btns.appendChild(viewBtn);
                     }
 
@@ -914,7 +922,15 @@
 
             if (job.status === 'completed') {
                 const v = document.createElement('button'); v.className = 'btn-view-result'; v.innerHTML = '<i class="fas fa-eye"></i> Результат';
-                v.onclick = () => openResultModal(job.job_id);
+                v.onclick = async () => {
+                    try {
+                        const r = await fetch('/api/v1/jobs/' + encodeURIComponent(job.job_id));
+                        const jobData = await r.json();
+                        showTextView(jobData.original_filename || job.job_id, jobData.text || 'Нет данных');
+                    } catch (e) {
+                        showToast('Ошибка загрузки результата');
+                    }
+                };
                 actionsEl.appendChild(v);
             }
             if (job.status === 'queued' || job.status === 'processing') {
