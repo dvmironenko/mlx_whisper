@@ -2610,3 +2610,4 @@ class MarkdownWYSIWYG {
         this.redoStack = null;
     }
 }
+window.MarkdownWYSIWYG = MarkdownWYSIWYG;
