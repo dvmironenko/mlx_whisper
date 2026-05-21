@@ -124,14 +124,15 @@
         let reportTypesData = null; // данные отчетов для хендлера
 
         function showToast(msg, type) {
-            notif.textContent = msg;
+            notif.removeAttribute('style');
             notif.style.display = 'block';
+            notif.textContent = msg;
             notif.style.color = type === 'success' ? 'var(--success-color)' : 'var(--error-color)';
             notif.style.marginTop = '16px';
             notif.style.padding = '8px 12px';
             notif.style.borderRadius = '6px';
             notif.style.border = `1px solid ${type === 'success' ? 'var(--success-color)' : 'var(--error-color)'}`;
-            setTimeout(function() { notif.style.display = 'none'; }, 3000);
+            setTimeout(function() { notif.removeAttribute('style'); notif.style.display = 'none'; }, 3000);
         }
 
         refreshBtn.addEventListener('click', async function() {
