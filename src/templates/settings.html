@@ -92,6 +92,29 @@
         </main>
     </div>
 
+    <!-- WYSIWYG Editor Modal -->
+    <div id="wysiwygModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
+            <div class="modal-header">
+                <h3>Редактирование промта</h3>
+                <button type="button" class="modal-close" id="wysiwygModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="wysiwyg-editor-container" class="wysiwyg-modal-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="wysiwygSaveBtn" class="submit-button">
+                    <i class="fas fa-save"></i>
+                    <span>Сохранить</span>
+                </button>
+                <button type="button" id="wysiwygCancelBtn" class="btn-cancel-delete">
+                    <i class="fas fa-times"></i>
+                    <span>Отменить</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
     // Theme switcher
     (function() {
@@ -124,6 +147,87 @@
         const saveBtn = document.getElementById('saveButton');
         const refreshBtn = document.getElementById('refreshButton');
         const notif = document.getElementById('notificationZone');
+
+        // WYSIWYG Editor
+        let editorInstance = null;
+
+        function openPromptEditor() {
+            const modal = document.getElementById('wysiwygModal');
+            if (!modal) return;
+
+            // Destroy previous instance if exists
+            if (editorInstance) {
+                editorInstance.destroy();
+                editorInstance = null;
+            }
+
+            // Initialize editor
+            editorInstance = new MarkdownWYSIWYG('wysiwyg-editor-container', {
+                initialValue: textarea.value,
+                showToolbar: true,
+                initialMode: 'wysiwyg',
+            });
+
+            // Make textarea readonly
+            textarea.readOnly = true;
+
+            // Show modal
+            modal.style.display = 'flex';
+        }
+
+        function savePromptEditor() {
+            if (!editorInstance) return;
+
+            const markdown = editorInstance.getValue();
+            textarea.value = markdown;
+            textarea.readOnly = false;
+            textarea.dispatchEvent(new Event('input')); // triggers checkChanged()
+
+            closePromptEditor();
+        }
+
+        function cancelPromptEditor() {
+            if (!editorInstance) return;
+
+            textarea.readOnly = false;
+            closePromptEditor();
+        }
+
+        function closePromptEditor() {
+            const modal = document.getElementById('wysiwygModal');
+            if (modal) modal.style.display = 'none';
+            if (editorInstance) {
+                editorInstance.destroy();
+                editorInstance = null;
+            }
+        }
+
+        // Open editor on button click
+        document.getElementById('editPromptBtn').addEventListener('click', openPromptEditor);
+
+        // Save button
+        document.getElementById('wysiwygSaveBtn').addEventListener('click', savePromptEditor);
+
+        // Cancel button
+        document.getElementById('wysiwygCancelBtn').addEventListener('click', cancelPromptEditor);
+
+        // Close button (X)
+        document.getElementById('wysiwygModalClose').addEventListener('click', cancelPromptEditor);
+
+        // Close on overlay click
+        document.getElementById('wysiwygModal').addEventListener('click', function(e) {
+            if (e.target === this) cancelPromptEditor();
+        });
+
+        // Close on ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('wysiwygModal');
+                if (modal && modal.style.display !== 'none') {
+                    cancelPromptEditor();
+                }
+            }
+        });
 
         let originalPrompts = {}; // {id: prompt} — для сравнения
         let originalNames = {}; // {id: name} — для сравнения
