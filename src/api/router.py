@@ -25,11 +25,11 @@ from src.config import (
     SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR,
     MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT,
     logger, log_transcription_result, OMLX_ENABLED, OMLX_BASE_URL,
-    OMLX_MODEL, DEFAULT_MODEL,
+    OMLX_MODEL, DEFAULT_MODEL, reload_dotenv,
 )
 from src.models.transcription import transcribe_audio
 from src.models.report import load_segments_file, generate_report_via_openai, save_report, generate_report_via_openai_sync
-from src.services.report_types import load_report_types, get_prompt_for_report_type, save_report_prompt
+from src.services.report_types import load_report_types, get_prompt_for_report_type, save_report_prompt, clear_cache
 from src.models.model_cache import ModelCache
 from src.utils.download import download_from_url, validate_url
 
@@ -647,6 +647,49 @@ async def save_settings(body: dict):
         raise HTTPException(status_code=500, detail=f"Ошибка записи: {e}")
 
     return {"status": "ok"}
+
+
+@router.post("/settings/refresh")
+async def refresh_settings():
+    """
+    Перечитать .env, сбросить кэш report_types, вернуть свежие данные.
+
+    Возвращает {success: true, config: {...}, settings: [...]}
+    """
+    try:
+        reload_dotenv()
+        clear_cache()
+
+        # Собрать свежие config
+        from src.config import (
+            INITIAL_PROMPT, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION,
+            DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD,
+            OMLX_ENABLED, OMLX_BASE_URL, OMLX_MODEL,
+        )
+        config = {
+            "initial_prompt": INITIAL_PROMPT,
+            "remove_silence": REMOVE_SILENCE,
+            "silence_threshold": SILENCE_THRESHOLD,
+            "silence_duration": SILENCE_DURATION,
+            "default_language": DEFAULT_LANGUAGE,
+            "no_speech_threshold": NO_SPEECH_THRESHOLD,
+            "hallucination_silence_threshold": HALLUCINATION_SILENCE_THRESHOLD,
+            "allowed_url_domains": ALLOWED_URL_DOMAINS,
+            "max_download_size_mb": MAX_DOWNLOAD_SIZE // (1024 * 1024),
+            "download_timeout": DOWNLOAD_TIMEOUT,
+            "omlx_enabled": OMLX_ENABLED,
+            "omlx_base_url": OMLX_BASE_URL,
+            "omlx_model": OMLX_MODEL,
+        }
+
+        # Собрать свежие settings
+        types = load_report_types()
+        settings = [{"id": t["id"], "name": t["name"], "prompt": t.get("prompt", "")} for t in types]
+
+        return {"success": True, "config": config, "settings": settings}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка обновления: {e}")
 
 
 @router.post("/report/{job_id}")
