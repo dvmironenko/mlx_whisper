@@ -1745,3 +1745,30 @@ body {
 .report-type-select { display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background-color:var(--card-bg);color:var(--text-primary);border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;cursor:pointer;transition:var(--transition);min-width:160px; }
 .report-type-select:hover { border-color:var(--accent-color); }
 .report-type-select option { background-color:var(--card-bg);color:var(--text-primary); }
+
+/* ===== WYSIWYG Editor ===== */
+.btn-edit-prompt {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: 'Source Sans 3', sans-serif;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.btn-edit-prompt:hover {
+    opacity: 0.9;
+}
+
+.wysiwyg-modal-container {
+    flex: 1;
+    overflow: auto;
+    min-height: 400px;
+}
