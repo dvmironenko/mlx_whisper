@@ -1772,3 +1772,46 @@ body {
     overflow: auto;
     min-height: 400px;
 }
+
+/* WYSIWYG Editor dark theme overrides */
+[data-theme="dark"] .md-editor-content-area,
+[data-theme="dark"] .md-wysiwyg-editor-wrapper [contenteditable] {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .md-toolbar {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .md-toolbar-button {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .md-toolbar-button:hover {
+    background-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .md-tab-button {
+    color: var(--text-secondary) !important;
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] .md-tab-button.md-active {
+    color: var(--accent-color) !important;
+    border-bottom-color: var(--accent-color) !important;
+}
+
+[data-theme="dark"] .md-line-numbers {
+    background-color: var(--card-bg) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] textarea.md-markdown-area {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
