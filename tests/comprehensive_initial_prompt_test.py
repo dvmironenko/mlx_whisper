@@ -1,5 +1,5 @@
 """
-Comprehensive test for the initial_prompt parameter in MLX-Whisper API.
+Comprehensive test for the initial_prompt parameter in MLX-Transcriber API.
 This verifies that the parameter works correctly through the complete pipeline.
 """
 import sys

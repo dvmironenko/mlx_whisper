@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="MLX-Whisper REST API",
+    title="MLX-Transcriber REST API",
     description="REST API for audio transcription using Apple's optimized Whisper model",
     version="1.0.0",
     lifespan=lifespan,
@@ -97,7 +97,7 @@ async def settings_page(request: Request):
 if __name__ == "__main__":
     import uvicorn
 
-    logger.info(f"Starting MLX-Whisper REST API on http://{HOST}:{PORT}")
+    logger.info(f"Starting MLX-Transcriber REST API on http://{HOST}:{PORT}")
     uvicorn.run(
         "main:app",
         host=HOST,

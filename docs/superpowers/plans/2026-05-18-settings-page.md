@@ -155,7 +155,7 @@ async def settings_page(request: Request):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MLX-Whisper Настройки</title>
+    <title>MLX-Transcriber Настройки</title>
     <link rel="stylesheet" href="/static/new_style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -165,7 +165,7 @@ async def settings_page(request: Request):
         <header class="app-header">
             <div class="header-content">
                 <h1 class="app-title">
-                    <i class="fas fa-microphone-alt"></i> MLX-Whisper
+                    <i class="fas fa-microphone-alt"></i> MLX-Transcriber
                 </h1>
                 <p class="app-subtitle">Настройки отчетов</p>
             </div>

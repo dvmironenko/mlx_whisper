@@ -1,4 +1,4 @@
-/* src/static/new_style.css - Light/Dark theme for MLX-Whisper */
+/* src/static/new_style.css - Light/Dark theme for MLX-Transcriber */
 :root {
     /* Minimalist color palette - muted tones */
     --primary-color: #2d3748;
@@ -1507,6 +1507,10 @@ body {
     width: auto;
 }
 
+.modal-header .submit-button {
+    width: auto;
+}
+
 .btn-modal-close {
     background-color: var(--primary-color);
     color: white;
@@ -1776,6 +1780,15 @@ body {
     flex: 1;
     overflow: auto;
     min-height: 400px;
+}
+
+#wysiwygModal .modal-body {
+    padding-top: 2px;
+}
+
+#wysiwygModal .md-toolbar {
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 /* WYSIWYG Editor dark theme overrides */

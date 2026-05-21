@@ -1,5 +1,5 @@
 """
-Playwright test for the "/" endpoint of MLX-Whisper API.
+Playwright test for the "/" endpoint of MLX-Transcriber API.
 This test verifies that the web interface loads correctly and contains expected elements.
 """
 import subprocess
@@ -35,12 +35,12 @@ def test_root_endpoint():
             page.goto("http://localhost:8801/")
 
             title = page.title()
-            assert "MLX-Whisper" in title
+            assert "MLX-Transcriber" in title
 
             header = page.query_selector("h1")
             assert header is not None
             header_text = header.text_content()
-            assert "MLX-Whisper" in header_text
+            assert "MLX-Transcriber" in header_text
 
             # Jobs list page elements
             jobs_section = page.query_selector("#jobsSection")

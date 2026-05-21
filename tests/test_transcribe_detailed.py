@@ -1,5 +1,5 @@
 """
-Тест endpoint'а /api/v1/transcribe для MLX-Whisper API.
+Тест endpoint'а /api/v1/transcribe для MLX-Transcriber API.
 Этот тест проверяет корректную работу endpoint'а транскрибации аудио.
 """
 
@@ -13,11 +13,11 @@ import json
 def test_transcribe_endpoint():
     """Тест endpoint'а /api/v1/transcribe с проверкой работы."""
 
-    print("Тестирование endpoint'а /api/v1/transcribe MLX-Whisper API")
+    print("Тестирование endpoint'а /api/v1/transcribe MLX-Transcriber API")
     print("=" * 65)
 
     # Запуск сервера в подпроцессе
-    print("Запуск сервера MLX-Whisper...")
+    print("Запуск сервера MLX-Transcriber...")
 
     # Запуск FastAPI сервера в фоне
     server_process = subprocess.Popen([

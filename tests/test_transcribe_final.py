@@ -1,5 +1,5 @@
 """
-Финальный тест endpoint'а /api/v1/transcribe для MLX-Whisper API.
+Финальный тест endpoint'а /api/v1/transcribe для MLX-Transcriber API.
 """
 
 import subprocess
@@ -12,11 +12,11 @@ import json
 def test_transcribe_endpoint_final():
     """Финальный тест endpoint'а /api/v1/transcribe."""
 
-    print("Финальное тестирование endpoint'а /api/v1/transcribe MLX-Whisper API")
+    print("Финальное тестирование endpoint'а /api/v1/transcribe MLX-Transcriber API")
     print("=" * 70)
 
     # Запуск сервера в подпроцессе
-    print("Запуск сервера MLX-Whisper...")
+    print("Запуск сервера MLX-Transcriber...")
 
     # Запуск FastAPI сервера в фоне
     server_process = subprocess.Popen([

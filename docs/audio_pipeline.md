@@ -1,4 +1,4 @@
-# Аудио пайплайн MLX-Whisper
+# Аудио пайплайн MLX-Transcriber
 
 Документ описывает полный цикл обработки аудиофайла — от загрузки через веб-интерфейс до генерации результатов транскрибации.
 
@@ -37,7 +37,7 @@
 
 | Параметр | Категория | Куда передаётся | Описание |
 |----------|-----------|-----------------|----------|
-| `model` | Whisper | `TranscriptionEngine.transcribe()` | Модель MLX-Whisper (tiny, base, small, medium, turbo, large) |
+| `model` | Whisper | `TranscriptionEngine.transcribe()` | Модель MLX-Transcriber (tiny, base, small, medium, turbo, large) |
 | `task` | Whisper | `TranscriptionEngine.transcribe()` | Задача: `transcribe` или `translate` |
 | `word_timestamps` | Whisper | `TranscriptionEngine.transcribe()` | Возвращать таймстампы для каждого слова |
 | `condition_on_previous` | Whisper | `TranscriptionEngine.transcribe()` | Учитывать предыдущий текст при генерации |

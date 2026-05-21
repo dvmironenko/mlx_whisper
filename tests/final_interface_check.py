@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Финальная проверка работы нового интерфейса MLX-Whisper
+Финальная проверка работы нового интерфейса MLX-Transcriber
 """
 
 import requests
@@ -9,7 +9,7 @@ import time
 def check_interface():
     """Проверить работоспособность нового интерфейса"""
     try:
-        print("Проверка нового интерфейса MLX-Whisper...")
+        print("Проверка нового интерфейса MLX-Transcriber...")
         print("=" * 50)
 
         # Проверяем, что сервер отвечает
@@ -24,7 +24,7 @@ def check_interface():
 
             # Проверяем ключевые элементы интерфейса
             checks = [
-                ("HTML заголовок", "<title>MLX-Whisper Audio Transcription</title>" in content),
+                ("HTML заголовок", "<title>MLX-Transcriber Audio Transcription</title>" in content),
                 ("Новый CSS файл", "/static/new_style.css" in content),
                 ("Заголовок приложения", "app-title" in content),
                 ("Форма загрузки", 'id="uploadForm"' in content),
@@ -77,7 +77,7 @@ def check_interface():
         return False
 
 def main():
-    print("Финальная проверка нового интерфейса MLX-Whisper")
+    print("Финальная проверка нового интерфейса MLX-Transcriber")
     print("=" * 60)
 
     success = check_interface()

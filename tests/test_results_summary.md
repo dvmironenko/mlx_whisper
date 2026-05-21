@@ -1,8 +1,8 @@
-# Playwright Test Results for MLX-Whisper API "/" Endpoint
+# Playwright Test Results for MLX-Transcriber API "/" Endpoint
 
 ## Test Summary
 
-I have successfully tested the "/" endpoint of the MLX-Whisper API using multiple approaches to ensure comprehensive verification.
+I have successfully tested the "/" endpoint of the MLX-Transcriber API using multiple approaches to ensure comprehensive verification.
 
 ## Test Approaches
 
@@ -30,7 +30,7 @@ I have successfully tested the "/" endpoint of the MLX-Whisper API using multipl
 - **HTML Structure**: Valid HTML5 with proper DOCTYPE
 
 ### Expected Web Interface Elements:
-✅ Main header: "MLX-Whisper Audio Transcription"
+✅ Main header: "MLX-Transcriber Audio Transcription"
 ✅ Upload form with ID `uploadForm`
 ✅ File input element with ID `audioFile`
 ✅ Language selection dropdown with ID `language`
@@ -53,7 +53,7 @@ I have successfully tested the "/" endpoint of the MLX-Whisper API using multipl
 
 ## Conclusion
 
-The "/" endpoint of the MLX-Whisper API is fully functional and correctly serves the web interface as intended. The endpoint:
+The "/" endpoint of the MLX-Transcriber API is fully functional and correctly serves the web interface as intended. The endpoint:
 - Returns valid HTML content (200 OK)
 - Contains all expected UI elements for audio transcription
 - Is properly structured and formatted
@@ -67,4 +67,4 @@ The web interface allows users to:
 - Enable word-level timestamps and context-aware processing
 - Download transcription results in various formats
 
-The test confirms that the MLX-Whisper API web interface is ready for use and properly handles requests to the root endpoint.
+The test confirms that the MLX-Transcriber API web interface is ready for use and properly handles requests to the root endpoint.

@@ -1,5 +1,5 @@
 """
-Playwright test for MLX-Whisper root endpoint (/).
+Playwright test for MLX-Transcriber root endpoint (/).
 This test verifies the web interface using actual Playwright browser automation.
 """
 import subprocess
@@ -15,7 +15,7 @@ sys.path.insert(0, project_root)
 def test_playwright_root_endpoint():
     """Test the root endpoint using Playwright browser automation."""
 
-    print("Testing MLX-Whisper root endpoint (/) with Playwright")
+    print("Testing MLX-Transcriber root endpoint (/) with Playwright")
     print("=" * 60)
 
     # Start the FastAPI server
@@ -41,7 +41,7 @@ def test_playwright_root_endpoint():
             print("2. Verifying page title...")
             title = page.title()
             # Root page may be index (jobs list) or uploads
-            assert "MLX-Whisper" in title
+            assert "MLX-Transcriber" in title
             print("  Page title is correct")
 
             print("3. Verifying page elements...")
@@ -49,7 +49,7 @@ def test_playwright_root_endpoint():
             header = page.query_selector("h1")
             assert header is not None
             header_text = header.text_content()
-            assert "MLX-Whisper" in header_text
+            assert "MLX-Transcriber" in header_text
             print("  Main header is present")
 
             # Jobs list page elements
@@ -74,7 +74,7 @@ def test_playwright_root_endpoint():
             print("  Footer is present")
 
             content = page.content()
-            assert "MLX-Whisper" in content
+            assert "MLX-Transcriber" in content
             print("  Page contains expected content")
 
         print("\n" + "=" * 60)

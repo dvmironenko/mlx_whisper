@@ -1,6 +1,6 @@
 # VibeVoiceEngine — механизм транскрибации через oMLX API
 
-`VibeVoiceEngine` — один из двух механизмов транскрипции в MLX-Whisper (наряду с `WhisperEngine`). Реализует паттерн Strategy через абстрактный базовый класс `TranscriptionEngine`, обеспечивая единый формат результата для всех механизмов.
+`VibeVoiceEngine` — один из двух механизмов транскрипции в MLX-Transcriber (наряду с `WhisperEngine`). Реализует паттерн Strategy через абстрактный базовый класс `TranscriptionEngine`, обеспечивая единый формат результата для всех механизмов.
 
 ## Описание
 

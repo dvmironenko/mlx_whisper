@@ -1,5 +1,5 @@
 """
-Simple test for the "/" endpoint of MLX-Whisper API.
+Simple test for the "/" endpoint of MLX-Transcriber API.
 This test verifies that the web interface loads correctly via HTTP request.
 """
 import requests
@@ -40,9 +40,9 @@ def test_root_endpoint():
         html_content = response.text
         
         # Check that key elements of the web interface are present
-        assert "MLX-Whisper Audio Transcription" in html_content, "Title not found in response"
+        assert "MLX-Transcriber Audio Transcription" in html_content, "Title not found in response"
         assert "<form id=\"uploadForm\"" in html_content, "Upload form not found in response"
-        assert "<h1>MLX-Whisper Audio Transcription</h1>" in html_content, "Main header not found"
+        assert "<h1>MLX-Transcriber Audio Transcription</h1>" in html_content, "Main header not found"
         assert "<input type=\"file\" id=\"audioFile\"" in html_content, "File input not found"
         assert "<select id=\"language\"" in html_content, "Language select not found"
         assert "<select id=\"task\"" in html_content, "Task select not found"

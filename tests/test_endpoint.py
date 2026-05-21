@@ -1,5 +1,5 @@
 """
-Test to verify the "/" endpoint of MLX-Whisper API.
+Test to verify the "/" endpoint of MLX-Transcriber API.
 This test confirms that the web interface endpoint is working properly.
 """
 
@@ -10,11 +10,11 @@ import time
 import requests
 
 def main():
-    print("Testing MLX-Whisper API root endpoint (/)")
+    print("Testing MLX-Transcriber API root endpoint (/)")
     print("=" * 50)
     
     # Start the server in a subprocess
-    print("Starting MLX-Whisper server...")
+    print("Starting MLX-Transcriber server...")
     
     # Start the FastAPI server in background
     server_process = subprocess.Popen([
@@ -49,9 +49,9 @@ def main():
         html_content = response.text
         
         required_elements = [
-            "MLX-Whisper Audio Transcription",
+            "MLX-Transcriber Audio Transcription",
             "<form id=\"uploadForm\"",
-            "<h1>MLX-Whisper Audio Transcription</h1>",
+            "<h1>MLX-Transcriber Audio Transcription</h1>",
             "<input type=\"file\" id=\"audioFile\"",
             "<select id=\"language\"",
             "<select id=\"task\"",
@@ -76,7 +76,7 @@ def main():
         assert "<body>" in html_content and "</body>" in html_content, "HTML body missing"
         
         print("\n3. Testing response content...")
-        assert "MLX-Whisper Audio Transcription" in html_content
+        assert "MLX-Transcriber Audio Transcription" in html_content
         print("   ✓ Page title is correct")
         
         # Final verification

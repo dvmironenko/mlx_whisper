@@ -1,4 +1,4 @@
-"""Unit tests для MLX-Whisper API."""
+"""Unit tests для MLX-Transcriber API."""
 import sys
 import os
 

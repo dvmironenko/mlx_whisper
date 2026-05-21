@@ -1,5 +1,5 @@
 """
-Тест структуры API MLX-Whisper для проверки endpoint'ов.
+Тест структуры API MLX-Transcriber для проверки endpoint'ов.
 """
 
 import subprocess
@@ -10,13 +10,13 @@ import requests
 import json
 
 def test_api_structure():
-    """Тест структуры API для MLX-Whisper."""
+    """Тест структуры API для MLX-Transcriber."""
 
-    print("Проверка структуры API MLX-Whisper")
+    print("Проверка структуры API MLX-Transcriber")
     print("=" * 50)
 
     # Запуск сервера в подпроцессе
-    print("Запуск сервера MLX-Whisper...")
+    print("Запуск сервера MLX-Transcriber...")
 
     # Запуск FastAPI сервера в фоне
     server_process = subprocess.Popen([

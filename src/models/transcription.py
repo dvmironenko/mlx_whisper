@@ -1,4 +1,4 @@
-"""Реализация транскрибации с помощью MLX-Whisper."""
+"""Реализация транскрибации с помощью MLX-Transcriber."""
 
 import gc
 import os
@@ -42,7 +42,7 @@ def transcribe_audio(
     initial_prompt: Optional[str] = None,
 ) -> Any:
     """
-    Транскрибировать аудиофайл с помощью MLX-Whisper.
+    Транскрибировать аудиофайл с помощью MLX-Transcriber.
 
     Parameters
     ----------

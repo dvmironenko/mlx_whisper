@@ -1,8 +1,8 @@
-# Техническая спецификация для MLX-Whisper REST API
+# Техническая спецификация для MLX-Transcriber REST API
 
 ## Обзор
 
-MLX-Whisper — это высокопроизводительный сервис транскрибации аудио, использующий оптимизированную модель Whisper от Apple (MLX-Whisper) и внешний oMLX API (VibeVoice-ASR) для обработки аудиофайлов на системах macOS с чипами Apple Silicon. Сервис предоставляет как веб-интерфейс, так и REST‑API для преобразования речи в текст с поддержкой нескольких языков, параллельной обработки и LLM-генерации отчётов.
+MLX-Transcriber — это высокопроизводительный сервис транскрибации аудио, использующий оптимизированную модель Whisper от Apple (MLX-Transcriber) и внешний oMLX API (VibeVoice-ASR) для обработки аудиофайлов на системах macOS с чипами Apple Silicon. Сервис предоставляет как веб-интерфейс, так и REST‑API для преобразования речи в текст с поддержкой нескольких языков, параллельной обработки и LLM-генерации отчётов.
 
 ## Архитектура
 
@@ -515,7 +515,7 @@ POST /api/v1/report/{job_id}
 
 ## Ссылки
 
-1. [MLX-Whisper GitHub](https://github.com/ml-explore/mlx-whisper)
+1. [MLX-Transcriber GitHub](https://github.com/ml-explore/mlx-whisper)
 2. [OpenAI Whisper GitHub](https://github.com/openai/whisper)
 3. [OpenAI API Speech-to-Text](https://developers.openai.com/api/docs/guides/speech-to-text)
 4. [OpenAI Whisper Paper](https://arxiv.org/abs/2212.04356)

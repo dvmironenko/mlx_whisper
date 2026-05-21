@@ -22,7 +22,7 @@ def test_interface():
             # Проверим наличие основных элементов нового дизайна
             checks = [
                 ("Новый CSS файл", "new_style.css" in content),
-                ("Новый заголовок", "<title>MLX-Whisper Audio Transcription</title>" in content),
+                ("Новый заголовок", "<title>MLX-Transcriber Audio Transcription</title>" in content),
                 ("Кнопка отправки", 'class="submit-button"' in content),
                 ("Форма загрузки", 'id="uploadForm"' in content),
             ]
@@ -53,7 +53,7 @@ def test_interface():
         return False
 
 if __name__ == "__main__":
-    print("Проверка нового интерфейса MLX-Whisper...")
+    print("Проверка нового интерфейса MLX-Transcriber...")
     print("=" * 50)
 
     success = test_interface()

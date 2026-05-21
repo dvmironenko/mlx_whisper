@@ -1,5 +1,5 @@
 """
-Final verification test for MLX-Whisper application with initial_prompt parameter.
+Final verification test for MLX-Transcriber application with initial_prompt parameter.
 This test ensures the application runs without errors and handles initial_prompt correctly.
 """
 import sys
@@ -119,7 +119,7 @@ def test_endpoints_exist():
         return False
 
 def main():
-    print("Running final verification test for MLX-Whisper with initial_prompt...")
+    print("Running final verification test for MLX-Transcriber with initial_prompt...")
     print("=" * 70)
 
     # Test 1: Application startup
@@ -142,7 +142,7 @@ def main():
         print("✓ API endpoint structure is valid")
         print("✓ All required components are present")
         print()
-        print("The MLX-Whisper application correctly implements the initial_prompt parameter:")
+        print("The MLX-Transcriber application correctly implements the initial_prompt parameter:")
         print("- It accepts initial_prompt in API endpoint")
         print("- It passes initial_prompt through the transcription pipeline")
         print("- It forwards initial_prompt to mlx_whisper.transcribe")

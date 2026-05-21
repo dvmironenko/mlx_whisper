@@ -1,5 +1,5 @@
 """
-Тест endpoint'а / с помощью Playwright для MLX-Whisper API.
+Тест endpoint'а / с помощью Playwright для MLX-Transcriber API.
 Этот тест проверяет работу веб-интерфейса через Playwright.
 """
 
@@ -16,7 +16,7 @@ def test_root_endpoint_playwright():
     print("=" * 60)
 
     # Запуск сервера в подпроцессе
-    print("Запуск сервера MLX-Whisper...")
+    print("Запуск сервера MLX-Transcriber...")
 
     # Запуск FastAPI сервера в фоне
     server_process = subprocess.Popen([
@@ -49,9 +49,9 @@ def test_root_endpoint_playwright():
 
                 # Проверка наличия ключевых элементов
                 required_elements = [
-                    "MLX-Whisper Audio Transcription",
+                    "MLX-Transcriber Audio Transcription",
                     "<form id=\"uploadForm\"",
-                    "<h1>MLX-Whisper Audio Transcription</h1>",
+                    "<h1>MLX-Transcriber Audio Transcription</h1>",
                     "<input type=\"file\" id=\"audioFile\"",
                     "<select id=\"language\"",
                     "<select id=\"task\"",
@@ -102,7 +102,7 @@ def test_root_endpoint_playwright():
         print("\n3. Структура веб-интерфейса:")
 
         print("   Ожидаемые элементы:")
-        print("   ✓ Заголовок: 'MLX-Whisper Audio Transcription'")
+        print("   ✓ Заголовок: 'MLX-Transcriber Audio Transcription'")
         print("   ✓ Форма загрузки: <form id=\"uploadForm\">")
         print("   ✓ Поле выбора файла: <input type=\"file\" id=\"audioFile\">")
         print("   ✓ Селекты для выбора языка, задачи и модели")
@@ -121,7 +121,7 @@ def test_root_endpoint_playwright():
                 # Основные проверки
                 checks = [
                     ("HTML структура", "<!DOCTYPE html>" in content or "<html" in content),
-                    ("Заголовок", "MLX-Whisper Audio Transcription" in content),
+                    ("Заголовок", "MLX-Transcriber Audio Transcription" in content),
                     ("Форма", "<form id=\"uploadForm\"" in content),
                     ("Файл", "<input type=\"file\" id=\"audioFile\"" in content),
                     ("Селекты", "<select id=\"language\"" in content and

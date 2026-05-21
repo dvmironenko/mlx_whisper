@@ -1,5 +1,5 @@
 """
-Playwright-style test for MLX-Whisper root endpoint using HTTP requests.
+Playwright-style test for MLX-Transcriber root endpoint using HTTP requests.
 This test verifies the web interface functionality without requiring actual browser automation.
 """
 
@@ -13,11 +13,11 @@ import threading
 def test_root_endpoint_with_server():
     """Test the root endpoint by starting the server and making HTTP requests."""
     
-    print("Starting comprehensive test for MLX-Whisper root endpoint (/)")
+    print("Starting comprehensive test for MLX-Transcriber root endpoint (/)")
     print("=" * 60)
     
     # Start the server in a separate process
-    print("Starting MLX-Whisper server...")
+    print("Starting MLX-Transcriber server...")
     
     # Start server in background
     server_process = subprocess.Popen([
@@ -48,9 +48,9 @@ def test_root_endpoint_with_server():
         
         # Check for key elements from the template
         expected_elements = [
-            "MLX-Whisper Audio Transcription",
+            "MLX-Transcriber Audio Transcription",
             "<form id=\"uploadForm\"",
-            "<h1>MLX-Whisper Audio Transcription</h1>",
+            "<h1>MLX-Transcriber Audio Transcription</h1>",
             "<input type=\"file\" id=\"audioFile\"",
             "<select id=\"language\"",
             "<select id=\"task\"",

@@ -1,5 +1,5 @@
 """
-Test for the initial_prompt parameter in MLX-Whisper API.
+Test for the initial_prompt parameter in MLX-Transcriber API.
 This verifies that the initial_prompt parameter works correctly.
 """
 import subprocess
@@ -13,11 +13,11 @@ from unittest.mock import patch, MagicMock
 def test_initial_prompt_parameter():
     """Test that initial_prompt parameter is correctly handled through the API."""
 
-    print("Testing MLX-Whisper API initial_prompt parameter")
+    print("Testing MLX-Transcriber API initial_prompt parameter")
     print("=" * 60)
 
     # Start the server in a subprocess
-    print("Starting MLX-Whisper server...")
+    print("Starting MLX-Transcriber server...")
 
     # Start the FastAPI server in background
     server_process = subprocess.Popen([

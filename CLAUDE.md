@@ -33,7 +33,7 @@ mlx-whisper/
 │   ├── technical_specification.md  # Техническая спецификация
 │   └── TODO.md              # План задач
 ├── tests/                   # Тесты
-├── models/                  # Модели MLX-Whisper
+├── models/                  # Модели MLX-Transcriber
 ├── uploads/                 # Временное хранилище
 └── logs/                    # Логи
 ```

@@ -1,5 +1,5 @@
 """
-Test for the /transcribe endpoint of MLX-Whisper API.
+Test for the /transcribe endpoint of MLX-Transcriber API.
 This verifies that the transcription endpoint works correctly with audio files.
 """
 
@@ -13,11 +13,11 @@ import json
 def test_transcribe_endpoint():
     """Test the /transcribe endpoint functionality."""
     
-    print("Testing MLX-Whisper API transcribe endpoint (/transcribe)")
+    print("Testing MLX-Transcriber API transcribe endpoint (/transcribe)")
     print("=" * 60)
     
     # Start the server in a subprocess
-    print("Starting MLX-Whisper server...")
+    print("Starting MLX-Transcriber server...")
     
     # Start the FastAPI server in background
     server_process = subprocess.Popen([

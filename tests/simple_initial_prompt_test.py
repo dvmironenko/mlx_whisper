@@ -1,5 +1,5 @@
 """
-Simple test for the initial_prompt parameter in MLX-Whisper API.
+Simple test for the initial_prompt parameter in MLX-Transcriber API.
 This test verifies the parameter handling logic without starting the server.
 """
 import sys

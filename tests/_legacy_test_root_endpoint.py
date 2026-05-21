@@ -1,5 +1,5 @@
 """
-Comprehensive test for the "/" endpoint of MLX-Whisper API.
+Comprehensive test for the "/" endpoint of MLX-Transcriber API.
 This verifies that the web interface loads correctly via HTTP request.
 """
 import requests
@@ -13,7 +13,7 @@ sys.path.insert(0, project_root)
 def run_test():
     """Run a comprehensive test for the root endpoint."""
     
-    print("Testing MLX-Whisper root endpoint (/)")
+    print("Testing MLX-Transcriber root endpoint (/)")
     print("=" * 50)
     
     try:
@@ -36,9 +36,9 @@ def run_test():
         
         # Verify key elements of the web interface
         required_elements = [
-            "MLX-Whisper Audio Transcription",
+            "MLX-Transcriber Audio Transcription",
             "<form id=\"uploadForm\"",
-            "<h1>MLX-Whisper Audio Transcription</h1>",
+            "<h1>MLX-Transcriber Audio Transcription</h1>",
             "<input type=\"file\" id=\"audioFile\"",
             "<select id=\"language\"",
             "<select id=\"task\"",
@@ -65,7 +65,7 @@ def run_test():
         return True
         
     except requests.exceptions.ConnectionError:
-        print("✗ Server is not running. Please start the MLX-Whisper server first.")
+        print("✗ Server is not running. Please start the MLX-Transcriber server first.")
         print("Run: python src/main.py")
         return False
     except Exception as e:
