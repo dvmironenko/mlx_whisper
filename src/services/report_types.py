@@ -76,6 +76,12 @@ def load_report_types() -> List[Dict[str, Any]]:
         return []
 
 
+def clear_cache() -> None:
+    """Сбросить модульный кэш — следующий вызов load_report_types() перечитает файл."""
+    global _report_types_cache
+    _report_types_cache = None
+
+
 def save_report_prompt(report_type_id: str, prompt: str, *, name: str | None = None) -> None:
     """
     Сохранить промт (и опционально название) для заданного report_type_id.
