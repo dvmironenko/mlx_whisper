@@ -71,6 +71,10 @@
                             <i class="fas fa-save"></i>
                             <span>Сохранить</span>
                         </button>
+                        <button type="button" id="refreshButton" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Обновить параметры</span>
+                        </button>
                     </div>
 
                     <!-- Notification zone -->
@@ -110,6 +114,7 @@
         const nameTextarea = document.getElementById('reportNameTextarea');
         const textarea = document.getElementById('promptTextarea');
         const saveBtn = document.getElementById('saveButton');
+        const refreshBtn = document.getElementById('refreshButton');
         const notif = document.getElementById('notificationZone');
 
         let originalPrompts = {}; // {id: prompt} — для сравнения
@@ -117,6 +122,59 @@
         let selectedOriginal = null; // оригинальный промпт выбранного отчета
         let selectedOriginalName = null; // оригинальное название выбранного отчета
         let reportTypesData = null; // данные отчетов для хендлера
+
+        function showToast(msg, type) {
+            notif.textContent = msg;
+            notif.style.display = 'block';
+            notif.style.color = type === 'success' ? 'var(--success-color)' : 'var(--error-color)';
+            notif.style.marginTop = '16px';
+            notif.style.padding = '8px 12px';
+            notif.style.borderRadius = '6px';
+            notif.style.border = `1px solid ${type === 'success' ? 'var(--success-color)' : 'var(--error-color)'}`;
+            setTimeout(function() { notif.style.display = 'none'; }, 3000);
+        }
+
+        refreshBtn.addEventListener('click', async function() {
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Обновление...</span>';
+
+            try {
+                const resp = await fetch('/api/v1/settings/refresh', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    throw new Error(data.detail || 'Ошибка обновления');
+                }
+
+                // Обновить select report types
+                select.innerHTML = '';
+                data.settings.forEach(function(t) {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.name;
+                    originalPrompts[t.id] = t.prompt || '';
+                    originalNames[t.id] = t.name || '';
+                    select.appendChild(opt);
+                });
+
+                // Сбросить выбранный отчет на первый
+                const firstId = data.settings[0]?.id;
+                if (firstId) {
+                    select.value = firstId;
+                    select.dispatchEvent(new Event('change'));
+                }
+
+                reportTypesData = {types: data.settings};
+                showToast('Параметры обновлены', 'success');
+            } catch (e) {
+                showToast(e.message, 'error');
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> <span>Обновить параметры</span>';
+            }
+        });
 
         // Загрузить отчеты
         try {
@@ -194,26 +252,15 @@
                 selectedOriginalName = name;
                 selectedOriginal = prompt;
                 checkChanged();
-                showNotification('Настройки сохранены', 'success');
+                showToast('Настройки сохранены', 'success');
             } catch (e) {
-                showNotification(e.message, 'error');
+                showToast(e.message, 'error');
                 checkChanged();
             } finally {
                 saveBtn.disabled = (textarea.value === selectedOriginal);
                 saveBtn.innerHTML = '<i class="fas fa-save"></i> <span>Сохранить</span>';
             }
         });
-
-        function showNotification(msg, type) {
-            notif.textContent = msg;
-            notif.style.display = 'block';
-            notif.style.color = type === 'success' ? 'var(--success-color)' : 'var(--error-color)';
-            notif.style.marginTop = '16px';
-            notif.style.padding = '8px 12px';
-            notif.style.borderRadius = '6px';
-            notif.style.border = `1px solid ${type === 'success' ? 'var(--success-color)' : 'var(--error-color)'}`;
-            setTimeout(function() { notif.style.display = 'none'; }, 3000);
-        }
     })();
     </script>
 </body>
