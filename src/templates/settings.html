@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MLX-Whisper Настройки</title>
-    <link rel="stylesheet" href="/static/new_style.css">
+    <link rel="stylesheet" href="/static/new_style.css?v=3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
     <link rel="stylesheet" href="/static/markdown-wysiwyg/editor.css">
-    <script src="/static/markdown-wysiwyg/editor.js"></script>
+    <script src="/static/markdown-wysiwyg/editor.js?v=2"></script>
 </head>
 <body>
 
@@ -94,10 +94,10 @@
 
     <!-- WYSIWYG Editor Modal -->
     <div id="wysiwygModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
+        <div class="modal-content" style="width: 99vw; height: 99vh;">
             <div class="modal-header">
                 <h3>Редактирование промта</h3>
-                <button type="button" class="modal-close" id="wysiwygModalClose">&times;</button>
+                <button type="button" class="submit-button" id="wysiwygModalClose">&times;</button>
             </div>
             <div class="modal-body">
                 <div id="wysiwyg-editor-container" class="wysiwyg-modal-container"></div>
@@ -107,7 +107,7 @@
                     <i class="fas fa-save"></i>
                     <span>Сохранить</span>
                 </button>
-                <button type="button" id="wysiwygCancelBtn" class="btn-cancel-delete">
+                <button type="button" id="wysiwygCancelBtn" class="submit-button">
                     <i class="fas fa-times"></i>
                     <span>Отменить</span>
                 </button>

@@ -1493,13 +1493,18 @@ body {
 
 .modal-footer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    gap: 12px;
     padding: 14px 20px;
     border-top: 1px solid var(--border-color);
     background-color: var(--background-dark);
     position: relative;
     z-index: 2;
     pointer-events: auto;
+}
+
+.modal-footer .submit-button {
+    width: auto;
 }
 
 .btn-modal-close {

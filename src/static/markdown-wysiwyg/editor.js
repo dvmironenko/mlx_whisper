@@ -2060,7 +2060,10 @@ class MarkdownWYSIWYG {
             breaks: false,
             smartLists: true,
         };
-        return marked.parse(markdown || '', markedOptions);
+        let html = marked.parse(markdown || '', markedOptions);
+        // Убираем новые строки между блочными элементами — они создают лишние пустые строки в рендере
+        html = html.replace(/>\s*\n\s*</g, '><');
+        return html;
     }
     _htmlToMarkdown(elementOrHtml) {
         let tempDiv;
