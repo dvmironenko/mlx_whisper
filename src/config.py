@@ -7,6 +7,12 @@ import os
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
 load_dotenv(env_path)
 
+
+def reload_dotenv() -> None:
+    """Перечитать .env файл и обновить переменные окружения."""
+    load_dotenv(env_path, override=True)
+
+
 import logging
 from typing import Optional
 from logging.handlers import RotatingFileHandler
