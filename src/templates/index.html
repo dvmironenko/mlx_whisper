@@ -92,34 +92,11 @@
 
         let currentModal = null;
 
-        // Загрузка и отображение содержимого файла
-        async function viewFileContent(jobId, filename) {
-            try {
-                const response = await fetch('/api/v1/files/' + encodeURIComponent(filename) + '/content');
-                if (!response.ok) {
-                    throw new Error('Failed to load file content');
-                }
-                const content = await response.text();
+        // Показать текст в модальном окне
+        function showTextView(title, content) {
+            // Закрыть текущее окно, если открыто
+            closeModal();
 
-                // Создаем и показываем модальное окно
-                currentModal = createModal(filename, content);
-                document.body.appendChild(currentModal);
-
-                // Добавляем обработчик ESC
-                document.addEventListener('keydown', handleModalEscape);
-
-                // Фокус на кнопку закрытия для доступности
-                const closeBtn = currentModal.querySelector('.modal-close-btn');
-                if (closeBtn) closeBtn.focus();
-
-            } catch (error) {
-                console.error('Error loading file content:', error);
-                alert('Ошибка загрузки содержимого файла: ' + error.message);
-            }
-        }
-
-        // Создание HTML модального окна (без innerHTML для безопасности)
-        function createModal(filename, content) {
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             modal.setAttribute('role', 'dialog');
@@ -129,6 +106,7 @@
             const contentDiv = document.createElement('div');
             contentDiv.className = 'modal-content';
 
+            // Header
             const header = document.createElement('div');
             header.className = 'modal-header';
 
@@ -142,7 +120,7 @@
             const titleText = document.createElement('h3');
             titleText.id = 'modal-title';
             titleText.className = 'modal-title';
-            titleText.textContent = filename;
+            titleText.textContent = title;
             titleWrapper.appendChild(titleText);
 
             header.appendChild(titleWrapper);
@@ -151,18 +129,16 @@
             closeBtn.className = 'modal-close-btn';
             closeBtn.setAttribute('aria-label', 'Закрыть');
             closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-            closeBtn.addEventListener('click', closeModal);
+            closeBtn.onclick = closeModal;
             header.appendChild(closeBtn);
 
             contentDiv.appendChild(header);
 
+            // Body
             const body = document.createElement('div');
             body.className = 'modal-body';
 
             const pre = document.createElement('pre');
-            pre.setAttribute('role', 'region');
-            pre.setAttribute('aria-label', 'Содержимое файла ' + filename);
-
             const code = document.createElement('code');
             code.textContent = content;
             pre.appendChild(code);
@@ -170,6 +146,7 @@
 
             contentDiv.appendChild(body);
 
+            // Footer
             const footer = document.createElement('div');
             footer.className = 'modal-footer';
 
@@ -177,16 +154,16 @@
             copyBtn.className = 'btn-modal-copy';
             copyBtn.type = 'button';
             copyBtn.textContent = 'Копировать';
-            copyBtn.addEventListener('click', function(e) {
+            copyBtn.onclick = function(e) {
                 e.stopPropagation();
                 copyToClipboard(content);
-            });
+            };
             footer.appendChild(copyBtn);
 
             const closeFooterBtn = document.createElement('button');
             closeFooterBtn.className = 'btn-modal-close';
             closeFooterBtn.textContent = 'Закрыть';
-            closeFooterBtn.addEventListener('click', closeModal);
+            closeFooterBtn.onclick = closeModal;
             footer.appendChild(closeFooterBtn);
 
             contentDiv.appendChild(footer);
@@ -199,50 +176,40 @@
                 }
             });
 
-            return modal;
+            document.body.appendChild(modal);
+            currentModal = modal;
         }
 
         // Копирование текста в буфер обмена
-        function copyToClipboard(text) {
-            console.log('copyToClipboard called, text length:', text.length);
-            var success = false;
+        async function copyToClipboard(text) {
+            const btn = currentModal && currentModal.querySelector('.btn-modal-copy');
+            const originalText = btn ? btn.textContent : 'Копировать';
 
-            // Пробуем современный Clipboard API
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(function() {
-                    success = true;
-                }).catch(function(err) {
-                    console.error('Ошибка Clipboard API:', err);
-                });
-            }
-
-            // Fallback через execCommand
-            if (!success) {
-                var textArea = document.createElement('textarea');
-                textArea.value = text;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    success = document.execCommand('copy');
-                } catch (err) {
-                    console.error('Ошибка execCommand:', err);
-                } finally {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    // Fallback через execCommand
+                    var textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
                     document.body.removeChild(textArea);
                 }
-            }
 
-            if (success) {
-                var copyBtn = currentModal.querySelector('.btn-modal-copy');
-                var originalText = copyBtn.textContent;
-                copyBtn.textContent = 'Скопировано!';
-                copyBtn.disabled = true;
-                setTimeout(function() {
-                    copyBtn.textContent = originalText;
-                    copyBtn.disabled = false;
-                }, 2000);
-            } else {
+                if (btn) {
+                    btn.textContent = 'Скопировано!';
+                    btn.disabled = true;
+                    setTimeout(function() {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Ошибка копирования:', err);
                 alert('Не удалось скопировать текст');
             }
         }
@@ -252,14 +219,6 @@
             if (currentModal) {
                 currentModal.remove();
                 currentModal = null;
-                document.removeEventListener('keydown', handleModalEscape);
-            }
-        }
-
-        // Обработка ESC для закрытия
-        function handleModalEscape(e) {
-            if (e.key === 'Escape' && currentModal) {
-                closeModal();
             }
         }
 
