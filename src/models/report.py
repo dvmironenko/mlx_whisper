@@ -222,7 +222,8 @@ def save_report(job_path: str, job_id: str, content: str, report_type: str | Non
         Путь к сохраненному файлу
     """
     if report_type:
-        report_filename = f"Отчет_{report_type}_{job_id}.md"
+        clean_type = report_type.strip("'\"")
+        report_filename = f"Отчет_{clean_type}_{job_id}.md"
     else:
         report_filename = f"Отчет по заданию {job_id}.md"
     report_path = os.path.join(job_path, report_filename)
