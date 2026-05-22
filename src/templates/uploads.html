@@ -366,24 +366,43 @@
             return iconMap[ext] || 'fa-file';
         }
 
-        // Обработка формы
+        // Обработка формы (файл или URL)
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const files = document.getElementById('audioFile').files;
-            if (files.length === 0) {
-                showError('Выберите файл для загрузки');
+            const urlValue = document.getElementById('urlInput').value.trim();
+            const fileInput = document.getElementById('audioFile');
+            const files = fileInput.files;
+
+            // Валидация: нужен либо URL, либо файл
+            if (!urlValue && files.length === 0) {
+                showError('Введите URL или выберите файл для загрузки');
                 return;
             }
 
-            // Проверка расширения файла
-            if (!validateFile(files[0].name)) {
-                showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+            // Валидация URL
+            if (urlValue && !urlValue.match(/^https?:\/\//)) {
+                showError('URL должен начинаться с http:// или https://');
                 return;
+            }
+
+            // Валидация файла (если не URL)
+            if (!urlValue && files.length > 0) {
+                if (!validateFile(files[0].name)) {
+                    showError('Неподдерживаемый формат файла. Используйте: WAV, MP3, M4A, FLAC, AAC, OGG, WMA, WEBM, MP4, MKV');
+                    return;
+                }
             }
             clearError();
 
+            // Выбор endpoint
+            const endpoint = urlValue ? '/api/v1/transcribe-url' : '/api/v1/transcribe';
+
             const formData = new FormData(this);
+            if (urlValue) {
+                formData.set('url', urlValue);
+            }
+
             const submitButton = document.getElementById('submitButton');
 
             // Показываем состояние загрузки
@@ -392,7 +411,7 @@
             submitButton.disabled = true;
 
             try {
-                const response = await fetch('/api/v1/transcribe', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
@@ -405,13 +424,12 @@
                 }
 
                 if (response.ok && data.status === "completed" && data.text) {
-                    // Синхронное завершение — редирект на index.html для просмотра
                     window.location.href = '/?redirect=' + data.job_id;
                     return;
                 }
 
                 if (!response.ok) {
-                    showError(data.error || 'Ошибка обработки');
+                    showError(data.error || data.detail || 'Ошибка обработки');
                 }
             } catch (error) {
                 showError('Ошибка соединения: ' + error.message);
