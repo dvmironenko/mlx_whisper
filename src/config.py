@@ -92,7 +92,7 @@ def omlx_available() -> bool:
     return bool(OMLX_BASE_URL)
 
 # URL download settings
-ALLOWED_URL_DOMAINS_STR: str = os.getenv("ALLOWED_URL_DOMAINS", "youtube.com,youtu.be,vimeo.com")
+ALLOWED_URL_DOMAINS_STR: str = os.getenv("ALLOWED_URL_DOMAINS", "youtube.com,youtu.be,vimeo.com,docs.mironenko.org")
 ALLOWED_URL_DOMAINS: list = [d.strip() for d in ALLOWED_URL_DOMAINS_STR.split(",") if d.strip()]
 MAX_DOWNLOAD_SIZE: int = int(os.getenv("MAX_DOWNLOAD_SIZE_MB", "2048")) * 1024 * 1024
 DOWNLOAD_TIMEOUT: int = int(os.getenv("DOWNLOAD_TIMEOUT_SECONDS", "600"))

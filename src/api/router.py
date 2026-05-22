@@ -398,13 +398,6 @@ async def transcribe_url_endpoint(
         logger.error(f"Transcription URL API error for {url}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-    finally:
-        # Удаляем временные файлы
-        if tmp_download and os.path.exists(tmp_download):
-            delete_file(tmp_download)
-        if converted_wav_path and converted_wav_path != tmp_download and os.path.exists(converted_wav_path):
-            delete_file(converted_wav_path)
-
 
 @router.get("/omlx/health")
 async def omlx_health():

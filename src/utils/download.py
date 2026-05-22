@@ -5,14 +5,7 @@ import subprocess
 from urllib.parse import urlparse
 from typing import Optional
 
-from src.config import logger, MAX_FILE_SIZE, CONVERSION_TIMEOUT_SECONDS
-
-# Белый список доменов (без www - проверяется отдельно)
-ALLOWED_URL_DOMAINS = [
-    "youtube.com",
-    "youtu.be",
-    "vimeo.com",
-]
+from src.config import logger, MAX_FILE_SIZE, CONVERSION_TIMEOUT_SECONDS, ALLOWED_URL_DOMAINS
 
 
 def _get_base_domain(hostname: str) -> str:
