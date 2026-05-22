@@ -251,6 +251,16 @@ body {
     display: none;
 }
 
+/* URL input section */
+.url-input-section {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.url-input {
+    width: 100%;
+}
+
 /* Input elements */
 .form-select {
     background-color: var(--background-light);
