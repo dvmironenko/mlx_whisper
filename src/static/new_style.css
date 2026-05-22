@@ -1295,6 +1295,7 @@ body {
     display: flex;
     align-items: center;
     gap: 9px;
+    margin-bottom: 8px;
 }
 
 .file-size {
