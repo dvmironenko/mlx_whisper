@@ -45,7 +45,7 @@ from src.config import (
     SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR,
     MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT,
     logger, log_transcription_result, OMLX_ENABLED, OMLX_BASE_URL,
-    OMLX_MODEL, DEFAULT_MODEL, reload_dotenv,
+    OMLX_MODEL, reload_dotenv,
 )
 from src.models.transcription import transcribe_audio
 from src.models.report import load_segments_file, generate_report_via_openai, save_report, generate_report_via_openai_sync
@@ -157,6 +157,7 @@ async def transcribe_audio_endpoint(
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
     mechanism: str = Form("whisper"),
+    include_timestamps: Optional[str] = Form(None),
 ):
     """Залогировать файл в очередь транскрипции."""
 
@@ -180,7 +181,7 @@ async def transcribe_audio_endpoint(
     if mechanism == "vibevoice":
         model_value = OMLX_MODEL
     else:
-        model_value = os.getenv("DEFAULT_MODEL", "large") if model == "large" else model
+        model_value = model
     word_timestamps_value = word_timestamps.lower() == "true"
     if word_timestamps == "false":
         word_timestamps_value = os.getenv("DEFAULT_WORD_TIMESTAMPS", "false").lower() == "true"
@@ -252,6 +253,7 @@ async def transcribe_audio_endpoint(
                 "hallucination_silence_threshold": hallucination_silence_threshold_value,
                 "initial_prompt": initial_prompt,
                 "mechanism": mechanism,
+                "include_timestamps": include_timestamps is not None and include_timestamps.lower() == "true",
             },
         })
 
@@ -323,6 +325,7 @@ async def transcribe_url_endpoint(
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
     mechanism: str = Form("whisper"),
+    include_timestamps: Optional[str] = Form(None),
 ):
     """Транскрибировать аудио по URL (YouTube, Vimeo, прямые ссылки)."""
 
@@ -338,8 +341,6 @@ async def transcribe_url_endpoint(
         model_value = OMLX_MODEL
     else:
         model_value = model
-        if model == "large":
-            model_value = DEFAULT_MODEL
 
     word_timestamps_value = word_timestamps.lower() == "true"
     if word_timestamps == "false":
@@ -404,6 +405,7 @@ async def transcribe_url_endpoint(
                 "hallucination_silence_threshold": hallucination_silence_threshold_value,
                 "initial_prompt": initial_prompt,
                 "mechanism": mechanism,
+                "include_timestamps": include_timestamps is not None and include_timestamps.lower() == "true",
             },
         })
 
