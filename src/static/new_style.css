@@ -1294,7 +1294,7 @@ body {
 .result-file-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
 }
 
 .file-size {
@@ -1305,7 +1305,7 @@ body {
 
 .file-actions {
     display: flex;
-    gap: 6px;
+    gap: 7px;
 }
 
 .btn-download-file {
