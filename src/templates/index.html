@@ -138,7 +138,9 @@
             // Body
             const body = document.createElement('div');
             body.className = 'modal-body';
-            body.innerHTML = marked.parse(content);
+            body.innerHTML = content.split('\n').map(function(line) {
+                return '<p>' + escapeHtml(line) + '</p>';
+            }).join('');
 
             contentDiv.appendChild(body);
 
@@ -491,9 +493,9 @@
 
         // Загрузка списка заданий
         function startPolling() {
-            const activeJobs = jobsList.filter(j => j.status === 'queued' || j.status === 'processing');
-            if (activeJobs.length === 0) { stopPolling(); return; }
-            pollingJobs = new Set(activeJobs.map(j => j.job_id));
+            const allTerminal = jobsList.length > 0 && jobsList.every(j => j.status === 'completed' || j.status === 'failed' || j.status === 'cancelled');
+            if (allTerminal) { stopPolling(); return; }
+            pollingJobs = new Set(jobsList.map(j => j.job_id));
             refreshInterval = setInterval(loadJobs, 5000);
         }
 
@@ -600,7 +602,7 @@
                     });
                 }
 
-                if (refreshInterval && jobsList.filter(j => j.status === 'queued' || j.status === 'processing').length === 0) { stopPolling(); }
+                if (refreshInterval && jobsList.every(j => j.status === 'completed' || j.status === 'failed' || j.status === 'cancelled')) { stopPolling(); }
 
                 // Обновить бейджи статусов генерации отчётов
                 pollReportStatuses();

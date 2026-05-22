@@ -193,6 +193,7 @@ class TranscriptionQueueManager:
                         "hallucination_silence_threshold"
                     ),
                     initial_prompt=job.params.get("initial_prompt"),
+                    include_timestamps=job.params.get("include_timestamps", True),
                 )
             duration = time.time() - start
             result = _sanitize_result(result)

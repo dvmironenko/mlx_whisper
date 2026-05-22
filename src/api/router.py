@@ -19,6 +19,26 @@ def format_timestamp(seconds: float) -> str:
     ms = int((seconds % 1) * 1000)
     return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
 
+
+def _url_to_filename(url: str) -> str:
+    """Извлечь осмысленное имя файла из URL.
+
+    YouTube/Vimeo — по видео ID, остальные — basename пути.
+    """
+    import re
+
+    # YouTube: watch?v=ID, youtu.be/ID, embed/ID
+    m = re.search(r'(?:v=|/embed/|youtu\.be/)([a-zA-Z0-9_-]{11})', url)
+    if m:
+        return f"youtube_{m.group(1)}"
+
+    # Vimeo: vimeo.com/ID или vimeo.com/channels/.../ID
+    m = re.search(r'vimeo\.com/(?:channels(?:/[^/]+)*/|groups/(?:(?!/video/).)*/)?(\d+)', url)
+    if m:
+        return f"vimeo_{m.group(1)}"
+
+    return os.path.basename(url) or "download"
+
 from src.config import (
     AUDIO_EXTENSIONS, SUPPORTED_MODELS, CHUNK_SIZE, DEFAULT_LANGUAGE,
     NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE,
@@ -371,7 +391,7 @@ async def transcribe_url_endpoint(
         success = mgr.submit({
             "job_id": job_id,
             "source": "url",
-            "original_filename": os.path.basename(url),
+            "original_filename": _url_to_filename(url),
             "wav_path": converted_wav_path,
             "duration": round(audio_duration, 2) if audio_duration is not None else None,
             "params": {

@@ -253,7 +253,9 @@ class VibeVoiceEngine(TranscriptionEngine):
 
         Параметры, специфичные для VibeVoice:
         - language: язык аудио
+        - include_timestamps: включать ли временные метки в текст
         """
+        include_timestamps = params.get("include_timestamps", True)
         if not OMLX_ENABLED or not OMLX_BASE_URL:
             raise RuntimeError("oMLX не настроен: проверьте OMLX_BASE_URL и OMLX_ENABLED")
 
@@ -285,7 +287,9 @@ class VibeVoiceEngine(TranscriptionEngine):
 
         duration = time.time() - start_time
 
-        formatted_text = _build_formatted_text_from_segments(all_segments, include_speaker=True)
+        formatted_text = _build_formatted_text_from_segments(
+            all_segments, include_speaker=True, include_timestamps=include_timestamps
+        )
 
         return {
             "segments": all_segments,

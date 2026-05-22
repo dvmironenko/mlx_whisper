@@ -71,6 +71,7 @@ class WhisperEngine(TranscriptionEngine):
         no_speech_threshold = params.get("no_speech_threshold")
         hallucination_silence_threshold = params.get("hallucination_silence_threshold")
         initial_prompt = params.get("initial_prompt")
+        include_timestamps = params.get("include_timestamps", True)
 
         # Resolve model path
         models_dir = os.getenv("MODELS_DIR", "models")
@@ -134,7 +135,9 @@ class WhisperEngine(TranscriptionEngine):
         segments = result.get("segments")
         if not isinstance(segments, list):
             segments = []
-        formatted_text = _build_formatted_text_from_segments(segments)
+        formatted_text = _build_formatted_text_from_segments(
+            segments, include_timestamps=include_timestamps
+        )
 
         # Normalize to unified format
         return {
@@ -150,8 +153,13 @@ def _build_formatted_text_from_segments(
     segments: list[dict],
     *,
     include_speaker: bool = False,
+    include_timestamps: bool = True,
 ) -> str:
-    """Собрать текст из сегментов в формате [MM:SS]: Текст или [MM:SS] Спикер N : Текст."""
+    """Собрать текст из сегментов.
+
+    При include_timestamps=True — формат [MM:SS]: Текст.
+    При include_timestamps=False — только текст, без префикса.
+    """
     lines: list[str] = []
     for seg in segments:
         start = seg.get("start", 0)
@@ -159,12 +167,15 @@ def _build_formatted_text_from_segments(
         text = seg.get("text", "").strip()
         if not text:
             continue
-        minutes = int(start) // 60
-        seconds = int(start) % 60
-        if include_speaker:
-            lines.append(f"[{minutes:02d}:{seconds:02d}] Спикер {speaker} : {text}")
+        if include_timestamps:
+            minutes = int(start) // 60
+            seconds = int(start) % 60
+            if include_speaker:
+                lines.append(f"[{minutes:02d}:{seconds:02d}] Спикер {speaker} : {text}")
+            else:
+                lines.append(f"[{minutes:02d}:{seconds:02d}]: {text}")
         else:
-            lines.append(f"[{minutes:02d}:{seconds:02d}]: {text}")
+            lines.append(text)
     return "\n".join(lines)
 
 
