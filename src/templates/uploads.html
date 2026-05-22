@@ -504,6 +504,14 @@
                     }
                 }
 
+                // Initialize default model
+                if (config.default_model) {
+                    const modelSelect = document.getElementById('model');
+                    if (modelSelect) {
+                        modelSelect.value = config.default_model;
+                    }
+                }
+
                 // Initialize no_speech_threshold slider
                 if (config.no_speech_threshold !== undefined) {
                     const noSpeechThresholdInput = document.getElementById('noSpeechThreshold');
