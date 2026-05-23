@@ -80,7 +80,7 @@ MAX_REPORT_CHUNK_SIZE: int = int(os.getenv("MAX_REPORT_CHUNK_SIZE", "10000"))
 
 # OMLX / VibeVoice Configuration
 OMLX_BASE_URL: str = os.getenv("OMLX_BASE_URL", "")
-OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-4bit")
+OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-8bit")
 OMLX_API_KEY: Optional[str] = os.getenv("OMLX_API_KEY") or None
 OMLX_ENABLED: bool = os.getenv("OMLX_ENABLED", "true").lower() == "true"
 
