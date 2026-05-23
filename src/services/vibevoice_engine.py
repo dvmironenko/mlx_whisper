@@ -36,12 +36,12 @@ class OMLXModelNotFoundError(Exception):
 
 
 # Константы splitting
-MAX_AUDIO_DURATION_SEC: int = 50 * 60  # 50 минут
+MAX_AUDIO_DURATION_SEC: int = 5 * 60  # 5 минут
 SILENCE_THRESHOLD_DB: int = 40
 
 
-# Максимальный размер аудио для одного запроса к oMLX (100 MB)
-MAX_UPLOAD_BYTES: int = 100 * 1024 * 1024
+# Максимальный размер аудио для одного запроса к oMLX (50 MB)
+MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024
 
 
 def _split_audio_by_silence(
@@ -135,11 +135,11 @@ def _group_intervals(
 
 
 def _save_segment(segment: AudioSegment) -> str:
-    """Сохранить сегмент во временный WAV файл."""
-    fd, path = tempfile.mkstemp(suffix=".wav", prefix="vv_segment_")
+    """Сохранить сегмент во временный MP3 файл для отправки в oMLX API."""
+    fd, path = tempfile.mkstemp(suffix=".mp3", prefix="vv_segment_")
     os.close(fd)
     try:
-        segment.export(path, format="wav")
+        segment.export(path, format="mp3", bitrate="64k")
     except Exception as e:
         logger.error(f"Failed to export segment: {e}")
         try:
@@ -306,7 +306,10 @@ class VibeVoiceEngine(TranscriptionEngine):
         url = f"{OMLX_BASE_URL}/audio/transcriptions"
 
         with open(file_path, "rb") as f:
-            files = {"file": (os.path.basename(file_path), f, "application/octet-stream")}
+            # Определяем MIME-тип по расширению файла
+            ext = os.path.splitext(file_path)[1].lower()
+            mime_type = {"wav": "audio/wav", ".mp3": "audio/mpeg"}.get(ext, "application/octet-stream")
+            files = {"file": (os.path.basename(file_path), f, mime_type)}
             data: Dict[str, Any] = {"model": OMLX_MODEL}
             if language:
                 data["language"] = language

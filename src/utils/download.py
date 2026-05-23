@@ -1,6 +1,7 @@
 """Утилиты для скачивания видео/аудио по URL."""
 import os
 import re
+import shutil
 import subprocess
 from urllib.parse import urlparse
 from typing import Optional
@@ -133,16 +134,25 @@ def download_from_url(url: str, output_path: str, max_size: Optional[int] = None
 
     logger.info(f"Downloading from URL: {url}")
 
-    # yt-dlp команды
+    # Resolve yt-dlp to absolute path to avoid PATH issues in spawned processes
+    yt_dlp_path = shutil.which("yt-dlp")
+    if not yt_dlp_path:
+        raise RuntimeError("yt-dlp not found. Please install: pip install yt-dlp")
+
+    # yt-dlp appends its own extension to the -o path, so we pass the directory
+    # and a template, then find the actual file afterward.
+    output_dir = os.path.dirname(output_path) or "."
+    yt_output_template = os.path.join(output_dir, "downloaded.%(ext)s")
+
+    # yt-dlp команды — скачиваем оригинальный аудиоформат,
+    # конвертацию в WAV и удаление тишины делает convert_to_wav()
     cmd = [
-        "yt-dlp",
-        "-f", "bestaudio[ext=mp3]/best[ext=mp4]/best",
-        "-o", output_path,
+        yt_dlp_path,
+        "-f", "bestaudio",
+        "-o", yt_output_template,
         "--no-warnings",
         "--no-progress",
         "--extract-audio",
-        "--audio-format", "wav",
-        "--audio-quality", "0",
         url,
     ]
 
@@ -154,34 +164,51 @@ def download_from_url(url: str, output_path: str, max_size: Optional[int] = None
             check=True,
             timeout=CONVERSION_TIMEOUT_SECONDS,
         )
-
-        if not os.path.exists(output_path):
-            raise FileNotFoundError(f"Downloaded file not found: {output_path}")
-
-        # Проверка размера
-        size = os.path.getsize(output_path)
-        if size > max_size:  # type: ignore
-            os.remove(output_path)
-            raise ValueError(f"File too large: {size} bytes (max: {max_size})")
-
-        logger.info(f"Downloaded file: {output_path}, size: {size} bytes")
-        return output_path
-
     except subprocess.TimeoutExpired as e:
         logger.error(f"Download timed out for {url}: {e}")
-        if os.path.exists(output_path):
-            os.remove(output_path)
+        _cleanup_yt_dlp_output(output_dir)
         raise RuntimeError(f"Download timed out after {CONVERSION_TIMEOUT_SECONDS} seconds")
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"yt-dlp error for {url}: {e.stderr.decode() if e.stderr else str(e)}")
-        if os.path.exists(output_path):
-            os.remove(output_path)
-        raise RuntimeError(f"Download failed: {e.stderr.decode() if e.stderr else str(e)}")
+        stderr_text = e.stderr.decode() if e.stderr else "(no stderr)"
+        logger.error(f"yt-dlp error for {url}: {stderr_text[:1000]}")
+        _cleanup_yt_dlp_output(output_dir)
+        raise RuntimeError(f"yt-dlp failed: {stderr_text[:500]}")
 
-    except FileNotFoundError as e:
-        logger.error(f"yt-dlp not found: {e}")
-        raise RuntimeError("yt-dlp not found. Please install: pip install yt-dlp")
+    # Find the actual downloaded file (yt-dlp appends its own extension)
+    downloaded_file = _find_yt_dlp_output(output_dir)
+    if not downloaded_file:
+        logger.error(f"No audio file found in {output_dir} after download")
+        raise RuntimeError(f"yt-dlp did not produce any audio file in {output_dir}")
+
+    # Проверка размера
+    size = os.path.getsize(downloaded_file)
+    if size > max_size:  # type: ignore
+        os.remove(downloaded_file)
+        raise ValueError(f"File too large: {size} bytes (max: {max_size})")
+
+    logger.info(f"Downloaded file: {downloaded_file}, size: {size} bytes")
+    return downloaded_file
+
+
+def _cleanup_yt_dlp_output(output_dir: str) -> None:
+    """Удалить все файлы, созданные yt-dlp в директории."""
+    if os.path.isdir(output_dir):
+        for f in os.listdir(output_dir):
+            filepath = os.path.join(output_dir, f)
+            if os.path.isfile(filepath):
+                os.remove(filepath)
+
+
+def _find_yt_dlp_output(output_dir: str) -> Optional[str]:
+    """Найти файл, созданный yt-dlp, в директории."""
+    audio_extensions = {".opus", ".webm", ".m4a", ".mp4", ".weba", ".flac", ".aac", ".ogg", ".wav", ".mp3"}
+    if os.path.isdir(output_dir):
+        for f in os.listdir(output_dir):
+            ext = os.path.splitext(f)[1].lower()
+            if ext in audio_extensions:
+                return os.path.join(output_dir, f)
+    return None
 
 
 def get_yt_dlp_version() -> Optional[str]:

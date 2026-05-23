@@ -370,20 +370,17 @@ async def transcribe_url_endpoint(
     try:
         # Скачивание файла
         tmp_download = os.path.join(job_path, "downloaded.wav")
-        download_from_url(url, tmp_download, MAX_DOWNLOAD_SIZE)
+        tmp_download = download_from_url(url, tmp_download, MAX_DOWNLOAD_SIZE)
 
-        # Конвертация (если скачалось не WAV)
-        if not tmp_download.endswith(".wav"):
-            converted_wav_path = os.path.join(job_path, "converted.wav")
-            convert_to_wav(
-                tmp_download,
-                converted_wav_path,
-                remove_silence=remove_silence_value,
-                silence_threshold=silence_threshold_value,
-                silence_duration=silence_duration_value
-            )
-        else:
-            converted_wav_path = tmp_download
+        # Конвертация в WAV + удаление тишины
+        converted_wav_path = os.path.join(job_path, "converted.wav")
+        convert_to_wav(
+            tmp_download,
+            converted_wav_path,
+            remove_silence=remove_silence_value,
+            silence_threshold=silence_threshold_value,
+            silence_duration=silence_duration_value
+        )
 
         # Получаем длительность
         audio_duration = get_audio_duration(converted_wav_path)
