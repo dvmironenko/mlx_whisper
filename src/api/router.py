@@ -632,13 +632,14 @@ async def list_report_types():
 @router.get("/settings")
 async def get_settings():
     """
-    Вернуть список типов отчетов с их промптами.
+    Вернуть список типов отчетов с их промптами и доступные модели.
 
-    Возвращает {types: [{id, name, prompt}, ...]}.
+    Возвращает {types: [{id, name, prompt}, ...], vibevoice_model: str, whisper_model: str}.
     """
+    from src.config import OMLX_MODEL, DEFAULT_MODEL
     types = load_report_types()
     result = [{"id": t["id"], "name": t["name"], "prompt": t.get("prompt", "")} for t in types]
-    return {"types": result}
+    return {"types": result, "vibevoice_model": OMLX_MODEL, "whisper_model": DEFAULT_MODEL}
 
 
 @router.post("/settings")

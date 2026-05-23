@@ -53,6 +53,13 @@
                 <!-- Settings form -->
                 <div class="settings-form">
                     <div class="form-group">
+                        <label for="mechanismModelSelect" class="form-label">Механизм</label>
+                        <select id="mechanismModelSelect" class="form-select">
+                            <option value="" disabled selected>Загрузка...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="reportTypeSelect" class="form-label">Тип отчета</label>
                         <select id="reportTypeSelect" class="form-select">
                             <option value="" disabled selected>Загрузка...</option>
@@ -141,12 +148,14 @@
 
     // Settings logic
     (async function() {
+        const mechanismSelect = document.getElementById('mechanismModelSelect');
         const select = document.getElementById('reportTypeSelect');
         const nameTextarea = document.getElementById('reportNameTextarea');
         const textarea = document.getElementById('promptTextarea');
         const saveBtn = document.getElementById('saveButton');
         const refreshBtn = document.getElementById('refreshButton');
         const notif = document.getElementById('notificationZone');
+        let currentMechanism = 'vibevoice'; // по умолчанию VibeVoice
 
         // WYSIWYG Editor
         let editorInstance = null;
@@ -297,6 +306,21 @@
                 select.innerHTML = '<option value="" disabled selected>Нет типов отчетов</option>';
                 return;
             }
+
+            // Заполнить селектор механизмов
+            const vvOpt = document.createElement('option');
+            vvOpt.value = 'vibevoice';
+            vvOpt.textContent = 'VibeVoice (' + reportTypesData.vibevoice_model + ')';
+            mechanismSelect.appendChild(vvOpt);
+
+            const wOpt = document.createElement('option');
+            wOpt.value = 'whisper';
+            wOpt.textContent = 'Whisper (' + reportTypesData.whisper_model + ')';
+            mechanismSelect.appendChild(wOpt);
+
+            mechanismSelect.value = 'vibevoice';
+            mechanismSelect.dispatchEvent(new Event('change'));
+
             select.innerHTML = '';
             reportTypesData.types.forEach(function(t) {
                 const opt = document.createElement('option');
@@ -310,6 +334,11 @@
             select.innerHTML = '<option value="" disabled selected>Ошибка загрузки</option>';
             return;
         }
+
+        // Переключение механизма
+        mechanismSelect.addEventListener('change', function() {
+            currentMechanism = this.value;
+        });
 
         // При смене отчета
         select.addEventListener('change', function() {
