@@ -752,7 +752,7 @@
             const cardHeader = document.createElement('div');
             cardHeader.className = 'job-card-header-with-status';
 
-            const fileName = job.original_filename || job.job_id;
+            const fileName = job.video_title || job.original_filename || job.job_id;
             const fileNameEl = document.createElement('span');
             fileNameEl.style.fontWeight = '600';
             fileNameEl.style.color = 'var(--text-primary)';
@@ -917,7 +917,7 @@
                     try {
                         const r = await fetch('/api/v1/jobs/' + encodeURIComponent(job.job_id));
                         const jobData = await r.json();
-                        showTextView(jobData.original_filename || job.job_id, jobData.text || 'Нет данных');
+                        showTextView(jobData.video_title || jobData.original_filename || jobData.job_id, jobData.text || 'Нет данных');
                     } catch (e) {
                         showToast('Ошибка загрузки результата');
                     }

@@ -1838,6 +1838,7 @@ body {
 
 /* ===== Job card updates ===== */
 .job-card-header-with-status { display:flex;align-items:center;justify-content:space-between; }
+.job-card-header-with-status span[style*="font-weight"] { max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block; }
 .job-card-meta { display:flex;flex-wrap:wrap;gap:12px;font-size:0.85rem;color:var(--text-secondary);margin:8px 0; }
 .job-card-meta span { display:inline-flex;align-items:center;gap:4px; }
 .job-card-actions { display:flex;flex-wrap:wrap;gap:8px;margin-top:12px; }

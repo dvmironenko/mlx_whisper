@@ -370,7 +370,7 @@ async def transcribe_url_endpoint(
     try:
         # Скачивание файла
         tmp_download = os.path.join(job_path, "downloaded.wav")
-        tmp_download = download_from_url(url, tmp_download, MAX_DOWNLOAD_SIZE)
+        tmp_download, video_title = download_from_url(url, tmp_download, MAX_DOWNLOAD_SIZE)
 
         # Конвертация в WAV + удаление тишины
         converted_wav_path = os.path.join(job_path, "converted.wav")
@@ -392,6 +392,8 @@ async def transcribe_url_endpoint(
             "job_id": job_id,
             "source": "url",
             "original_filename": _url_to_filename(url),
+            "video_title": video_title,
+            "original_url": url,
             "wav_path": converted_wav_path,
             "duration": round(audio_duration, 2) if audio_duration is not None else None,
             "params": {
@@ -404,6 +406,7 @@ async def transcribe_url_endpoint(
                 "hallucination_silence_threshold": hallucination_silence_threshold_value,
                 "initial_prompt": initial_prompt,
                 "mechanism": mechanism,
+                "video_title": video_title,
                 "include_timestamps": include_timestamps is not None and include_timestamps.lower() == "true",
             },
         })

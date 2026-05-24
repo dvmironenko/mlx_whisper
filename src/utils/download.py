@@ -103,7 +103,12 @@ def get_url_format(url: str) -> str:
     return 'unknown'
 
 
-def download_from_url(url: str, output_path: str, max_size: Optional[int] = None) -> str:
+def download_from_url(
+    url: str,
+    output_path: str,
+    max_size: Optional[int] = None,
+    extract_title: bool = True,
+) -> tuple:
     """
     Скачать видео/аудио по URL через yt-dlp.
 
@@ -115,15 +120,18 @@ def download_from_url(url: str, output_path: str, max_size: Optional[int] = None
         Путь для сохранения скачанного файла
     max_size : int
         Максимальный размер файла в байтах (по умолчанию из config)
+    extract_title : bool
+        Извлечь название видео из метаданных (по умолчанию True)
 
     Returns
     -------
-    str
-        Путь к скачанному файлу
+    tuple[str, Optional[str]]
+        (путь к скачанному файлу, название видео)
+        название видео — None, если извлечение не удалось или отключено.
 
     Raises
     ------
-    HTTPException
+    ValueError
         При ошибках скачивания
     """
     if max_size is None:
@@ -148,13 +156,18 @@ def download_from_url(url: str, output_path: str, max_size: Optional[int] = None
     # конвертацию в WAV и удаление тишины делает convert_to_wav()
     cmd = [
         yt_dlp_path,
+        "--no-simulate",
+    ]
+    if extract_title:
+        cmd.extend(["--print", "title"])
+    cmd.extend([
         "-f", "bestaudio",
         "-o", yt_output_template,
         "--no-warnings",
         "--no-progress",
         "--extract-audio",
         url,
-    ]
+    ])
 
     try:
         result = subprocess.run(
@@ -175,6 +188,17 @@ def download_from_url(url: str, output_path: str, max_size: Optional[int] = None
         _cleanup_yt_dlp_output(output_dir)
         raise RuntimeError(f"yt-dlp failed: {stderr_text[:500]}")
 
+    # Extract title from first line of stdout
+    video_title = None
+    if extract_title and result.stdout:
+        try:
+            stdout_text = result.stdout.decode("utf-8", errors="replace").strip()
+            first_line = stdout_text.split("\n")[0].strip()
+            if first_line:
+                video_title = first_line
+        except Exception as e:
+            logger.warning(f"Title extraction failed: {e}")
+
     # Find the actual downloaded file (yt-dlp appends its own extension)
     downloaded_file = _find_yt_dlp_output(output_dir)
     if not downloaded_file:
@@ -188,7 +212,7 @@ def download_from_url(url: str, output_path: str, max_size: Optional[int] = None
         raise ValueError(f"File too large: {size} bytes (max: {max_size})")
 
     logger.info(f"Downloaded file: {downloaded_file}, size: {size} bytes")
-    return downloaded_file
+    return (downloaded_file, video_title)
 
 
 def _cleanup_yt_dlp_output(output_dir: str) -> None:

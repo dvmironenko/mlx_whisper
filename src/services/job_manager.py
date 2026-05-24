@@ -63,6 +63,7 @@ class JobManager:
             "created_at": now,
             "updated_at": now,
             "original_filename": None,
+            "original_url": None,
             "model": None,
             "language": None,
             "task": None,
@@ -72,6 +73,7 @@ class JobManager:
             "transcription_duration": None,
             "result_file": None,
             "error": None,
+            "video_title": None,
         }
         metadata.update(extra)
         self._save(job_id, metadata)
@@ -125,6 +127,7 @@ class JobManager:
                     "created_at": "",
                     "updated_at": "",
                     "original_filename": None,
+                    "original_url": None,
                     "model": None,
                     "language": None,
                     "task": None,
@@ -134,6 +137,7 @@ class JobManager:
                     "transcription_duration": None,
                     "result_file": None,
                     "error": None,
+                    "video_title": None,
                     "files": [
                         {"name": fn, "size": os.path.getsize(os.path.join(job_dir, fn))}
                         for fn in job_dir_files

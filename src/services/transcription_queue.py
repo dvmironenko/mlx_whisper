@@ -81,6 +81,8 @@ class TranscriptionQueueManager:
             job_id=job_id,
             source=payload.get("source", "upload"),
             original_filename=payload.get("original_filename"),
+            original_url=payload.get("original_url"),
+            video_title=payload.get("video_title"),
             model=params.get("model"),
             language=params.get("language"),
             task=params.get("task"),
