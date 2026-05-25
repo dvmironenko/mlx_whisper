@@ -84,6 +84,13 @@ OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-8bit")
 OMLX_API_KEY: Optional[str] = os.getenv("OMLX_API_KEY") or None
 OMLX_ENABLED: bool = os.getenv("OMLX_ENABLED", "true").lower() == "true"
 
+# VibeVoice model selection — alias → display name
+VIBEVOICE_MODELS: dict = {
+    "VibeVoice-ASR-8bit": "VibeVoice ASR 8-bit",
+    "VibeVoice-ASR": "VibeVoice ASR",
+}
+VIBEVOICE_MODEL: str = os.getenv("VIBEVOICE_MODEL", "VibeVoice-ASR-8bit")
+
 
 def omlx_available() -> bool:
     """Check if oMLX is configured and enabled."""

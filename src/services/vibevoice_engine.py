@@ -256,6 +256,7 @@ class VibeVoiceEngine(TranscriptionEngine):
         - include_timestamps: включать ли временные метки в текст
         """
         include_timestamps = params.get("include_timestamps", True)
+        vibevoice_model = params.get("model")
         if not OMLX_ENABLED or not OMLX_BASE_URL:
             raise RuntimeError("oMLX не настроен: проверьте OMLX_BASE_URL и OMLX_ENABLED")
 
@@ -268,7 +269,7 @@ class VibeVoiceEngine(TranscriptionEngine):
 
         for seg_start_samples, _, seg_path in segments_files:
             try:
-                seg_result = self._transcribe_segment(seg_path, language)
+                seg_result = self._transcribe_segment(seg_path, language, model=vibevoice_model)
             except OMLXModelNotFoundError:
                 # Модель не найдена — все сегменты упадут с той же ошибкой
                 raise
@@ -301,7 +302,7 @@ class VibeVoiceEngine(TranscriptionEngine):
             "raw_response": None,
         }
 
-    def _transcribe_segment(self, file_path: str, language: Optional[str]) -> Dict[str, Any]:
+    def _transcribe_segment(self, file_path: str, language: Optional[str], model: Optional[str] = None) -> Dict[str, Any]:
         """Транскрибировать один сегмент через oMLX API."""
         url = f"{OMLX_BASE_URL}/audio/transcriptions"
 
@@ -310,7 +311,7 @@ class VibeVoiceEngine(TranscriptionEngine):
             ext = os.path.splitext(file_path)[1].lower()
             mime_type = {"wav": "audio/wav", ".mp3": "audio/mpeg"}.get(ext, "application/octet-stream")
             files = {"file": (os.path.basename(file_path), f, mime_type)}
-            data: Dict[str, Any] = {"model": OMLX_MODEL}
+            data: Dict[str, Any] = {"model": model or OMLX_MODEL}
             if language:
                 data["language"] = language
 
