@@ -24,11 +24,11 @@ class TestGetEngine:
         engine = get_engine("whisper")
         assert type(engine).__name__ == "WhisperEngine"
 
-    def test_vibevoice_returns_vibevoice_engine(self):
+    def test_omlx_returns_omlx_engine(self):
         from src.services.whisper_engines import get_engine
 
-        engine = get_engine("vibevoice")
-        assert type(engine).__name__ == "VibeVoiceEngine"
+        engine = get_engine("omlx")
+        assert type(engine).__name__ == "OMLXEngine"
 
     def test_unknown_mechanism_returns_whisper(self):
         from src.services.whisper_engines import get_engine

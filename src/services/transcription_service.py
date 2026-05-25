@@ -110,11 +110,11 @@ class TranscriptionService:
                         result["text"] = f.read()
 
                 # Read segments JSON
-                # Whisper saves as "segments.json", VibeVoice as "{job_id}_segments.json"
+                # Whisper saves as "segments.json", oMLX as "{job_id}_segments.json"
                 segments_path = os.path.join(job_dir, "segments.json")
                 if not os.path.isfile(segments_path):
-                    vibevoice_segments = f"{job_id}_segments.json"
-                    segments_path = os.path.join(job_dir, vibevoice_segments)
+                    omlx_segments = f"{job_id}_segments.json"
+                    segments_path = os.path.join(job_dir, omlx_segments)
                 if os.path.isfile(segments_path):
                     with open(segments_path, "r", encoding="utf-8") as f:
                         data = json.load(f)

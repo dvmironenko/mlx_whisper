@@ -1,4 +1,4 @@
-"""VibeVoiceEngine — механизм транскрибации через oMLX API (VibeVoice-ASR)."""
+"""OMLXEngine — механизм транскрибации через oMLX API."""
 
 from __future__ import annotations
 
@@ -136,7 +136,7 @@ def _group_intervals(
 
 def _save_segment(segment: AudioSegment) -> str:
     """Сохранить сегмент во временный MP3 файл для отправки в oMLX API."""
-    fd, path = tempfile.mkstemp(suffix=".mp3", prefix="vv_segment_")
+    fd, path = tempfile.mkstemp(suffix=".mp3", prefix="omlx_segment_")
     os.close(fd)
     try:
         segment.export(path, format="mp3", bitrate="64k")
@@ -244,19 +244,19 @@ def _repair_truncated_json(text_field: str) -> Optional[List[Dict[str, Any]]]:
 
 
 
-class VibeVoiceEngine(TranscriptionEngine):
-    """Механизм транскрибации через oMLX API (VibeVoice-ASR)."""
+class OMLXEngine(TranscriptionEngine):
+    """Механизм транскрибации через oMLX API."""
 
     def transcribe(self, file_path: str, **params) -> Dict[str, Any]:
         """
         Транскрибировать аудиофайл через oMLX API.
 
-        Параметры, специфичные для VibeVoice:
+        Параметры, специфичные для oMLX:
         - language: язык аудио
         - include_timestamps: включать ли временные метки в текст
         """
         include_timestamps = params.get("include_timestamps", True)
-        vibevoice_model = params.get("model")
+        omlx_model = params.get("model")
         if not OMLX_ENABLED or not OMLX_BASE_URL:
             raise RuntimeError("oMLX не настроен: проверьте OMLX_BASE_URL и OMLX_ENABLED")
 
@@ -269,7 +269,7 @@ class VibeVoiceEngine(TranscriptionEngine):
 
         for seg_start_samples, _, seg_path in segments_files:
             try:
-                seg_result = self._transcribe_segment(seg_path, language, model=vibevoice_model)
+                seg_result = self._transcribe_segment(seg_path, language, model=omlx_model)
             except OMLXModelNotFoundError:
                 # Модель не найдена — все сегменты упадут с той же ошибкой
                 raise
@@ -343,12 +343,12 @@ class VibeVoiceEngine(TranscriptionEngine):
         text = "\n".join(seg["text"] for seg in segments)
 
         if not segments:
-            fd, raw_debug_path = tempfile.mkstemp(suffix=".json", prefix="vv_debug_")
+            fd, raw_debug_path = tempfile.mkstemp(suffix=".json", prefix="omlx_debug_")
             os.close(fd)
             with open(raw_debug_path, "w") as f:
                 f.write(raw_text)
             logger.warning(
-                f"VibeVoice API returned empty segments for {os.path.basename(file_path)} "
+                f"oMLX API returned empty segments for {os.path.basename(file_path)} "
                 f"(raw response length: {len(raw_text)}, items count: {len(items) if isinstance(items, list) else 'N/A'}, "
                 f"debug saved to {raw_debug_path})"
             )

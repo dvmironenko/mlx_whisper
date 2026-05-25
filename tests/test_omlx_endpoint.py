@@ -118,8 +118,8 @@ class TestOmlxHealthEndpoint:
         assert data["model"] == "VibeVoice-ASR-4bit"
 
 
-class TestConfigEndpointVibevoiceFields:
-    """Тесты что GET /api/v1/config возвращает vibevoice поля."""
+class TestConfigEndpointOmlxFields:
+    """Тесты что GET /api/v1/config возвращает omlx поля."""
 
     @pytest.fixture
     def client(self):
@@ -152,7 +152,7 @@ class TestConfigEndpointVibevoiceFields:
         assert "omlx_model" in data
         assert data["omlx_model"] == "custom-model"
 
-    def test_default_model_is_vibevoice_asr(self, client):
+    def test_default_model_is_omlx_asr(self, client):
         with (
             patch("src.config.OMLX_MODEL", "VibeVoice-ASR-4bit"),
             patch("src.config.OMLX_BASE_URL", ""),

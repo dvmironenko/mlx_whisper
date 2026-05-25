@@ -36,7 +36,7 @@ from src.config import (
     SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR,
     MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT,
     logger, OMLX_ENABLED, OMLX_BASE_URL,
-    OMLX_MODEL, VIBEVOICE_MODELS, VIBEVOICE_MODEL, reload_dotenv,
+    OMLX_MODEL, OMLX_MODELS, reload_dotenv,
 )
 from src.models.report import load_segments_file, save_report, generate_report_via_openai_sync
 from src.services.report_types import load_report_types, get_prompt_for_report_type, save_report_prompt, clear_cache
@@ -146,7 +146,7 @@ async def transcribe_audio_endpoint(
     remove_silence: str = Form(None),  # Используем None для определения, что параметр не задан
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
-    mechanism: str = Form("vibevoice"),
+    mechanism: str = Form("omlx"),
     include_timestamps: Optional[str] = Form(None),
 ):
     """Залогировать файл в очередь транскрипции."""
@@ -160,7 +160,7 @@ async def transcribe_audio_endpoint(
             detail=f"Unsupported audio format. Supported: {', '.join(AUDIO_EXTENSIONS)}"
         )
 
-    if mechanism != "vibevoice" and model not in SUPPORTED_MODELS:
+    if mechanism != "omlx" and model not in SUPPORTED_MODELS:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported model. Supported: {', '.join(SUPPORTED_MODELS.keys())}"
@@ -168,11 +168,11 @@ async def transcribe_audio_endpoint(
 
     # Resolve defaults
     task_value = os.getenv("DEFAULT_TASK", "transcribe")
-    if mechanism == "vibevoice":
-        vibevoice_model = VIBEVOICE_MODEL
-        if model in VIBEVOICE_MODELS:
-            vibevoice_model = model
-        model_value = vibevoice_model
+    if mechanism == "omlx":
+        selected_model = OMLX_MODEL
+        if model in OMLX_MODELS:
+            selected_model = model
+        model_value = selected_model
     else:
         model_value = model
     word_timestamps_value = word_timestamps.lower() == "true"
@@ -286,8 +286,8 @@ async def get_config():
         OMLX_ENABLED,
         OMLX_BASE_URL,
         OMLX_MODEL,
-        VIBEVOICE_MODELS,
-        VIBEVOICE_MODEL,
+        OMLX_MODELS,
+        OMLX_MODEL,
     )
     return {
         "initial_prompt": INITIAL_PROMPT,
@@ -304,8 +304,8 @@ async def get_config():
         "omlx_enabled": OMLX_ENABLED,
         "omlx_base_url": OMLX_BASE_URL,
         "omlx_model": OMLX_MODEL,
-        "vibevoice_models": VIBEVOICE_MODELS,
-        "vibevoice_default_model": VIBEVOICE_MODEL,
+        "omlx_models": OMLX_MODELS,
+        "omlx_default_model": OMLX_MODEL,
     }
 
 
@@ -323,7 +323,7 @@ async def transcribe_url_endpoint(
     remove_silence: str = Form(None),
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
-    mechanism: str = Form("vibevoice"),
+    mechanism: str = Form("omlx"),
     include_timestamps: Optional[str] = Form(None),
 ):
     """Транскрибировать аудио по URL (YouTube, Vimeo, прямые ссылки)."""
@@ -336,11 +336,11 @@ async def transcribe_url_endpoint(
         )
 
     # Обработка параметров
-    if mechanism == "vibevoice":
-        vibevoice_model = VIBEVOICE_MODEL
-        if model in VIBEVOICE_MODELS:
-            vibevoice_model = model
-        model_value = vibevoice_model
+    if mechanism == "omlx":
+        selected_model = OMLX_MODEL
+        if model in OMLX_MODELS:
+            selected_model = model
+        model_value = selected_model
     else:
         model_value = model
 
@@ -425,7 +425,7 @@ async def transcribe_url_endpoint(
 
 @router.get("/omlx/health")
 async def omlx_health():
-    """Проверка доступности oMLX API (VibeVoice-ASR)."""
+    """Проверка доступности oMLX API."""
     if not OMLX_ENABLED or not OMLX_BASE_URL:
         return {
             "omlx": "disabled",
@@ -456,10 +456,10 @@ async def get_models():
     return {"supported_models": list(SUPPORTED_MODELS.keys())}
 
 
-@router.get("/vibevoice-models")
-async def get_vibevoice_models():
-    """Список доступных моделей VibeVoice."""
-    return {"models": VIBEVOICE_MODELS}
+@router.get("/omlx-models")
+async def get_omlx_models():
+    """Список доступных моделей oMLX."""
+    return {"models": OMLX_MODELS}
 
 
 @router.get("/jobs/{job_id}")
@@ -640,12 +640,12 @@ async def get_settings():
     """
     Вернуть список типов отчетов с их промптами и доступные модели.
 
-    Возвращает {types: [{id, name, prompt}, ...], vibevoice_model: str, vibevoice_models: dict, whisper_model: str}.
+    Возвращает {types: [{id, name, prompt}, ...], omlx_model: str, omlx_models: dict, whisper_model: str}.
     """
-    from src.config import OMLX_MODEL, DEFAULT_MODEL, VIBEVOICE_MODELS, VIBEVOICE_MODEL
+    from src.config import OMLX_MODEL, DEFAULT_MODEL, OMLX_MODELS, OMLX_MODEL
     types = load_report_types()
     result = [{"id": t["id"], "name": t["name"], "prompt": t.get("prompt", "")} for t in types]
-    return {"types": result, "vibevoice_model": OMLX_MODEL, "vibevoice_default_model": VIBEVOICE_MODEL, "vibevoice_models": VIBEVOICE_MODELS, "whisper_model": DEFAULT_MODEL}
+    return {"types": result, "omlx_model": OMLX_MODEL, "omlx_default_model": OMLX_MODEL, "omlx_models": OMLX_MODELS, "whisper_model": DEFAULT_MODEL}
 
 
 @router.post("/settings")
@@ -688,7 +688,7 @@ async def refresh_settings():
         from src.config import (
             INITIAL_PROMPT, REMOVE_SILENCE, SILENCE_THRESHOLD, SILENCE_DURATION,
             DEFAULT_LANGUAGE, NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD,
-            OMLX_ENABLED, OMLX_BASE_URL, OMLX_MODEL, VIBEVOICE_MODELS, VIBEVOICE_MODEL,
+            OMLX_ENABLED, OMLX_BASE_URL, OMLX_MODEL, OMLX_MODELS, OMLX_MODEL,
         )
         config = {
             "initial_prompt": INITIAL_PROMPT,
@@ -704,8 +704,8 @@ async def refresh_settings():
             "omlx_enabled": OMLX_ENABLED,
             "omlx_base_url": OMLX_BASE_URL,
             "omlx_model": OMLX_MODEL,
-            "vibevoice_models": VIBEVOICE_MODELS,
-            "vibevoice_default_model": VIBEVOICE_MODEL,
+            "omlx_models": OMLX_MODELS,
+            "omlx_default_model": OMLX_MODEL,
         }
 
         # Собрать свежие settings

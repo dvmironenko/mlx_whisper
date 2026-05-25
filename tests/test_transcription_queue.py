@@ -179,13 +179,13 @@ def test_submit_persists_mechanism():
         result = mgr.submit({
             "job_id": "mech-job-1",
             "wav_path": "/tmp/test.wav",
-            "params": {"mechanism": "vibevoice", "model": "turbo"},
+            "params": {"mechanism": "omlx", "model": "turbo"},
         })
         assert result is True
 
         meta = mgr._meta.load("mech-job-1")
         assert meta is not None
-        assert meta["mechanism"] == "vibevoice"
+        assert meta["mechanism"] == "omlx"
         assert meta["model"] == "turbo"
     finally:
         mgr.shutdown()

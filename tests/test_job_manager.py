@@ -134,9 +134,9 @@ class TestJobManagerCancel:
 
 class TestJobManagerMechanism:
     def test_create_includes_mechanism(self, job_manager):
-        meta = job_manager.create(mechanism="vibevoice")
+        meta = job_manager.create(mechanism="omlx")
 
-        assert meta["mechanism"] == "vibevoice"
+        assert meta["mechanism"] == "omlx"
 
     def test_create_default_mechanism_is_none(self, job_manager):
         meta = job_manager.create()
@@ -149,11 +149,11 @@ class TestJobManagerMechanism:
         assert meta["mechanism"] == "whisper"
 
     def test_update_preserves_mechanism(self, job_manager):
-        job_manager.create(job_id="mech-preserve", mechanism="vibevoice", model="turbo")
+        job_manager.create(job_id="mech-preserve", mechanism="omlx", model="turbo")
         job_manager.update_status("mech-preserve", JobStatus.COMPLETED)
         meta = job_manager.load("mech-preserve")
 
-        assert meta["mechanism"] == "vibevoice"
+        assert meta["mechanism"] == "omlx"
         assert meta["model"] == "turbo"
 
 

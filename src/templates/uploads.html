@@ -69,13 +69,13 @@
                         <label for="mechanism"><i class="fas fa-microchip"></i> Механизм</label>
                         <select id="mechanism" name="mechanism" class="form-select">
                             <option value="whisper" id="whisperOption">Whisper MLX</option>
-                            <option value="vibevoice" selected>VibeVoice oMLX</option>
+                            <option value="omlx" selected>oMLX</option>
                         </select>
                     </div>
 
-                    <div class="form-group" id="vibevoiceModelGroup" style="display:none;">
-                        <label for="vibevoiceModel"><i class="fas fa-microchip"></i> Модель VibeVoice</label>
-                        <select id="vibevoiceModel" name="vibevoice_model" class="form-select">
+                    <div class="form-group" id="omlxModelGroup" style="display:none;">
+                        <label for="omlxModel"><i class="fas fa-microchip"></i> Модель oMLX</label>
+                        <select id="omlxModel" name="omlx_model" class="form-select">
                             <option value="">Загрузка...</option>
                         </select>
                     </div>
@@ -419,10 +419,10 @@
 
             // Override model based on mechanism
             const mechanism = document.getElementById('mechanism').value;
-            if (mechanism === 'vibevoice') {
-                const vibevoiceModel = document.getElementById('vibevoiceModel').value;
-                if (vibevoiceModel) {
-                    formData.set('model', vibevoiceModel);
+            if (mechanism === 'omlx') {
+                const omlxModel = document.getElementById('omlxModel').value;
+                if (omlxModel) {
+                    formData.set('model', omlxModel);
                 }
             }
 
@@ -528,21 +528,21 @@
                     }
                 }
 
-                // Initialize VibeVoice models
-                if (config.vibevoice_models) {
-                    const vibevoiceModelSelect = document.getElementById('vibevoiceModel');
-                    if (vibevoiceModelSelect) {
-                        vibevoiceModelSelect.innerHTML = '';
+                // Initialize oMLX models
+                if (config.omlx_models) {
+                    const omlxModelSelect = document.getElementById('omlxModel');
+                    if (omlxModelSelect) {
+                        omlxModelSelect.innerHTML = '';
                         // Set default model as selected
-                        const defaultVVModel = config.vibevoice_default_model || Object.keys(config.vibevoice_models)[0];
-                        for (const [alias, displayName] of Object.entries(config.vibevoice_models)) {
+                        const defaultVVModel = config.omlx_default_model || Object.keys(config.omlx_models)[0];
+                        for (const [alias, displayName] of Object.entries(config.omlx_models)) {
                             const option = document.createElement('option');
                             option.value = alias;
                             option.textContent = displayName;
                             if (alias === defaultVVModel) {
                                 option.selected = true;
                             }
-                            vibevoiceModelSelect.appendChild(option);
+                            omlxModelSelect.appendChild(option);
                         }
                     }
                 }
@@ -623,25 +623,25 @@
 
         function updateMechanismUI() {
             const mechanism = document.getElementById('mechanism').value;
-            const isVibeVoice = mechanism === 'vibevoice';
+            const isoMLX = mechanism === 'omlx';
 
-            // Show/hide VibeVoice model selector
-            const vibevoiceModelGroup = document.getElementById('vibevoiceModelGroup');
-            if (vibevoiceModelGroup) {
-                vibevoiceModelGroup.style.display = isVibeVoice ? '' : 'none';
+            // Show/hide oMLX model selector
+            const omlxModelGroup = document.getElementById('omlxModelGroup');
+            if (omlxModelGroup) {
+                omlxModelGroup.style.display = isoMLX ? '' : 'none';
             }
 
             // Show/hide Whisper-specific params
             WHISPER_PARAMS.forEach(function(id) {
                 var el = document.getElementById(id);
                 if (el) {
-                    el.style.display = isVibeVoice ? 'none' : '';
+                    el.style.display = isoMLX ? 'none' : '';
                 }
             });
 
             // Expand/collapse accordion based on mechanism
             if (parametersHeader && parametersContent) {
-                if (!isVibeVoice) {
+                if (!isoMLX) {
                     // Whisper: expand
                     parametersHeader.setAttribute('data-expanded', 'true');
                     parametersContent.style.maxHeight = parametersContent.scrollHeight + 'px';
@@ -650,7 +650,7 @@
                         toggleBtn.querySelector('.toggle-icon').style.transform = 'rotate(180deg)';
                     }
                 } else {
-                    // VibeVoice: collapse
+                    // oMLX: collapse
                     parametersHeader.setAttribute('data-expanded', 'false');
                     parametersContent.style.maxHeight = '0';
                     parametersContent.style.padding = '0 20px';
@@ -702,7 +702,7 @@
             });
         }
 
-        // Initialize mechanism UI (expand for Whisper, collapse for VibeVoice)
+        // Initialize mechanism UI (expand for Whisper, collapse for oMLX)
         updateMechanismUI();
     </script>
 </body>

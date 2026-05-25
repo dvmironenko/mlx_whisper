@@ -155,7 +155,7 @@
         const saveBtn = document.getElementById('saveButton');
         const refreshBtn = document.getElementById('refreshButton');
         const notif = document.getElementById('notificationZone');
-        let currentMechanism = 'vibevoice'; // по умолчанию VibeVoice
+        let currentMechanism = 'omlx'; // по умолчанию oMLX
 
         // WYSIWYG Editor
         let editorInstance = null;
@@ -312,8 +312,8 @@
 
             // Заполнить селектор механизмов
             const vvOpt = document.createElement('option');
-            vvOpt.value = 'vibevoice';
-            vvOpt.textContent = 'VibeVoice (' + reportTypesData.vibevoice_model + ')';
+            vvOpt.value = 'omlx';
+            vvOpt.textContent = 'oMLX (' + reportTypesData.omlx_model + ')';
             mechanismSelect.appendChild(vvOpt);
 
             const wOpt = document.createElement('option');
@@ -321,7 +321,7 @@
             wOpt.textContent = 'Whisper (' + reportTypesData.whisper_model + ')';
             mechanismSelect.appendChild(wOpt);
 
-            mechanismSelect.value = 'vibevoice';
+            mechanismSelect.value = 'omlx';
             mechanismSelect.dispatchEvent(new Event('change'));
 
             select.innerHTML = '';

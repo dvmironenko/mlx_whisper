@@ -179,12 +179,12 @@ def _build_formatted_text_from_segments(
     return "\n".join(lines)
 
 
-def get_engine(mechanism: str = "vibevoice") -> TranscriptionEngine:
+def get_engine(mechanism: str = "omlx") -> TranscriptionEngine:
     """Получить механизм транскрибации по имени."""
-    if mechanism == "vibevoice":
-        from src.services.vibevoice_engine import VibeVoiceEngine
+    if mechanism == "omlx":
+        from src.services.omlx_engine import OMLXEngine
 
-        return VibeVoiceEngine()
+        return OMLXEngine()
     return WhisperEngine()
 
 

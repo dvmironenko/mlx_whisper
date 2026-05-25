@@ -78,18 +78,18 @@ OPENAI_REPORT_PROMPT: Optional[str] = os.getenv(
 # Report generation chunk size (for large texts)
 MAX_REPORT_CHUNK_SIZE: int = int(os.getenv("MAX_REPORT_CHUNK_SIZE", "10000"))
 
-# OMLX / VibeVoice Configuration
+# OMLX Configuration
 OMLX_BASE_URL: str = os.getenv("OMLX_BASE_URL", "")
 OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-8bit")
 OMLX_API_KEY: Optional[str] = os.getenv("OMLX_API_KEY") or None
 OMLX_ENABLED: bool = os.getenv("OMLX_ENABLED", "true").lower() == "true"
 
-# VibeVoice model selection — alias → display name
-VIBEVOICE_MODELS: dict = {
+# OMLX model selection — alias → display name
+OMLX_MODELS: dict = {
     "VibeVoice-ASR-8bit": "VibeVoice ASR 8-bit",
     "VibeVoice-ASR": "VibeVoice ASR",
 }
-VIBEVOICE_MODEL: str = os.getenv("VIBEVOICE_MODEL", "VibeVoice-ASR-8bit")
+OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-8bit")
 
 
 def omlx_available() -> bool:

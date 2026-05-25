@@ -1,10 +1,10 @@
-# VibeVoiceEngine — механизм транскрибации через oMLX API
+# oMLXEngine — механизм транскрибации через oMLX API
 
-`VibeVoiceEngine` — один из двух механизмов транскрипции в MLX-Transcriber (наряду с `WhisperEngine`). Реализует паттерн Strategy через абстрактный базовый класс `TranscriptionEngine`, обеспечивая единый формат результата для всех механизмов.
+`oMLXEngine` — один из двух механизмов транскрипции в MLX-Transcriber (наряду с `WhisperEngine`). Реализует паттерн Strategy через абстрактный базовый класс `TranscriptionEngine`, обеспечивая единый формат результата для всех механизмов.
 
 ## Описание
 
-Механизм выполняет транскрипцию аудио через HTTP API oMLX (VibeVoice-ASR модель). Автоматически разбивает длинное аудио на сегменты по тишине, транскрибирует каждый сегмент, объединяет результаты с корректными временными метками.
+Механизм выполняет транскрипцию аудио через HTTP API oMLX (oMLX-ASR модель). Автоматически разбивает длинное аудио на сегменты по тишине, транскрибирует каждый сегмент, объединяет результаты с корректными временными метками.
 
 **Ключевые особенности:**
 
@@ -22,13 +22,13 @@
 # MLX Whisper (по умолчанию)
 curl -X POST http://localhost:8801/api/v1/transcribe \
   -F "file=@audio.wav" \
-  -F "mechanism=vibevoice" \
+  -F "mechanism=omlx" \
   -F "language=ru"
 
 # Через URL
 curl -X POST http://localhost:8801/api/v1/transcribe-url \
   -F "url=https://example.com/audio.mp3" \
-  -F "mechanism=vibevoice"
+  -F "mechanism=omlx"
 ```
 
 ### Программно
@@ -36,7 +36,7 @@ curl -X POST http://localhost:8801/api/v1/transcribe-url \
 ```python
 from src.services.transcription_engines import get_engine
 
-engine = get_engine("vibevoice")
+engine = get_engine("omlx")
 result = engine.transcribe(
     file_path="audio.wav",
     language="ru",
@@ -48,7 +48,7 @@ for seg in result["segments"]:
 
 ## Единый формат результата
 
-`VibeVoiceEngine` возвращает результат в том же формате, что и `WhisperEngine`:
+`oMLXEngine` возвращает результат в том же формате, что и `WhisperEngine`:
 
 ```json
 {
@@ -93,7 +93,7 @@ for seg in result["segments"]:
 
 ## Парсинг JSON сегментов
 
-oMLX API может возвращать сегменты в различных форматах. `VibeVoiceEngine` поддерживает несколько стратегий парсинга:
+oMLX API может возвращать сегменты в различных форматах. `oMLXEngine` поддерживает несколько стратегий парсинга:
 
 ### 1. Прямой JSON-массив
 
@@ -148,22 +148,22 @@ oMLX API возвращает идентификаторы спикеров (0, 
 
 ## Конфигурация
 
-Переменные окружения для работы `VibeVoiceEngine`:
+Переменные окружения для работы `oMLXEngine`:
 
 | Переменная | По умолчанию | Описание |
 |------------|--------------|----------|
 | `OMLX_BASE_URL` | — | URL oMLX API (обязательно) |
-| `OMLX_MODEL` | `VibeVoice-ASR-4bit` | Модель транскрипции |
+| `OMLX_MODEL` | `oMLX-ASR-4bit` | Модель транскрипции |
 | `OMLX_API_KEY` | — | API ключ для аутентификации |
-| `OMLX_ENABLED` | `true` | Включён ли VibeVoice |
+| `OMLX_ENABLED` | `true` | Включён ли oMLX |
 
-Если `OMLX_ENABLED=false` или `OMLX_BASE_URL` не указан, `VibeVoiceEngine.transcribe()` выбросит `RuntimeError`.
+Если `OMLX_ENABLED=false` или `OMLX_BASE_URL` не указан, `oMLXEngine.transcribe()` выбросит `RuntimeError`.
 
 ## Архитектура
 
 ### Компоненты
 
-**`VibeVoiceEngine`** — основной класс, реализующий `TranscriptionEngine`:
+**`oMLXEngine`** — основной класс, реализующий `TranscriptionEngine`:
 - `transcribe(file_path, **params)` — полная транскрипция с разбиением
 - `_transcribe_segment(file_path, language)` — транскрипция одного сегмента
 

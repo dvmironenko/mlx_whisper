@@ -1,10 +1,10 @@
-# VibeVoice Transcription — Implementation Plan
+# oMLX Transcription — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Добавить второй механизм транскрипции (VibeVoice/oMLX API) alongside existing MLX Whisper с выбором через UI.
+**Goal:** Добавить второй механизм транскрипции (oMLX/oMLX API) alongside existing MLX Whisper с выбором через UI.
 
-**Architecture:** Strategy pattern — TranscriptionEngine ABC, WhisperEngine + VibeVoiceEngine. Queue manager выбирает engine по механизму. Фронтенд показывает/скрывает Whisper-параметры при переключении.
+**Architecture:** Strategy pattern — TranscriptionEngine ABC, WhisperEngine + oMLXEngine. Queue manager выбирает engine по механизму. Фронтенд показывает/скрывает Whisper-параметры при переключении.
 
 **Tech Stack:** Python, FastAPI, MLX Whisper, oMLX HTTP API (requests), librosa, pydub, Jinja2
 
@@ -35,7 +35,7 @@ pip install librosa pydub requests
 
 ```bash
 git add requirements.txt
-git commit -m "deps: add librosa and pydub for VibeVoice engine"
+git commit -m "deps: add librosa and pydub for oMLX engine"
 ```
 
 ---
@@ -50,9 +50,9 @@ git commit -m "deps: add librosa and pydub for VibeVoice engine"
 После существующих MLX_ переменных добавить:
 
 ```python
-# OMLX / VibeVoice Configuration
+# OMLX / oMLX Configuration
 OMLX_BASE_URL: str = os.getenv("OMLX_BASE_URL", "")
-OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-4bit")
+OMLX_MODEL: str = os.getenv("OMLX_MODEL", "oMLX-ASR-4bit")
 OMLX_API_KEY: Optional[str] = os.getenv("OMLX_API_KEY") or None
 OMLX_ENABLED: bool = os.getenv("OMLX_ENABLED", "true").lower() == "true"
 ```
@@ -76,7 +76,7 @@ python -c "from src.config import OMLX_BASE_URL, OMLX_ENABLED, omlx_available; p
 
 ```bash
 git add src/config.py
-git commit -m "feat: add OMLX config variables for VibeVoice"
+git commit -m "feat: add OMLX config variables for oMLX"
 ```
 
 ---
@@ -92,7 +92,7 @@ git commit -m "feat: add OMLX config variables for VibeVoice"
 Создать `src/services/transcription_engines.py`:
 
 ```python
-"""Transcription engine abstraction with Whisper and VibeVoice implementations."""
+"""Transcription engine abstraction with Whisper and oMLX implementations."""
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
@@ -153,18 +153,18 @@ git commit -m "refactor: create TranscriptionEngine ABC + WhisperEngine"
 
 ---
 
-## Task 4: Create VibeVoiceEngine
+## Task 4: Create oMLXEngine
 
 **Files:**
-- Create: `src/services/vibevoice_engine.py`
-- Modify: `src/services/transcription_engines.py` (import VibeVoiceEngine)
+- Create: `src/services/omlx_engine.py`
+- Modify: `src/services/transcription_engines.py` (import oMLXEngine)
 
-- [ ] **Step 1: Create VibeVoiceEngine**
+- [ ] **Step 1: Create oMLXEngine**
 
-Создать `src/services/vibevoice_engine.py`:
+Создать `src/services/omlx_engine.py`:
 
 ```python
-"""VibeVoice transcription engine using oMLX API."""
+"""oMLX transcription engine using oMLX API."""
 
 import os
 import tempfile
@@ -237,8 +237,8 @@ def _split_audio_by_silence(
     return result
 
 
-class VibeVoiceEngine(TranscriptionEngine):
-    """VibeVoice ASR transcription via oMLX API."""
+class oMLXEngine(TranscriptionEngine):
+    """oMLX ASR transcription via oMLX API."""
 
     SILENCE_THRESHOLD_DB = 40
     MAX_SEGMENT_SEC = 50 * 60
@@ -295,7 +295,7 @@ class VibeVoiceEngine(TranscriptionEngine):
             os.unlink(tmp_path)
 
     def transcribe(self, file_path: str, **params) -> Dict[str, Any]:
-        """Transcribe using VibeVoice/oMLX API."""
+        """Transcribe using oMLX/oMLX API."""
         language = params.get("language")
 
         # Check duration
@@ -319,7 +319,7 @@ class VibeVoiceEngine(TranscriptionEngine):
                 # Log error, continue with next segment
                 import logging
                 logging.getLogger(__name__).error(
-                    f"VibeVoice segment transcription failed [{start:.1f}-{end:.1f}]: {e}"
+                    f"oMLX segment transcription failed [{start:.1f}-{end:.1f}]: {e}"
                 )
                 continue
 
@@ -373,24 +373,24 @@ class VibeVoiceEngine(TranscriptionEngine):
 
 Также добавить вспомогательную функцию `_parse_raw_text` для fallback парсинга.
 
-- [ ] **Step 2: Import VibeVoiceEngine in transcription_engines.py**
+- [ ] **Step 2: Import oMLXEngine in transcription_engines.py**
 
 Добавить:
 ```python
-from src.services.vibevoice_engine import VibeVoiceEngine
+from src.services.omlx_engine import oMLXEngine
 ```
 
-- [ ] **Step 3: Test VibeVoiceEngine imports**
+- [ ] **Step 3: Test oMLXEngine imports**
 
 ```bash
-python -c "from src.services.transcription_engines import VibeVoiceEngine; print('OK')"
+python -c "from src.services.transcription_engines import oMLXEngine; print('OK')"
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/services/vibevoice_engine.py src/services/transcription_engines.py
-git commit -m "feat: add VibeVoiceEngine for oMLX API transcription"
+git add src/services/omlx_engine.py src/services/transcription_engines.py
+git commit -m "feat: add oMLXEngine for oMLX API transcription"
 ```
 
 ---
@@ -409,7 +409,7 @@ import src.models.transcription as _transcription_module
 
 На:
 ```python
-from src.services.transcription_engines import WhisperEngine, VibeVoiceEngine
+from src.services.transcription_engines import WhisperEngine, oMLXEngine
 ```
 
 В `TranscriptionQueueManager.__init__` добавить параметр `mechanism` и разрешить engine:
@@ -420,7 +420,7 @@ def __init__(
     max_queue_size: int = 20,
     mechanism: str = "whisper",  # new parameter
 ):
-    self._engine = WhisperEngine() if mechanism == "vibevoice" else WhisperEngine()
+    self._engine = WhisperEngine() if mechanism == "omlx" else WhisperEngine()
 ```
 
 - [ ] **Step 2: Update worker to use engine**
@@ -473,8 +473,8 @@ mechanism: str = Form("whisper"),
 
 Валидация:
 ```python
-if mechanism not in ("whisper", "vibevoice"):
-    raise HTTPException(status_code=400, detail="Invalid mechanism. Must be 'whisper' or 'vibevoice'.")
+if mechanism not in ("whisper", "omlx"):
+    raise HTTPException(status_code=400, detail="Invalid mechanism. Must be 'whisper' or 'omlx'.")
 ```
 
 - [ ] **Step 2: Pass mechanism through the service layer**
@@ -489,18 +489,18 @@ job_id, success = transcription_service.submit(
 
 - [ ] **Step 3: Update queue creation with mechanism**
 
-При submit проверить `mechanism == "vibevoice"` и пересоздать TranscriptionQueueManager с нужным mechanism, либо использовать module-level паттерн:
+При submit проверить `mechanism == "omlx"` и пересоздать TranscriptionQueueManager с нужным mechanism, либо использовать module-level паттерн:
 ```python
-if mechanism == "vibevoice":
+if mechanism == "omlx":
     TranscriptionQueueManager._instance = None  # force reinit
-    qm = TranscriptionQueueManager(mechanism="vibevoice")
+    qm = TranscriptionQueueManager(mechanism="omlx")
 else:
     qm = TranscriptionQueueManager(mechanism="whisper")
 ```
 
 Или лучше — создать queue manager с engine на уровне сервиса:
 ```python
-engine = VibeVoiceEngine() if mechanism == "vibevoice" else WhisperEngine()
+engine = oMLXEngine() if mechanism == "omlx" else WhisperEngine()
 transcription_service = TranscriptionService(qm, jm, engine)
 ```
 
@@ -554,13 +554,13 @@ git commit -m "feat: add GET /api/v1/omlx/health endpoint"
 **Files:**
 - Modify: `src/api/router.py:240-263`
 
-- [ ] **Step 1: Add vibevoice fields to config response**
+- [ ] **Step 1: Add omlx fields to config response**
 
 В `GET /api/v1/config` добавить:
 ```python
 from src.config import OMLX_ENABLED, omlx_available
 
-config["vibevoice_enabled"] = OMLX_ENABLED
+config["omlx_enabled"] = OMLX_ENABLED
 config["omlx_available"] = omlx_available()
 ```
 
@@ -568,7 +568,7 @@ config["omlx_available"] = omlx_available()
 
 ```bash
 git add src/api/router.py
-git commit -m "feat: extend config with vibevoice_enabled and omlx_available"
+git commit -m "feat: extend config with omlx_enabled and omlx_available"
 ```
 
 ---
@@ -586,7 +586,7 @@ git commit -m "feat: extend config with vibevoice_enabled and omlx_available"
     <label for="mechanism">Transcription Mechanism:</label>
     <select id="mechanism" name="mechanism">
         <option value="whisper" selected>Whisper (MLX)</option>
-        <option value="vibevoice">VibeVoice (oMLX)</option>
+        <option value="omlx">oMLX (oMLX)</option>
     </select>
 </div>
 ```
@@ -605,17 +605,17 @@ function loadConfig() {
             const mechanismSelect = document.getElementById('mechanism');
             const whisperAccordion = document.getElementById('whisper-params-accordion');
 
-            if (!config.vibevoice_enabled) {
-                // VibeVoice not available — disable select, force Whisper
-                const vibevoiceOption = mechanismSelect.querySelector('[value="vibevoice"]');
-                if (vibevoiceOption) vibevoiceOption.disabled = true;
+            if (!config.omlx_enabled) {
+                // oMLX not available — disable select, force Whisper
+                const omlxOption = mechanismSelect.querySelector('[value="omlx"]');
+                if (omlxOption) omlxOption.disabled = true;
                 mechanismSelect.value = 'whisper';
             }
 
             if (!config.omlx_available) {
-                // oMLX not configured — disable VibeVoice option
-                const vibevoiceOption = mechanismSelect.querySelector('[value="vibevoice"]');
-                if (vibevoiceOption) vibevoiceOption.disabled = true;
+                // oMLX not configured — disable oMLX option
+                const omlxOption = mechanismSelect.querySelector('[value="omlx"]');
+                if (omlxOption) omlxOption.disabled = true;
             }
 
             // Mechanism change handler
@@ -623,7 +623,7 @@ function loadConfig() {
                 const isWhisper = this.value === 'whisper';
                 whisperAccordion.style.display = isWhisper ? 'block' : 'none';
 
-                // Disable/enable mechanism select if VibeVoice unavailable
+                // Disable/enable mechanism select if oMLX unavailable
                 if (!config.omlx_available) {
                     this.value = 'whisper';
                 }
@@ -699,7 +699,7 @@ git commit -m "style: add CSS for mechanism selector dropdown"
 **Files:**
 - Create: `tests/test_transcription_engines.py`
 - Create: `tests/test_omlx_health.py`
-- Create: `tests/test_vibevoice_engine.py` (optional, skip if no oMLX server)
+- Create: `tests/test_omlx_engine.py` (optional, skip if no oMLX server)
 
 - [ ] **Step 1: Test TranscriptionEngine ABC and WhisperEngine import**
 
@@ -813,9 +813,9 @@ git commit -m "test: add integration test for WhisperEngine.transcribe()"
 
 1. **Install deps**: `pip install librosa pydub requests`
 2. **Run app**: `source .venv/bin/activate && python src/main.py`
-3. **Check UI**: Open uploads page, verify mechanism select shows Whisper (MLX) / VibeVoice (oMLX)
+3. **Check UI**: Open uploads page, verify mechanism select shows Whisper (MLX) / oMLX (oMLX)
 4. **Test Whisper**: Upload audio with Whisper — should work as before
-5. **Test VibeVoice**: Switch to VibeVoice, upload audio — should transcribe via oMLX
+5. **Test oMLX**: Switch to oMLX, upload audio — should transcribe via oMLX
 6. **Test health endpoint**: `curl http://localhost:8000/api/v1/omlx/health`
-7. **Test config**: `curl http://localhost:8000/api/v1/config` — should include `vibevoice_enabled` and `omlx_available`
+7. **Test config**: `curl http://localhost:8000/api/v1/config` — should include `omlx_enabled` and `omlx_available`
 8. **Run tests**: `pytest tests/ -v` — all existing tests pass

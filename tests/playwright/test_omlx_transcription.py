@@ -1,4 +1,4 @@
-"""Playwright test for VibeVoice transcription via UI."""
+"""Playwright test for oMLX transcription via UI."""
 
 import os
 import sys
@@ -14,7 +14,7 @@ BASE_URL = "http://localhost:8801"
 
 
 def wait_for_job_completion(job_id: str, max_wait: int = 600, poll: int = 5) -> dict | None:
-    """Poll /api/v1/jobs until the specific vibevoice job completes or timeout."""
+    """Poll /api/v1/jobs until the specific omlx job completes or timeout."""
     deadline = time.time() + max_wait
     while time.time() < deadline:
         try:
@@ -32,10 +32,10 @@ def wait_for_job_completion(job_id: str, max_wait: int = 600, poll: int = 5) -> 
     return None
 
 
-def test_vibevoice_transcription():
-    """Test VibeVoice transcription via the uploads UI."""
+def test_omlx_transcription():
+    """Test oMLX transcription via the uploads UI."""
 
-    print("Testing VibeVoice transcription via UI...")
+    print("Testing oMLX transcription via UI...")
     print("=" * 60)
 
     test_file = os.path.join(project_root, "test_telemost.webm")
@@ -57,25 +57,25 @@ def test_vibevoice_transcription():
             page.wait_for_load_state("networkidle")
             print("  [OK] Page loaded")
 
-            # 2. Verify VibeVoice option exists
+            # 2. Verify oMLX option exists
             print("\n2. Checking mechanism options...")
             mechanism_select = page.query_selector("#mechanism")
             assert mechanism_select is not None, "Mechanism select not found"
             options = mechanism_select.query_selector_all("option")
             option_values = [opt.get_attribute("value") for opt in options]
             print(f"  Available mechanisms: {option_values}")
-            assert "vibevoice" in option_values, "VibeVoice option not found"
-            print("  [OK] VibeVoice option present")
+            assert "omlx" in option_values, "oMLX option not found"
+            print("  [OK] oMLX option present")
 
-            # 3. Select VibeVoice mechanism
-            print("\n3. Selecting VibeVoice mechanism...")
-            mechanism_select.select_option(value="vibevoice")
+            # 3. Select oMLX mechanism
+            print("\n3. Selecting oMLX mechanism...")
+            mechanism_select.select_option(value="omlx")
             selected = mechanism_select.evaluate("el => el.value")
-            assert selected == "vibevoice", f"Expected 'vibevoice', got '{selected}'"
-            print("  [OK] VibeVoice selected")
+            assert selected == "omlx", f"Expected 'omlx', got '{selected}'"
+            print("  [OK] oMLX selected")
 
             # 4. Verify Whisper params are hidden
-            print("\n4. Verifying Whisper params hidden for VibeVoice...")
+            print("\n4. Verifying Whisper params hidden for oMLX...")
             whisper_params = [
                 "task", "model", "noSpeechThreshold", "hallucinationSilenceThreshold",
                 "wordTimestamps", "conditionOnPreviousText", "initialPrompt",
@@ -148,9 +148,9 @@ def test_vibevoice_transcription():
                     resp = requests.get(f"{BASE_URL}/api/v1/jobs", timeout=10)
                     if resp.status_code == 200:
                         jobs = resp.json()
-                        vibevoice_jobs = [j for j in jobs if j.get("mechanism") == "vibevoice"]
-                        print(f"  VibeVoice jobs found: {len(vibevoice_jobs)}")
-                        for vj in vibevoice_jobs[-3:]:
+                        omlx_jobs = [j for j in jobs if j.get("mechanism") == "omlx"]
+                        print(f"  oMLX jobs found: {len(omlx_jobs)}")
+                        for vj in omlx_jobs[-3:]:
                             print(f"    - {vj['job_id'][:8]}... status={vj['status']} "
                                   f"duration={vj.get('transcription_duration')}s")
                 except Exception:
@@ -177,9 +177,9 @@ def test_vibevoice_transcription():
                     first_seg = segments[0]
                     print(f"  First segment: speaker={first_seg.get('speaker')}, "
                           f"text={first_seg.get('text', '')[:80]}...")
-                    print("\n  [OK] VibeVoice transcription returned segments")
+                    print("\n  [OK] oMLX transcription returned segments")
                 else:
-                    print("\n  [WARN] VibeVoice completed but segments are empty")
+                    print("\n  [WARN] oMLX completed but segments are empty")
                     print("  This may indicate an API response parsing issue")
 
                 files = job_detail.get("files", [])
@@ -210,11 +210,11 @@ def test_vibevoice_transcription():
 
             print("\n" + "=" * 60)
             print("  PLAYWRIGHT TEST COMPLETED")
-            print("  VibeVoice transcription flow works end-to-end.")
+            print("  oMLX transcription flow works end-to-end.")
 
         finally:
             browser.close()
 
 
 if __name__ == "__main__":
-    test_vibevoice_transcription()
+    test_omlx_transcription()
