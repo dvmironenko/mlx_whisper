@@ -179,7 +179,7 @@ def _build_formatted_text_from_segments(
     return "\n".join(lines)
 
 
-def get_engine(mechanism: str = "whisper") -> TranscriptionEngine:
+def get_engine(mechanism: str = "vibevoice") -> TranscriptionEngine:
     """Получить механизм транскрибации по имени."""
     if mechanism == "vibevoice":
         from src.services.vibevoice_engine import VibeVoiceEngine

@@ -176,7 +176,7 @@ class TranscriptionQueueManager:
         """Process one job: call engine.transcribe() with lock."""
         import time
 
-        mechanism = job.params.get("mechanism", "whisper")
+        mechanism = job.params.get("mechanism", "vibevoice")
         start = time.time()
         try:
             with self._transcription_lock:

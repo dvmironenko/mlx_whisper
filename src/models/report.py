@@ -5,7 +5,7 @@ import os
 import time
 from typing import Optional, List
 
-from openai import AsyncOpenAI, OpenAI
+from openai import OpenAI
 
 from src.config import logger, OPENAI_API_KEY, OPENAI_MODEL, OPENAI_REPORT_PROMPT, OPENAI_BASE_URL, MAX_REPORT_CHUNK_SIZE
 
@@ -118,86 +118,6 @@ def split_text(text: str, max_chunk: Optional[int] = None) -> List[str]:
         is_separator_regex=False,
     )
     return splitter.split_text(text)
-
-
-def build_prompt(text: str, custom_prompt: Optional[str] = None) -> str:
-    """
-    Собрать финальный промпт для OpenAI.
-
-    Parameters
-    ----------
-    text: str
-        Текст транскрипции из segments.txt
-    custom_prompt: Optional[str]
-        Пользовательский промпт или None для использования дефолтного
-
-    Returns
-    -------
-    str
-        Полный промпт для отправки в OpenAI
-    """
-    base_prompt = custom_prompt or OPENAI_REPORT_PROMPT or "Создать отчет о сессии."
-    return f"""{base_prompt}
-
-Транскрипция:
-{text}"""
-
-
-async def generate_report_via_openai(text: str, prompt: Optional[str] = None) -> str:
-    """
-    Отправить на OpenAI и получить Markdown отчёт.
-
-    Parameters
-    ----------
-    text: str
-        Текст транскрипции для анализа
-    prompt: Optional[str]
-        Пользовательский промпт или None для использования дефолтного
-
-    Returns
-    -------
-    str
-        Сгенерированный Markdown отчёт
-
-    Raises
-    ------
-    ValueError
-        Если не задан OPENAI_API_KEY
-    Exception
-        Если API вызов не удался
-    """
-    if not OPENAI_API_KEY:
-        raise ValueError(
-            "OPENAI_API_KEY не задана. Установите переменную окружения OPENAI_API_KEY"
-        )
-
-    client = AsyncOpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
-    base_prompt = prompt or OPENAI_REPORT_PROMPT or "Создать отчет о сессии."
-
-    logger.info(f"Sending report request to OpenAI model: {OPENAI_MODEL}")
-    logger.debug(f"Base prompt length: {len(base_prompt)} chars, text length: {len(text)} chars")
-
-    try:
-        response = await client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=[
-                {
-                    "role": "system",
-                    "content": f"{base_prompt}\n\nВыводи только Markdown без дополнительных пояснений.",
-                },
-                {"role": "user", "content": f"Транскрипция:\n{text}"},
-            ],
-            temperature=0.7,
-        )
-
-        content = response.choices[0].message.content or ""
-        logger.info(f"OpenAI API call successful. Response length: {len(content)} chars")
-
-        return content
-
-    except Exception as e:
-        logger.error(f"OpenAI API error: {e}")
-        raise
 
 
 def save_report(job_path: str, job_id: str, content: str, report_type: str | None = None) -> str:

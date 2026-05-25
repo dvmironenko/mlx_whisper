@@ -11,15 +11,6 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from typing import Optional
 
 
-def format_timestamp(seconds: float) -> str:
-    """Форматировать секунды в HH:MM:SS.mmm формат."""
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    secs = seconds % 60
-    ms = int((seconds % 1) * 1000)
-    return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
-
-
 def _url_to_filename(url: str) -> str:
     """Извлечь осмысленное имя файла из URL.
 
@@ -44,11 +35,10 @@ from src.config import (
     NO_SPEECH_THRESHOLD, HALLUCINATION_SILENCE_THRESHOLD, REMOVE_SILENCE,
     SILENCE_THRESHOLD, SILENCE_DURATION, UPLOADS_DIR, DATA_UPLOADS_DIR,
     MAX_FILE_SIZE, ALLOWED_URL_DOMAINS, MAX_DOWNLOAD_SIZE, DOWNLOAD_TIMEOUT,
-    logger, log_transcription_result, OMLX_ENABLED, OMLX_BASE_URL,
+    logger, OMLX_ENABLED, OMLX_BASE_URL,
     OMLX_MODEL, reload_dotenv,
 )
-from src.models.transcription import transcribe_audio
-from src.models.report import load_segments_file, generate_report_via_openai, save_report, generate_report_via_openai_sync
+from src.models.report import load_segments_file, save_report, generate_report_via_openai_sync
 from src.services.report_types import load_report_types, get_prompt_for_report_type, save_report_prompt, clear_cache
 from src.models.model_cache import ModelCache
 from src.utils.download import download_from_url, validate_url
@@ -60,7 +50,7 @@ _report_executor = ThreadPoolExecutor(max_workers=3)
 generating_reports: set[str] = set()
 
 from src.utils.audio import convert_to_wav, get_audio_duration
-from src.utils.files import generate_unique_filename, delete_file, validate_file_extension, validate_file_size, build_job_path
+from src.utils.files import delete_file, validate_file_extension, build_job_path
 import requests as _requests
 
 router = APIRouter(prefix="/api/v1", tags=["transcription"])
@@ -156,7 +146,7 @@ async def transcribe_audio_endpoint(
     remove_silence: str = Form(None),  # Используем None для определения, что параметр не задан
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
-    mechanism: str = Form("whisper"),
+    mechanism: str = Form("vibevoice"),
     include_timestamps: Optional[str] = Form(None),
 ):
     """Залогировать файл в очередь транскрипции."""
@@ -326,7 +316,7 @@ async def transcribe_url_endpoint(
     remove_silence: str = Form(None),
     silence_threshold: str = Form(None),
     silence_duration: str = Form(None),
-    mechanism: str = Form("whisper"),
+    mechanism: str = Form("vibevoice"),
     include_timestamps: Optional[str] = Form(None),
 ):
     """Транскрибировать аудио по URL (YouTube, Vimeo, прямые ссылки)."""
