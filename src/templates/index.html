@@ -170,7 +170,7 @@
             copyBtn.textContent = 'Копировать';
             copyBtn.onclick = function(e) {
                 e.stopPropagation();
-                copyToClipboard(content);
+                copyToClipboard(body.innerHTML, content);
             };
             footer.appendChild(copyBtn);
 
@@ -194,18 +194,24 @@
             currentModal = modal;
         }
 
-        // Копирование текста в буфер обмена
-        async function copyToClipboard(text) {
+        // Копирование текста в буфер обмена (HTML + plain text)
+        async function copyToClipboard(html, plainText) {
             const btn = currentModal && currentModal.querySelector('.btn-modal-copy');
             const originalText = btn ? btn.textContent : 'Копировать';
 
             try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(text);
+                if (navigator.clipboard && navigator.clipboard.write) {
+                    const data = new ClipboardItem({
+                        'text/html': new Blob([html], { type: 'text/html' }),
+                        'text/plain': new Blob([plainText], { type: 'text/plain' })
+                    });
+                    await navigator.clipboard.write([data]);
+                } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(plainText);
                 } else {
                     // Fallback через execCommand
                     var textArea = document.createElement('textarea');
-                    textArea.value = text;
+                    textArea.value = plainText;
                     textArea.style.position = 'fixed';
                     textArea.style.left = '-999999px';
                     document.body.appendChild(textArea);
