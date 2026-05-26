@@ -84,11 +84,25 @@ OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-8bit")
 OMLX_API_KEY: Optional[str] = os.getenv("OMLX_API_KEY") or None
 OMLX_ENABLED: bool = os.getenv("OMLX_ENABLED", "true").lower() == "true"
 
-# OMLX model selection — alias → display name
-OMLX_MODELS: dict = {
+# OMLX model selection — alias → display name (env: OMLX_MODELS="alias:display|alias:display")
+def _parse_omlx_models(raw: str) -> dict:
+    """Parse OMLX_MODELS env var: 'alias1:Display 1|alias2:Display 2'."""
+    result: dict = {}
+    for pair in raw.split("|"):
+        pair = pair.strip()
+        if ":" in pair:
+            alias, name = pair.split(":", 1)
+            result[alias.strip()] = name.strip()
+    return result
+
+
+OMLX_MODELS_DEFAULT: dict = {
     "VibeVoice-ASR-8bit": "VibeVoice ASR 8-bit",
     "VibeVoice-ASR": "VibeVoice ASR",
 }
+OMLX_MODELS: dict = _parse_omlx_models(
+    os.getenv("OMLX_MODELS", "")
+) or OMLX_MODELS_DEFAULT
 OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-8bit")
 
 
