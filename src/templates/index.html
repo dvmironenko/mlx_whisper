@@ -100,17 +100,6 @@
             return d.innerHTML;
         }
 
-        // Предобработка: обернуть абзацы (разделённые \n\n) в <p>
-        function preprocessParagraphs(content) {
-            const escaped = escapeHtml(content);
-            const normalized = escaped.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            const paragraphs = normalized.split('\n\n').filter(p => p.trim() !== '');
-            if (paragraphs.length > 0) {
-                return paragraphs.map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('\n');
-            }
-            return '<p>' + normalized + '</p>';
-        }
-
         // Показать текст в модальном окне
         function showTextView(title, content) {
             // Закрыть текущее окно, если открыто
@@ -156,7 +145,7 @@
             // Body
             const body = document.createElement('div');
             body.className = 'modal-body';
-            body.innerHTML = preprocessParagraphs(content);
+            body.innerHTML = marked.parse(content);
 
             contentDiv.appendChild(body);
 
@@ -170,7 +159,7 @@
             copyBtn.textContent = 'Копировать';
             copyBtn.onclick = function(e) {
                 e.stopPropagation();
-                copyToClipboard(body.innerHTML, content);
+                copyToClipboard(body.innerHTML, '');
             };
             footer.appendChild(copyBtn);
 
@@ -196,7 +185,7 @@
 
         // Копирование текста в буфер обмена (HTML + plain text)
         async function copyToClipboard(html, plainText) {
-            const btn = currentModal && currentModal.querySelector('.btn-modal-copy');
+            const btn = document.querySelector('.modal-overlay .btn-modal-copy');
             const originalText = btn ? btn.textContent : 'Копировать';
 
             try {
