@@ -129,9 +129,14 @@
 - [x] Конфигурация отчётов — добавлена карточка "Видео" (сжатый пересказ видео), переименована "Сжатый пересказ" в "Сжатый пересказ беседы"
 - [x] Чекбокс "Таймкоды" на uploads.html — после Language, по умолчанию включён; при выключении `_build_formatted_text_from_segments()` формирует текст без `[{MM}:{SS}]:`
 
+### 2026-05-26
 
-
-## Очередь
+- [x] Исправление двойного `/v1` в URL oMLX endpoint — `OMLX_BASE_URL` уже содержит `/v1`
+- [x] `_normalize_segments` — поддержка нового формата API с полем `segments` (whisper-large-v3-*)
+- [x] Тестирование `whisper-large-v3-turbo-asr-fp16` — 75 сегментов, 10 517 символов за 17с
+- [x] Сравнение моделей turbo vs asr-fp16 — turbo в 3.4 раза быстрее при сопоставимом качестве
+- [x] Исправление TypeError в convert_to_wav — числовые аргументы FFmpeg ("-ar", 16000) и ("-ac", 1) заменены на строки "-ar", "16000" и "-ac", "1"
+- [x] Playwright тест oMLX — переключён с VibeVoice-ASR-8bit (ошибки 500 от API) на whisper-large-v3-asr-fp16, которая работает стабильно
 
 - [ ] Добавить поддержку пакетной обработки файлов
 - [ ] Улучшить мобильную версию веб-интерфейса
@@ -141,3 +146,4 @@
 - [ ] Поддержка SRT формата для субтитров
 - [ ] Контейнеризация через Docker
 - [ ] Миграция на async/await для всех операций ввода-вывода
+- [x] Auto-detect speakers in `_build_formatted_text_from_segments` — remove `include_speaker`, scan segments for `speaker != 0`

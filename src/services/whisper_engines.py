@@ -152,14 +152,21 @@ class WhisperEngine(TranscriptionEngine):
 def _build_formatted_text_from_segments(
     segments: list[dict],
     *,
-    include_speaker: bool = False,
     include_timestamps: bool = True,
 ) -> str:
     """Собрать текст из сегментов.
 
+    Спикеры определяются автоматически: если хотя бы один сегмент
+    имеет speaker != 0, рендерятся метки спикеров.
+    Иначе — текст без меток.
+
     При include_timestamps=True — формат [MM:SS]: Текст.
     При include_timestamps=False — только текст, без префикса.
     """
+    # Автоопределение: спикеры есть, если хотя бы у одного сегмента
+    # speaker != 0
+    has_speakers = any(seg.get("speaker", 0) != 0 for seg in segments)
+
     lines: list[str] = []
     for seg in segments:
         start = seg.get("start", 0)
@@ -170,7 +177,7 @@ def _build_formatted_text_from_segments(
         if include_timestamps:
             minutes = int(start) // 60
             seconds = int(start) % 60
-            if include_speaker:
+            if has_speakers:
                 lines.append(f"[{minutes:02d}:{seconds:02d}] Спикер {speaker} : {text}")
             else:
                 lines.append(f"[{minutes:02d}:{seconds:02d}]: {text}")

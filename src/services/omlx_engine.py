@@ -154,31 +154,40 @@ def _save_segment(segment: AudioSegment) -> str:
 def _normalize_segments(items: Any) -> Optional[List[Dict[str, Any]]]:
     """Нормализовать список сырых сегментов в единый формат.
 
-    API возвращает dict:
+    Поддерживает два формата ответа API:
+
+    Новый формат (whisper-large-v3-*):
     {
-        "text": "[{\"Start\":0,\"End\":12.67,\"Speaker\":0,\"Content\":\"...\"}]",
+        "text": "...",
         "language": "ru",
-        "segments": [{"start":0,"end":12.67,"speaker_id":0,"text":"..."}]
+        "segments": [{"start":0,"end":12.67,"text":"..."}]
     }
 
-    Для длинных сегментов поле "text" может быть обрезано — в этом случае
-    выполняется восстановление сегментов через regex.
+    Старый формат (VibeVoice):
+    {
+        "text": "[{\"Start\":0,\"End\":12.67,\"Speaker\":0,\"Content\":\"...\"}]",
+        "language": "ru"
+    }
     """
     segments: List[Dict[str, Any]] = []
 
-    # API возвращает dict — извлекаем JSON-строку из поля "text"
+    # Новый формат: segments в отдельном поле
     if isinstance(items, dict):
-        text_field = items.get("text", "")
-        if isinstance(text_field, str) and text_field.startswith("["):
-            try:
-                items = json.loads(text_field)
-            except (json.JSONDecodeError, ValueError):
-                # JSON обрезан — пробуем восстановить сегменты через regex
-                items = _repair_truncated_json(text_field)
-                if items is None:
-                    return None
+        raw_segments = items.get("segments")
+        if isinstance(raw_segments, list) and len(raw_segments) > 0:
+            items = raw_segments
         else:
-            return None
+            # Старый формат: извлекаем JSON-строку из поля "text"
+            text_field = items.get("text", "")
+            if isinstance(text_field, str) and text_field.startswith("["):
+                try:
+                    items = json.loads(text_field)
+                except (json.JSONDecodeError, ValueError):
+                    items = _repair_truncated_json(text_field)
+                    if items is None:
+                        return None
+            else:
+                return None
 
     if not isinstance(items, list):
         return None
@@ -189,7 +198,7 @@ def _normalize_segments(items: Any) -> Optional[List[Dict[str, Any]]]:
         start = float(item.get("Start", item.get("start", 0)))
         end = float(item.get("End", item.get("end", 0)))
         speaker = int(item.get("Speaker", item.get("speaker", 0)))
-        content = str(item.get("Content", item.get("content", "")))
+        content = str(item.get("Content", item.get("content", item.get("text", ""))))
         segments.append({
             "start": start,
             "end": end,
@@ -289,7 +298,7 @@ class OMLXEngine(TranscriptionEngine):
         duration = time.time() - start_time
 
         formatted_text = _build_formatted_text_from_segments(
-            all_segments, include_speaker=True, include_timestamps=include_timestamps
+            all_segments, include_timestamps=include_timestamps
         )
 
         return {
@@ -339,6 +348,7 @@ class OMLXEngine(TranscriptionEngine):
 
         raw_text = response.text
         items = json.loads(raw_text)
+        logger.info(f"oMLX raw response (first 500): {raw_text[:500]}")
         segments = _normalize_segments(items) or []
         text = "\n".join(seg["text"] for seg in segments)
 
