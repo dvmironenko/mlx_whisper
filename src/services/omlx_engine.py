@@ -135,11 +135,11 @@ def _group_intervals(
 
 
 def _save_segment(segment: AudioSegment) -> str:
-    """Сохранить сегмент во временный MP3 файл для отправки в oMLX API."""
-    fd, path = tempfile.mkstemp(suffix=".mp3", prefix="omlx_segment_")
+    """Сохранить сегмент во временный OPUS файл для отправки в oMLX API."""
+    fd, path = tempfile.mkstemp(suffix=".opus", prefix="omlx_segment_")
     os.close(fd)
     try:
-        segment.export(path, format="mp3", bitrate="64k")
+        segment.export(path, format="opus", bitrate="48k")
     except Exception as e:
         logger.error(f"Failed to export segment: {e}")
         try:
@@ -318,7 +318,7 @@ class OMLXEngine(TranscriptionEngine):
         with open(file_path, "rb") as f:
             # Определяем MIME-тип по расширению файла
             ext = os.path.splitext(file_path)[1].lower()
-            mime_type = {"wav": "audio/wav", ".mp3": "audio/mpeg"}.get(ext, "application/octet-stream")
+            mime_type = {"wav": "audio/wav", ".opus": "audio/opus"}.get(ext, "application/octet-stream")
             files = {"file": (os.path.basename(file_path), f, mime_type)}
             data: Dict[str, Any] = {"model": model or OMLX_MODEL}
             if language:
