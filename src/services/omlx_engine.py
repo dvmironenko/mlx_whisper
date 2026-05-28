@@ -37,7 +37,7 @@ class OMLXModelNotFoundError(Exception):
 
 
 # Константы
-MAX_AUDIO_DURATION_SEC: int = 60 * 60  # 60 минут
+MAX_AUDIO_DURATION_SEC: int = 50 * 60  # 50 минут
 SILENCE_GAP_MS: int = 2000
 
 
