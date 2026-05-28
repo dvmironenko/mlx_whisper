@@ -5,17 +5,13 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 import re
 import struct
-from io import BytesIO
-
 import time
-
-import requests as _requests
+from io import BytesIO
+import requests
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
-
-if TYPE_CHECKING:
-    from pydub import AudioSegment  # noqa: F401
 
 from src.config import (
     OMLX_API_KEY,
@@ -27,6 +23,10 @@ from src.services.whisper_engines import (
     TranscriptionEngine,
     _build_formatted_text_from_segments,
 )
+from src.utils.audio import get_audio_duration
+
+if TYPE_CHECKING:
+    from pydub import AudioSegment  # noqa: F401
 
 logger = logging.getLogger("mlx_whisper")
 
@@ -36,20 +36,16 @@ class OMLXModelNotFoundError(Exception):
     pass
 
 
-# Константы splitting
-MAX_AUDIO_DURATION_SEC: int = 5 * 60  # 5 минут
-SILENCE_THRESHOLD_DB: int = 40
-
-
-# Максимальный размер аудио для одного запроса к oMLX (50 MB)
-MAX_UPLOAD_BYTES: int = 50 * 1024 * 1024
+# Константы
+MAX_AUDIO_DURATION_SEC: int = 60 * 60  # 60 минут
+SILENCE_GAP_MS: int = 2000
 
 
 def _detect_silence_chunks(
     audio_segment: "AudioSegment",
     chunk_duration_ms: int = 100,
     silence_threshold_db: int = -40,
-    gap_ms: int = 2000,
+    gap_ms: int = SILENCE_GAP_MS,
 ) -> List[Tuple[int, int]]:
     """Обход аудио чанками, возврат не-тихих интервалов в миллисекундах.
 
@@ -71,12 +67,13 @@ def _detect_silence_chunks(
     for i in range(0, num_samples, chunk_size):
         chunk = samples[i : i + chunk_size]
         rms = math.sqrt(sum(s * s for s in chunk) / len(chunk))
-        if rms > 0:
-            db = 20 * math.log10(rms / 32768.0)
-            if db > silence_threshold_db:
-                start_ms = i * 1000 // audio_segment.frame_rate
-                end_ms = (i + len(chunk)) * 1000 // audio_segment.frame_rate
-                non_silent.append((start_ms, end_ms))
+        if rms == 0:
+            continue
+        db = 20 * math.log10(rms / 32768.0)
+        if db > silence_threshold_db:
+            start_ms = i * 1000 // audio_segment.frame_rate
+            end_ms = (i + len(chunk)) * 1000 // audio_segment.frame_rate
+            non_silent.append((start_ms, end_ms))
 
     if not non_silent:
         return []
@@ -90,60 +87,6 @@ def _detect_silence_chunks(
             merged.append((start, end))
 
     return merged
-
-
-def _split_audio_by_silence(
-    file_path: str,
-    max_duration_sec: int = MAX_AUDIO_DURATION_SEC,
-) -> Tuple[List[Tuple[int, int, bytes]], int]:
-    """
-    Разбить аудио на сегменты по тишине и максимальной длительности.
-
-    Использует только pydub — без librosa/numpy.
-
-    Returns
-    -------
-    list of (start_ms, end_ms, audio_bytes)
-    sample_rate: частота дискретизации из pydub AudioSegment
-    """
-    from pydub import AudioSegment  # noqa: F401
-
-    try:
-        audio = AudioSegment.from_file(file_path)
-    except Exception as e:
-        logger.error(f"Failed to load audio with pydub: {e}")
-        return [(0, -1, b"")], 16000
-
-    non_silent = _detect_silence_chunks(
-        audio,
-        gap_ms=int(2.0 * 1000),
-    )
-
-    if not non_silent:
-        return [(0, -1, b"")], audio.frame_rate
-
-    result: List[Tuple[int, int, bytes]] = []
-    max_duration_ms = max_duration_sec * 1000
-
-    for start_ms, end_ms in non_silent:
-        duration_ms = end_ms - start_ms
-
-        if duration_ms <= max_duration_ms:
-            segment = audio[start_ms:end_ms]
-            buf = BytesIO()
-            segment.export(buf, format="opus")
-            result.append((start_ms, end_ms, buf.getvalue()))
-        else:
-            for chunk_start in range(0, duration_ms, max_duration_ms):
-                chunk_end = min(chunk_start + max_duration_ms, duration_ms)
-                abs_start = start_ms + chunk_start
-                abs_end = start_ms + chunk_end
-                segment = audio[abs_start:abs_end]
-                buf = BytesIO()
-                segment.export(buf, format="opus")
-                result.append((abs_start, -1, buf.getvalue()))
-
-    return result, audio.frame_rate
 
 
 def _normalize_segments(items: Any) -> Optional[List[Dict[str, Any]]]:
@@ -305,28 +248,19 @@ class OMLXEngine(TranscriptionEngine):
         language = params.get("language")
         start_time = time.time()
 
-        # Разбиваем аудио на сегменты
-        segments_files, _ = _split_audio_by_silence(file_path)
-        all_segments: List[Dict[str, Any]] = []
+        # Проверка длительности: если > 60 мин — разбить по тишине
+        duration_sec = get_audio_duration(file_path)
+        if duration_sec and duration_sec > MAX_AUDIO_DURATION_SEC:
+            return self._split_and_transcribe(
+                file_path,
+                language=language,
+                model=omlx_model,
+                include_timestamps=include_timestamps,
+                start_time=start_time,
+            )
 
-        for start_ms, _, audio_bytes in segments_files:
-            try:
-                seg_result = self._transcribe_segment(audio_bytes, language=language, model=omlx_model)
-            except OMLXModelNotFoundError:
-                # Модель не найдена — все сегменты упадут с той же ошибкой
-                raise
-            except Exception as e:
-                logger.error(f"Segment transcription failed: {e}")
-                continue
-
-            # Корректировка временных меток по сдвигу сегмента
-            if start_ms > 0:
-                offset_sec = start_ms / 1000.0
-                for seg in seg_result["segments"]:
-                    seg["start"] += offset_sec
-                    seg["end"] += offset_sec
-
-            all_segments.extend(seg_result["segments"])
+        seg_result = self._transcribe_file(file_path, language=language, model=omlx_model)
+        all_segments: List[Dict[str, Any]] = list(seg_result["segments"])
 
         # Рехилиация speaker IDs — маппинг локальных ID в глобальные
         all_segments = _reconcile_speaker_ids(all_segments)
@@ -347,12 +281,17 @@ class OMLXEngine(TranscriptionEngine):
             "raw_response": None,
         }
 
-    def _transcribe_segment(self, audio_bytes: bytes, filename: str = "segment.opus", language: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
-        """Транскрибировать один сегмент через oMLX API."""
+    def _transcribe_file(
+        self,
+        file_path: str,
+        language: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Транскрибировать один файл напрямую через oMLX API (без сегментации)."""
         url = f"{OMLX_BASE_URL}/audio/transcriptions"
 
-        bio = BytesIO(audio_bytes)
-        files = {"file": (filename, bio, "audio/opus")}
+        with open(file_path, "rb") as f:
+            files = {"file": (os.path.basename(file_path), f, "audio/wav")}
         data: Dict[str, Any] = {"model": model or OMLX_MODEL, "diarize": True}
         if language:
             data["language"] = language
@@ -361,11 +300,10 @@ class OMLXEngine(TranscriptionEngine):
         if OMLX_API_KEY:
             headers["Authorization"] = f"Bearer {OMLX_API_KEY}"
 
-        response = _requests.post(
+        response = requests.post(
             url, files=files, data=data, headers=headers, timeout=(10, 3600)
         )
 
-        # Явная обработка 404 not_found_error от OMLX — до raise_for_status()
         if response.status_code == 404:
             try:
                 error_body = response.json()
@@ -383,7 +321,6 @@ class OMLXEngine(TranscriptionEngine):
         items = json.loads(raw_text)
         logger.info(f"oMLX raw response (first 500): {raw_text[:500]}")
         segments = _normalize_segments(items) or []
-        # Debug: log speaker distribution
         if segments:
             speaker_counts: Dict[int, int] = {}
             for seg in segments:
@@ -402,4 +339,123 @@ class OMLXEngine(TranscriptionEngine):
             "segments": segments,
             "text": text,
             "raw_response": raw_text,
+        }
+
+    def _transcribe_segment(
+        self,
+        audio_bytes: bytes,
+        language: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Транскрибировать один сегмент (байты WAV) через oMLX API."""
+        url = f"{OMLX_BASE_URL}/audio/transcriptions"
+
+        bio = BytesIO(audio_bytes)
+        files = {"file": ("segment.wav", bio, "audio/wav")}
+        data: Dict[str, Any] = {"model": model or OMLX_MODEL, "diarize": True}
+        if language:
+            data["language"] = language
+
+        headers: Dict[str, str] = {}
+        if OMLX_API_KEY:
+            headers["Authorization"] = f"Bearer {OMLX_API_KEY}"
+
+        response = requests.post(
+            url, files=files, data=data, headers=headers, timeout=(10, 3600)
+        )
+
+        if response.status_code == 404:
+            try:
+                error_body = response.json()
+                if error_body.get("error", {}).get("type") == "not_found_error":
+                    raise OMLXModelNotFoundError(
+                        f"Модель '{OMLX_MODEL}' не найдена в oMLX API. "
+                        f"Проверьте конфигурацию OMLX_MODEL."
+                    )
+            except (json.JSONDecodeError, AttributeError):
+                pass
+
+        response.raise_for_status()
+
+        raw_text = response.text
+        items = json.loads(raw_text)
+        logger.info(f"oMLX raw response (first 500): {raw_text[:500]}")
+        segments = _normalize_segments(items) or []
+        if segments:
+            speaker_counts: Dict[int, int] = {}
+            for seg in segments:
+                sid = seg.get("speaker", 0)
+                speaker_counts[sid] = speaker_counts.get(sid, 0) + 1
+            logger.info(f"oMLX diarization result: {dict(speaker_counts)}")
+        text = "\n".join(seg["text"] for seg in segments)
+
+        if not segments:
+            logger.warning(
+                f"oMLX API returned empty segments "
+                f"(raw response length: {len(raw_text)}, items count: {len(items) if isinstance(items, list) else 'N/A'})"
+            )
+
+        return {
+            "segments": segments,
+            "text": text,
+            "raw_response": raw_text,
+        }
+
+    def _split_and_transcribe(
+        self,
+        file_path: str,
+        language: Optional[str] = None,
+        model: Optional[str] = None,
+        include_timestamps: bool = True,
+        start_time: float = 0,
+    ) -> Dict[str, Any]:
+        """Разбить аудио по тишине на сегменты ≤ 60 мин и транскрибировать каждый."""
+        from pydub import AudioSegment
+
+        if start_time == 0:
+            start_time = time.time()
+
+        audio = AudioSegment.from_file(file_path)
+        non_silent = _detect_silence_chunks(audio, gap_ms=SILENCE_GAP_MS)
+
+        if not non_silent:
+            return {"segments": [], "text": "", "raw_response": None}
+
+        all_segments: List[Dict[str, Any]] = []
+        max_chunk_ms = MAX_AUDIO_DURATION_SEC * 1000
+
+        for start_ms, end_ms in non_silent:
+            duration_ms = end_ms - start_ms
+            for chunk_start in range(0, duration_ms, max_chunk_ms):
+                abs_start = start_ms + chunk_start
+                abs_end = min(abs_start + max_chunk_ms, end_ms)
+
+                segment = audio[abs_start:abs_end]
+                buf = BytesIO()
+                segment.export(buf, format="wav")
+
+                seg_result = self._transcribe_segment(
+                    buf.getvalue(), language=language, model=model
+                )
+
+                # Offset correction: смещение сегмента к таймкодам
+                offset_sec = abs_start / 1000.0
+                for seg in seg_result["segments"]:
+                    seg["start"] += offset_sec
+                    seg["end"] += offset_sec
+
+                all_segments.extend(seg_result["segments"])
+
+        all_segments = _reconcile_speaker_ids(all_segments)
+
+        formatted_text = _build_formatted_text_from_segments(
+            all_segments, include_timestamps=include_timestamps
+        )
+
+        return {
+            "segments": all_segments,
+            "text": formatted_text,
+            "speaker_detected": bool(all_segments and any(s.get("speaker", 0) != 0 for s in all_segments)),
+            "transcription_duration": round(time.time() - start_time, 2),
+            "raw_response": None,
         }

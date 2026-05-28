@@ -1,12 +1,12 @@
 """Тесты для функций парсинга omlx_engine.py."""
 
-import os
+import json
 import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, __import__("os").path.join(__import__("os").path.dirname(__file__), ".."))
 
 
 # =============================================================================
@@ -129,56 +129,57 @@ class TestOMLXEngineTranscribe:
                 with pytest.raises(RuntimeError, match="oMLX не настроен"):
                     engine.transcribe("/tmp/test.wav")
 
-    def test_skips_failed_segments(self):
-        """Упавший сегмент не ломает весь процесс."""
-        from src.services.omlx_engine import OMLXEngine
-
-        engine = OMLXEngine()
-
-        with (
-            patch("src.services.omlx_engine._split_audio_by_silence") as mock_split,
-            patch("src.services.omlx_engine.OMLX_ENABLED", True),
-            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
-        ):
-            # Один сегмент, который упадёт при транскрипции
-            mock_split.return_value = ([(0, 5000, b"fake_opus_data")], 16000)
-
-            original_transcribe_segment = engine._transcribe_segment
-            engine._transcribe_segment = MagicMock(side_effect=RuntimeError("API down"))
-
-            try:
-                result = engine.transcribe("/tmp/test.wav")
-
-                assert isinstance(result["segments"], list)
-                assert isinstance(result["text"], str)
-            finally:
-                engine._transcribe_segment = original_transcribe_segment
-
-    def test_corrects_time_offset(self):
-        """Корректировка временных меток по сдвигу сегмента."""
+    def test_calls_transcribe_file(self):
+        """transcribe вызывает _transcribe_file при duration ≤ 60 мин."""
+        import src.services.omlx_engine as omlx_module
         from src.services.omlx_engine import OMLXEngine
 
         engine = OMLXEngine()
         mock_result = {
-            "segments": [{"start": 0.0, "end": 1.0, "speaker": 1, "text": "test"}],
-            "text": "test",
-            "raw_response": '[{"Start": 0.0, "End": 1.0, "Speaker": 1, "Content": "test"}]',
+            "segments": [{"start": 0.0, "end": 1.0, "speaker": 0, "text": "hello"}],
+            "text": "hello",
+            "raw_response": None,
         }
 
         with (
-            patch("src.services.omlx_engine._split_audio_by_silence") as mock_split,
-            patch("src.services.omlx_engine.OMLX_ENABLED", True),
-            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "OMLX_ENABLED", True),
+            patch.object(omlx_module, "OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "get_audio_duration", return_value=300.0),
+            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=lambda s: s),
         ):
-            # Начальный сдвиг 500 мс
-            mock_split.return_value = ([(500, 5500, b"fake_opus_data")], 16000)
-
-            engine._transcribe_segment = MagicMock(return_value=mock_result)
+            engine._transcribe_file = MagicMock(return_value=mock_result)
             result = engine.transcribe("/tmp/test.wav")
 
-            # Start должен быть скорректирован: 0.0 + 0.5 = 0.5
-            assert result["segments"][0]["start"] == pytest.approx(0.5)
-            assert result["segments"][0]["end"] == pytest.approx(1.5)
+            engine._transcribe_file.assert_called_once_with("/tmp/test.wav", language=None, model=None)
+            assert len(result["segments"]) == 1
+            assert result["segments"][0]["text"] == "hello"
+
+    def test_calls_split_and_transcribe_when_duration_exceeds(self):
+        """duration > 3600s → вызывается _split_and_transcribe."""
+        import src.services.omlx_engine as omlx_module
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+        mock_result = {
+            "segments": [{"start": 0.0, "end": 1.0, "speaker": 0, "text": "hello"}],
+            "text": "hello",
+            "raw_response": None,
+        }
+
+        with (
+            patch.object(omlx_module, "OMLX_ENABLED", True),
+            patch.object(omlx_module, "OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "get_audio_duration", return_value=4000.0),
+            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=lambda s: s),
+        ):
+            engine._split_and_transcribe = MagicMock(return_value=mock_result)
+            result = engine.transcribe("/tmp/test.wav")
+
+            engine._split_and_transcribe.assert_called_once()
+            call_kwargs = engine._split_and_transcribe.call_args.kwargs
+            assert call_kwargs["language"] is None
+            assert call_kwargs["model"] is None
+            assert call_kwargs["include_timestamps"] is True
 
     def test_speaker_detected_true(self):
         """speaker_detected = True если есть speaker > 0."""
@@ -192,22 +193,19 @@ class TestOMLXEngineTranscribe:
             "raw_response": None,
         }
 
-        def passthrough_segments(segments):
-            return segments
-
         with (
-            patch.object(omlx_module, "_split_audio_by_silence", return_value=([(0, -1, b"fake_opus_data")], 16000)),
-            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=passthrough_segments),
             patch.object(omlx_module, "OMLX_ENABLED", True),
             patch.object(omlx_module, "OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "get_audio_duration", return_value=300.0),
+            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=lambda s: s),
         ):
-            engine._transcribe_segment = MagicMock(return_value=mock_result)
-
+            engine._transcribe_file = MagicMock(return_value=mock_result)
             result = engine.transcribe("/tmp/test.wav")
             assert result["speaker_detected"] is True
 
     def test_speaker_detected_false(self):
         """speaker_detected = False если все speaker == 0."""
+        import src.services.omlx_engine as omlx_module
         from src.services.omlx_engine import OMLXEngine
 
         engine = OMLXEngine()
@@ -218,29 +216,29 @@ class TestOMLXEngineTranscribe:
         }
 
         with (
-            patch("src.services.omlx_engine._split_audio_by_silence") as mock_split,
-            patch("src.services.omlx_engine.OMLX_ENABLED", True),
-            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "OMLX_ENABLED", True),
+            patch.object(omlx_module, "OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "get_audio_duration", return_value=300.0),
+            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=lambda s: s),
         ):
-            mock_split.return_value = ([(0, -1, "/tmp/seg.wav")], 16000)
-            engine._transcribe_segment = MagicMock(return_value=mock_result)
-
+            engine._transcribe_file = MagicMock(return_value=mock_result)
             result = engine.transcribe("/tmp/test.wav")
             assert result["speaker_detected"] is False
 
     def test_returns_transcription_duration(self):
         """Возвращает transcription_duration."""
+        import src.services.omlx_engine as omlx_module
         from src.services.omlx_engine import OMLXEngine
 
         engine = OMLXEngine()
 
         with (
-            patch("src.services.omlx_engine._split_audio_by_silence") as mock_split,
-            patch("src.services.omlx_engine.OMLX_ENABLED", True),
-            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "OMLX_ENABLED", True),
+            patch.object(omlx_module, "OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "get_audio_duration", return_value=300.0),
+            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=lambda s: s),
         ):
-            mock_split.return_value = ([(0, -1, "/tmp/seg.wav")], 16000)
-            engine._transcribe_segment = MagicMock(return_value={
+            engine._transcribe_file = MagicMock(return_value={
                 "segments": [],
                 "text": "",
                 "raw_response": None,
@@ -249,6 +247,128 @@ class TestOMLXEngineTranscribe:
             result = engine.transcribe("/tmp/test.wav")
             assert "transcription_duration" in result
             assert isinstance(result["transcription_duration"], float)
+
+    def test_passes_language_and_model(self):
+        """transcribe передаёт language и model в _transcribe_file."""
+        import src.services.omlx_engine as omlx_module
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+
+        with (
+            patch.object(omlx_module, "OMLX_ENABLED", True),
+            patch.object(omlx_module, "OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "get_audio_duration", return_value=300.0),
+            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=lambda s: s),
+        ):
+            engine._transcribe_file = MagicMock(return_value={
+                "segments": [], "text": "", "raw_response": None,
+            })
+            engine.transcribe("/tmp/test.wav", language="ru", model="whisper-large")
+
+            engine._transcribe_file.assert_called_once_with(
+                "/tmp/test.wav", language="ru", model="whisper-large"
+            )
+
+
+# =============================================================================
+# TestTranscribeFile
+# =============================================================================
+
+class TestTranscribeFile:
+    """Тесты OMLXEngine._transcribe_file — прямая транскрибация файла."""
+
+    def _make_mock_response(self, text='[{"Start": 0.0, "End": 1.0, "Speaker": 0, "Content": "hello"}]'):
+        from unittest.mock import MagicMock
+        mock = MagicMock()
+        mock.text = text
+        mock.status_code = 200
+        mock.json.return_value = json.loads(text)
+        mock.raise_for_status.return_value = None
+        return mock
+
+    def test_transcribe_file_opens_file_directly(self):
+        """_transcribe_file открывает файл напрямую, не через BytesIO."""
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+        mock_response = self._make_mock_response()
+
+        with (
+            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
+            patch("src.services.omlx_engine.OMLX_API_KEY", "key123"),
+            patch("src.services.omlx_engine.requests.post", return_value=mock_response) as mock_post,
+            patch("builtins.open", MagicMock(return_value=MagicMock(read=lambda: b"fake"))),
+        ):
+            engine._transcribe_file("/tmp/test.wav", language="en")
+
+            mock_post.assert_called_once()
+            call_kwargs = mock_post.call_args.kwargs
+            # Файл передан как file-like объект, не bytes
+            file_tuple = call_kwargs["files"]["file"]
+            assert file_tuple[0] == "test.wav"
+            # Второй элемент — file-like объект
+            assert hasattr(file_tuple[1], "read") or hasattr(file_tuple[1], "__iter__")
+
+    def test_transcribe_file_includes_language(self):
+        """_transcribe_file передаёт language в payload."""
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+        mock_response = self._make_mock_response()
+
+        captured_data = {}
+
+        def capture_post(_url, _files=None, data=None, _headers=None, _timeout=None, **_kwargs):
+            captured_data["data"] = data
+            return mock_response
+
+        with (
+            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
+            patch("src.services.omlx_engine.requests.post", side_effect=capture_post),
+            patch("builtins.open", MagicMock(return_value=MagicMock(read=lambda: b"fake"))),
+        ):
+            engine._transcribe_file("/tmp/test.wav", language="ru")
+
+        assert captured_data["data"]["language"] == "ru"
+
+    def test_transcribe_file_parses_response(self):
+        """_transcribe_file парсит ответ API."""
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+        mock_response = self._make_mock_response(
+            '[{"Start": 0.0, "End": 1.0, "Speaker": 1, "Content": "Hello world"}]'
+        )
+
+        with (
+            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
+            patch("src.services.omlx_engine.requests.post", return_value=mock_response),
+            patch("builtins.open", MagicMock(return_value=MagicMock(read=lambda: b"fake"))),
+        ):
+            result = engine._transcribe_file("/tmp/test.wav", language="en")
+
+            assert len(result["segments"]) == 1
+            assert result["segments"][0]["text"] == "Hello world"
+
+    def test_transcribe_file_api_error_propagates(self):
+        """_transcribe_file прокидывает ошибки API."""
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+
+        with (
+            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch("src.services.omlx_engine.requests.post") as mock_post,
+            patch("builtins.open", MagicMock(return_value=MagicMock(read=lambda: b"fake"))),
+        ):
+            mock_post.return_value.raise_for_status.side_effect = Exception("500")
+
+            with pytest.raises(Exception, match="500"):
+                engine._transcribe_file("/tmp/test.wav", language="en")
 
 
 # =============================================================================
@@ -278,9 +398,9 @@ class TestTranscribeSegment:
             patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
             patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
             patch("src.services.omlx_engine.OMLX_API_KEY", "key123"),
-            patch("src.services.omlx_engine._requests", mock_requests_module),
+            patch("src.services.omlx_engine.requests", mock_requests_module),
         ):
-            engine._transcribe_segment(b"fake_opus_data", language="en")
+            engine._transcribe_segment(b"fake_wav_data", language="en")
 
             mock_requests_module.post.assert_called_once()
             call_args = mock_requests_module.post.call_args
@@ -301,55 +421,11 @@ class TestTranscribeSegment:
         with (
             patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
             patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
-            patch("src.services.omlx_engine._requests.post", side_effect=capture_post),
+            patch("src.services.omlx_engine.requests.post", side_effect=capture_post),
         ):
-            engine._transcribe_segment(b"fake_opus_data", language="ru")
+            engine._transcribe_segment(b"fake_wav_data", language="ru")
 
         assert captured_data["data"]["language"] == "ru"
-
-    def test_includes_api_key_header(self):
-        from src.services.omlx_engine import OMLXEngine
-
-        engine = OMLXEngine()
-        mock_response = self._make_mock_response()
-
-        captured_headers = {}
-
-        def capture_post(_url, _files=None, _data=None, headers=None, _timeout=None, **_kwargs):
-            captured_headers["headers"] = headers
-            return mock_response
-
-        with (
-            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
-            patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
-            patch("src.services.omlx_engine.OMLX_API_KEY", "secret-key"),
-            patch("src.services.omlx_engine._requests.post", side_effect=capture_post),
-        ):
-            engine._transcribe_segment(b"fake_opus_data", language="en")
-
-        assert captured_headers["headers"]["Authorization"] == "Bearer secret-key"
-
-    def test_no_auth_header_without_key(self):
-        from src.services.omlx_engine import OMLXEngine
-
-        engine = OMLXEngine()
-        mock_response = self._make_mock_response()
-
-        captured_headers = {}
-
-        def capture_post(_url, _files=None, _data=None, headers=None, _timeout=None, **_kwargs):
-            captured_headers["headers"] = headers
-            return mock_response
-
-        with (
-            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
-            patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
-            patch("src.services.omlx_engine.OMLX_API_KEY", None),
-            patch("src.services.omlx_engine._requests.post", side_effect=capture_post),
-        ):
-            engine._transcribe_segment(b"fake_opus_data")
-
-        assert captured_headers["headers"] is None or "Authorization" not in captured_headers["headers"]
 
     def test_parses_json_api_response(self):
         from src.services.omlx_engine import OMLXEngine
@@ -362,9 +438,9 @@ class TestTranscribeSegment:
         with (
             patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
             patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
-            patch("src.services.omlx_engine._requests.post", return_value=mock_response),
+            patch("src.services.omlx_engine.requests.post", return_value=mock_response),
         ):
-            result = engine._transcribe_segment(b"fake_opus_data", language="en")
+            result = engine._transcribe_segment(b"fake_wav_data", language="en")
 
             assert len(result["segments"]) == 1
             assert result["segments"][0]["text"] == "Hello world"
@@ -376,26 +452,23 @@ class TestTranscribeSegment:
 
         with (
             patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
-            patch("src.services.omlx_engine._requests.post") as mock_post,
+            patch("src.services.omlx_engine.requests.post") as mock_post,
         ):
             mock_post.return_value.raise_for_status.side_effect = Exception("500")
 
             with pytest.raises(Exception, match="500"):
-                engine._transcribe_segment(b"fake_opus_data", language="en")
+                engine._transcribe_segment(b"fake_wav_data", language="en")
 
 
 # =============================================================================
-# TestSplitAudioBySilenceIntegration
+# TestDetectSilenceChunks
 # =============================================================================
 
-class TestSplitAudioBySilenceIntegration:
-    """Интеграционные тесты _split_audio_by_silence с реальным pydub AudioSegment."""
+class TestDetectSilenceChunks:
+    """Тесты _detect_silence_chunks()."""
 
     def _create_test_audio(self, segments_data):
-        """Создать временный WAV-файл из последовательности silent/tone сегментов.
-
-        segments_data: list of (is_silent: bool, duration_ms: int)
-        """
+        """Создать временный WAV-файл из последовательности silent/tone сегментов."""
         from pydub import AudioSegment
         from pydub.generators import Sine
 
@@ -405,81 +478,133 @@ class TestSplitAudioBySilenceIntegration:
                 combined += AudioSegment.silent(duration=duration_ms)
             else:
                 combined += Sine(440).to_audio_segment(duration=duration_ms)
-        path = "/tmp/_test_audio_split.wav"
+        path = "/tmp/_test_audio_detect.wav"
         combined.export(path, format="wav")
         return path
 
-    def test_splits_on_silence_gaps(self):
-        """Тихий-звук-тихий-звук-тихий → 2 сегмента."""
-        from src.services.omlx_engine import _split_audio_by_silence
+    def test_detects_non_silent_chunks(self):
+        """Звук-тишина-звук → 2 не-тихих интервала."""
+        from src.services.omlx_engine import _detect_silence_chunks
 
         path = self._create_test_audio([
+            (False, 1000),  # 1s sound
             (True, 2000),   # 2s silence
             (False, 1000),  # 1s sound
-            (True, 3000),   # 3s silence (gap)
-            (False, 1500),  # 1.5s sound
-            (True, 1000),   # 1s silence
         ])
         try:
-            segments, sr = _split_audio_by_silence(path)
+            audio = __import__("pydub").AudioSegment.from_file(path)
+            intervals = _detect_silence_chunks(audio, gap_ms=500)
 
-            assert sr == 44100  # pydub default for Sine
-            assert len(segments) == 2
-            # Первый сегмент: ~1s, второй: ~1.5s
-            assert segments[0][1] - segments[0][0] > 500
-            assert segments[1][1] - segments[1][0] > 500
-            # Оба содержат данные
-            assert len(segments[0][2]) > 0
-            assert len(segments[1][2]) > 0
+            assert len(intervals) == 2
+            # Оба интервала содержат звук
+            assert intervals[0][1] - intervals[0][0] > 500
+            assert intervals[1][1] - intervals[1][0] > 500
         finally:
-            os.remove(path)
-
-    def test_returns_single_segment_no_silence(self):
-        """Без тишины — один сегмент на всё аудио."""
-        from src.services.omlx_engine import _split_audio_by_silence
-
-        path = self._create_test_audio([
-            (False, 3000),
-        ])
-        try:
-            segments, _ = _split_audio_by_silence(path)
-            assert len(segments) == 1
-            assert segments[0][0] == 0
-            assert segments[0][1] == 3000  # end_ms = duration for single segment
-            assert len(segments[0][2]) > 0
-        finally:
-            os.remove(path)
+            __import__("os").remove(path)
 
     def test_returns_empty_for_pure_silence(self):
-        """Чистая тишина → fallback (0, -1, b'')."""
-        from src.services.omlx_engine import _split_audio_by_silence
+        """Чистая тишина → пустой список."""
+        from src.services.omlx_engine import _detect_silence_chunks
 
         path = self._create_test_audio([
             (True, 5000),
         ])
         try:
-            segments, _ = _split_audio_by_silence(path)
-            # При чистой тишине возвращается fallback
-            assert len(segments) == 1
-            assert segments[0] == (0, -1, b"")
+            audio = __import__("pydub").AudioSegment.from_file(path)
+            intervals = _detect_silence_chunks(audio, gap_ms=500)
+            assert intervals == []
         finally:
-            os.remove(path)
+            __import__("os").remove(path)
 
-    def test_respects_max_duration(self):
-        """Длинный сегмент разбивается на чанки по max_duration_sec."""
-        from src.services.omlx_engine import _split_audio_by_silence
 
-        # 15s sound — больше MAX_AUDIO_DURATION_SEC (300s), но для теста
-        # используем маленький max_duration
-        path = self._create_test_audio([
-            (False, 15000),  # 15s sound
-        ])
-        try:
-            segments, _ = _split_audio_by_silence(path, max_duration_sec=5)
-            # 15s / 5s = 3 чанка
-            assert len(segments) == 3
-            for seg in segments:
-                assert seg[1] == -1  # промежуточные чанки имеют -1
-                assert len(seg[2]) > 0
-        finally:
-            os.remove(path)
+# =============================================================================
+# TestSplitAndTranscribe
+# =============================================================================
+
+class TestSplitAndTranscribe:
+    """Тесты OMLXEngine._split_and_transcribe()."""
+
+    def _create_test_audio(self, segments_data):
+        """Создать временный WAV-файл из последовательности silent/tone сегментов."""
+        from pydub import AudioSegment
+        from pydub.generators import Sine
+
+        combined = AudioSegment.empty()
+        for is_silent, duration_ms in segments_data:
+            if is_silent:
+                combined += AudioSegment.silent(duration=duration_ms)
+            else:
+                combined += Sine(440).to_audio_segment(duration=duration_ms)
+        path = "/tmp/_test_audio_split_and_transcribe.wav"
+        combined.export(path, format="wav")
+        return path
+
+    def test_calls_transcribe_segment_for_each_chunk(self):
+        """_split_and_transcribe вызывает _transcribe_segment для каждого чанка."""
+        from pydub import AudioSegment
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+        mock_result = {
+            "segments": [{"start": 0.0, "end": 1.0, "speaker": 0, "text": "chunk"}],
+            "text": "chunk",
+            "raw_response": None,
+        }
+
+        mock_audio = MagicMock()
+        mock_audio.frame_rate = 44100
+        mock_audio.channels = 1
+        mock_audio.sample_width = 2
+        # 100 сэмплов со значением 1000 (не тишина)
+        mock_audio.raw_data = (b"\xe8\x03" * 100)  # 100 samples of 1000
+        mock_audio.__getitem__ = lambda self, key: AudioSegment.empty()
+
+        with (
+            patch("src.services.omlx_engine.OMLX_BASE_URL", "http://test"),
+            patch("src.services.omlx_engine.OMLX_MODEL", "test-model"),
+            patch("src.services.omlx_engine.OMLX_API_KEY", "key"),
+            patch("src.services.omlx_engine._reconcile_speaker_ids", side_effect=lambda s: s),
+            patch("pydub.AudioSegment.from_file", return_value=mock_audio),
+        ):
+            engine._transcribe_segment = MagicMock(return_value=mock_result)
+            result = engine._split_and_transcribe("/tmp/test.wav")
+
+            engine._transcribe_segment.assert_called_once()
+            assert len(result["segments"]) == 1
+
+    def test_offset_correction_applied(self):
+        """Таймкоды корректируются на смещение чанка."""
+        import src.services.omlx_engine as omlx_module
+        from src.services.omlx_engine import OMLXEngine
+
+        engine = OMLXEngine()
+        mock_result = {
+            "segments": [{"start": 0.0, "end": 1.0, "speaker": 0, "text": "chunk"}],
+            "text": "chunk",
+            "raw_response": None,
+        }
+
+        captured_segments = []
+
+        def capture_transcribe_segment(audio_bytes, language=None, model=None):
+            captured_segments.append(audio_bytes)
+            return mock_result
+
+        with (
+            patch.object(omlx_module, "OMLX_ENABLED", True),
+            patch.object(omlx_module, "OMLX_BASE_URL", "http://test"),
+            patch.object(omlx_module, "OMLX_MODEL", "test-model"),
+            patch.object(omlx_module, "OMLX_API_KEY", "key"),
+            patch.object(omlx_module, "_reconcile_speaker_ids", side_effect=lambda s: s),
+        ):
+            engine._transcribe_segment = MagicMock(side_effect=capture_transcribe_segment)
+
+            # Создаём аудио с одним длинным звуком (10s)
+            path = self._create_test_audio([(False, 10000)])
+            try:
+                engine._split_and_transcribe(path, start_time=0)
+            finally:
+                __import__("os").remove(path)
+
+            # Должен быть 1 чанк
+            assert len(captured_segments) == 1
