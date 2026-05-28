@@ -18,6 +18,8 @@ from src.config import (
     OMLX_BASE_URL,
     OMLX_MODEL,
     OMLX_ENABLED,
+    OMLX_MAX_AUDIO_DURATION_SEC,
+    OMLX_SILENCE_GAP_MS,
 )
 from src.services.whisper_engines import (
     TranscriptionEngine,
@@ -36,16 +38,11 @@ class OMLXModelNotFoundError(Exception):
     pass
 
 
-# Константы
-MAX_AUDIO_DURATION_SEC: int = 50 * 60  # 50 минут
-SILENCE_GAP_MS: int = 2000
-
-
 def _detect_silence_chunks(
     audio_segment: "AudioSegment",
     chunk_duration_ms: int = 100,
     silence_threshold_db: int = -40,
-    gap_ms: int = SILENCE_GAP_MS,
+    gap_ms: int = OMLX_SILENCE_GAP_MS,
 ) -> List[Tuple[int, int]]:
     """Обход аудио чанками, возврат не-тихих интервалов в миллисекундах.
 
@@ -250,7 +247,7 @@ class OMLXEngine(TranscriptionEngine):
 
         # Проверка длительности: если > 60 мин — разбить по тишине
         duration_sec = get_audio_duration(file_path)
-        if duration_sec and duration_sec > MAX_AUDIO_DURATION_SEC:
+        if duration_sec and duration_sec > OMLX_MAX_AUDIO_DURATION_SEC:
             return self._split_and_transcribe(
                 file_path,
                 language=language,
@@ -416,13 +413,13 @@ class OMLXEngine(TranscriptionEngine):
             start_time = time.time()
 
         audio = AudioSegment.from_file(file_path)
-        non_silent = _detect_silence_chunks(audio, gap_ms=SILENCE_GAP_MS)
+        non_silent = _detect_silence_chunks(audio, gap_ms=OMLX_SILENCE_GAP_MS)
 
         if not non_silent:
             return {"segments": [], "text": "", "raw_response": None}
 
         all_segments: List[Dict[str, Any]] = []
-        max_chunk_ms = MAX_AUDIO_DURATION_SEC * 1000
+        max_chunk_ms = OMLX_MAX_AUDIO_DURATION_SEC * 1000
 
         for start_ms, end_ms in non_silent:
             duration_ms = end_ms - start_ms

@@ -84,6 +84,12 @@ OMLX_MODEL: str = os.getenv("OMLX_MODEL", "VibeVoice-ASR-8bit")
 OMLX_API_KEY: Optional[str] = os.getenv("OMLX_API_KEY") or None
 OMLX_ENABLED: bool = os.getenv("OMLX_ENABLED", "true").lower() == "true"
 
+# OMLX audio splitting — max duration for a single API request (seconds)
+OMLX_MAX_AUDIO_DURATION_SEC: int = int(os.getenv("OMLX_MAX_AUDIO_DURATION_SEC", "3000"))
+
+# OMLX silence detection — gap in milliseconds below which adjacent non-silent chunks are merged
+OMLX_SILENCE_GAP_MS: int = int(os.getenv("OMLX_SILENCE_GAP_MS", "2000"))
+
 # OMLX model selection — alias → display name (env: OMLX_MODELS="alias:display|alias:display")
 def _parse_omlx_models(raw: str) -> dict:
     """Parse OMLX_MODELS env var: 'alias1:Display 1|alias2:Display 2'."""
