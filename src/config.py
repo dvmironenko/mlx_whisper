@@ -63,6 +63,10 @@ DEFAULT_LANGUAGE: Optional[str] = os.getenv("DEFAULT_LANGUAGE", None)
 # Default model for transcription
 DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "turbo")
 
+# Default transcription options
+DEFAULT_WORD_TIMESTAMPS: str = os.getenv("DEFAULT_WORD_TIMESTAMPS", "false")
+DEFAULT_CONDITION_ON_PREVIOUS: str = os.getenv("DEFAULT_CONDITION_ON_PREVIOUS", "true")
+
 # Transcription thresholds
 NO_SPEECH_THRESHOLD: float = float(os.getenv("NO_SPEECH_THRESHOLD", "0.4"))
 HALLUCINATION_SILENCE_THRESHOLD: float = float(os.getenv("HALLUCINATION_SILENCE_THRESHOLD", "0.8"))
