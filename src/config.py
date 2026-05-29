@@ -25,6 +25,7 @@ DEBUG: bool = os.getenv("MLX_WHISPER_DEBUG", "false").lower() == "true"
 # Audio processing
 MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE_MB", "500")) * 1024 * 1024
 CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE_KB", "8")) * 1024
+AUDIO_SAMPLE_RATE: int = int(os.getenv("AUDIO_SAMPLE_RATE", "32000"))
 
 # FFmpeg timeouts
 CONVERSION_TIMEOUT_SECONDS: int = int(os.getenv("CONVERSION_TIMEOUT", "600"))

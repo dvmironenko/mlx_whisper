@@ -4,7 +4,7 @@ import subprocess
 import logging
 from typing import Optional
 
-from src.config import CONVERSION_TIMEOUT_SECONDS, CHUNK_SIZE
+from src.config import CONVERSION_TIMEOUT_SECONDS, CHUNK_SIZE, AUDIO_SAMPLE_RATE
 
 logger = logging.getLogger("mlx_whisper")
 
@@ -17,7 +17,7 @@ def convert_to_wav(input_path: str, output_path: str, remove_silence: bool = Tru
             "ffmpeg",
             "-i", input_path,
             "-acodec", "pcm_s16le",
-            "-ar", "32000",
+            "-ar", str(AUDIO_SAMPLE_RATE),
             "-ac", "1",
             "-af", f"silenceremove=stop_periods=-1:stop_duration={silence_duration}:stop_threshold={silence_threshold}dB",
             output_path,
@@ -27,7 +27,7 @@ def convert_to_wav(input_path: str, output_path: str, remove_silence: bool = Tru
             "ffmpeg",
             "-i", input_path,
             "-acodec", "pcm_s16le",
-            "-ar", "32000",
+            "-ar", str(AUDIO_SAMPLE_RATE),
             "-ac", "1",
             output_path,
         ]
