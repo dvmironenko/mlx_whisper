@@ -63,6 +63,9 @@ DEFAULT_LANGUAGE: Optional[str] = os.getenv("DEFAULT_LANGUAGE", None)
 # Default model for transcription
 DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "turbo")
 
+# Default task for transcription
+DEFAULT_TASK: str = os.getenv("DEFAULT_TASK", "transcribe")
+
 # Default transcription options
 DEFAULT_WORD_TIMESTAMPS: str = os.getenv("DEFAULT_WORD_TIMESTAMPS", "false")
 DEFAULT_CONDITION_ON_PREVIOUS: str = os.getenv("DEFAULT_CONDITION_ON_PREVIOUS", "true")

@@ -3,9 +3,8 @@
 from typing import Optional
 
 from src.config import (
-    DEFAULT_LANGUAGE,
-    DEFAULT_MODEL,
     DEFAULT_CONDITION_ON_PREVIOUS,
+    DEFAULT_TASK,
     DEFAULT_WORD_TIMESTAMPS,
     HALLUCINATION_SILENCE_THRESHOLD,
     NO_SPEECH_THRESHOLD,
@@ -46,7 +45,7 @@ def resolve_transcription_params(
         model_value = model
 
     # Task resolution — use env default
-    task_value = task or "transcribe"
+    task_value = task or DEFAULT_TASK
 
     # Word timestamps — form "false" means use env default
     if word_timestamps == "false":
