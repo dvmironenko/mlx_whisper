@@ -19,7 +19,7 @@
 ### Через API
 
 ```bash
-# MLX Whisper (по умолчанию)
+# oMLX (по умолчанию)
 curl -X POST http://localhost:8801/api/v1/transcribe \
   -F "file=@audio.wav" \
   -F "mechanism=omlx" \
@@ -34,7 +34,7 @@ curl -X POST http://localhost:8801/api/v1/transcribe-url \
 ### Программно
 
 ```python
-from src.services.transcription_engines import get_engine
+from src.services.whisper_engines import get_engine
 
 engine = get_engine("omlx")
 result = engine.transcribe(
@@ -140,11 +140,136 @@ r'\{"Start"\s*:\s*([\d.]+)(?:\s*,\s*"End"\s*:\s*([\d.]+))?(?:\s*,\s*"Speaker"\s*
 [00:15] Speaker 1: Ответ
 ```
 
-## Определение спикеров
+## Модель VibeVoice-ASR-7B
 
-oMLX API возвращает идентификаторы спикеров (0, 1, 2...). В текстовом выводе они отображаются как:
+`oMLXEngine` использует модель **VibeVoice-ASR-7B** от Microsoft — LLM-based STT (Speech-to-Text) модель, работающая через oMLX HTTP API.
 
-- `0`, `1`, `2+` — идентификаторы спикеров из ответа oMLX API
+### Архитектура
+
+- **Базовая модель:** Qwen2.5-7B (LLM)
+- **Механизм:** Next-token diffusion framework — LLM + diffusion head для генерации акустических деталей
+- **Токенизаторы:** Continuous speech tokenizers — Acoustic + Semantic с frame rate 7.5 Hz
+- **Языки:** 50+ языков (multilingual)
+- **Макс. длительность:** До 60 минут аудио в один проход (без сегментации на входе)
+- **Лицензия:** MIT License (ICLR 2026 Oral)
+
+### Формат вывода модели
+
+Модель генерирует LLM-вывод, который затем парсится через `parse_transcription()` (из `mlx_audio.stt.models.vibevoice_asr.vibevoice_asr`, строки 896-955).
+
+**Системный промпт:**
+```
+You are a helpful assistant that transcribes audio input into text output in JSON format.
+```
+
+**Пользовательский промпт:**
+```
+This is {duration} seconds audio, please transcribe it with these keys: Start time, End time, Speaker ID, Content
+```
+
+**Сырой вывод (LLM-generated JSON):**
+```json
+[
+  {"Start time": 0.0, "End time": 5.2, "Speaker ID": 0, "Content": "Привет"},
+  {"Start time": 6.1, "End time": 10.5, "Speaker ID": 1, "Content": "Добрый день"}
+]
+```
+
+Может быть обернут в markdown code block:
+```json
+```json
+[{"Start time": 0.0, "End time": 5.2, "Speaker ID": 0, "Content": "Привет"}]
+```
+```
+
+**Нормализация ключей:**
+
+| Сырой ключ | Нормализованный ключ | Тип |
+|------------|---------------------|-----|
+| `"Start time"` или `"Start"` | `"start"` | float (секунды) |
+| `"End time"` или `"End"` | `"end"` | float (секунды) |
+| `"Speaker ID"` или `"Speaker"` | `"speaker_id"` | int (опционально) |
+| `"Content"` | `"text"` | string |
+
+**Извлечение JSON:**
+
+1. Если есть ````json` — извлекает текст между ````json` и ````
+2. Иначе ищет `[` или `{` и использует bracket counting для определения границ JSON
+3. Парсит через `json.loads()`
+4. Если результат — dict, оборачивает в список `[result]`
+5. Применяет key mapping для нормализации
+6. При любой ошибке (`json.JSONDecodeError` или другое исключение) возвращает пустой список `[]`
+
+**Надёжность:** Ниже чем у Whisper, так как вывод LLM-генерируемый. JSON может быть некорректным, обрезанным или полностью отсутствовать. В случае неудачи `parse_transcription()` возвращает `[]`.
+
+## Whisper-модели в oMLX
+
+oMLX поддерживает Whisper-модели через бэкенд [mlx-audio](https://github.com/ml-explore/mlx-audio). Модели загружаются лениво при первом запросе транскрипции.
+
+### Доступные модели
+
+| Модель ID | Описание |
+|-----------|----------|
+| `whisper-large-v3-asr-fp16` | Whisper large v3, fp16 точность |
+| `whisper-large-v3-turbo-asr-fp16` | Whisper large v3 turbo, fp16 точность |
+| `whisper-medium-asr-fp16` | Whisper medium, fp16 точность |
+
+### API
+
+Используется тот же эндпоинт `POST /v1/audio/transcriptions`. Whisper-модели поддерживают дополнительный параметр `word_timestamps` — при `true` каждый сегмент включает массив `words` с пословными таймкодами:
+
+```json
+{
+  "text": "Привет, мир.",
+  "language": "russian",
+  "duration": 2.5,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 1.2,
+      "text": "Привет",
+      "words": [
+        {"word": "Привет", "start": 0.0, "end": 0.6, "probability": 0.95}
+      ]
+    }
+  ]
+}
+```
+
+### Пример curl
+
+```bash
+curl -X POST http://localhost:8880/v1/audio/transcriptions \
+  -H "Authorization: Bearer 1234" \
+  -F "file=@audio.wav" \
+  -F "model=whisper-large-v3-asr-fp16" \
+  -F "language=ru" \
+  -F "word_timestamps=true"
+```
+
+### Особенности реализации
+
+- **Нормализация языка:** ISO-коды маппятся на названия (`ru` → `russian`, `en` → `english`) для mlx-audio
+- **preprocessor_config.json:** Обязателен для Whisper-моделей. Если файл отсутствует в MLX-конвертации, модель не загрузится с ошибкой 500. Фикс: скопировать `preprocessor_config.json`, `tokenizer.json` и `special_tokens_map.json` из HuggingFace репозитория в локальную модель
+- **max_tokens:** По умолчанию 8192 (~24 минут аудио). Для длинных файлов увеличить через `settings.json` или параметр `max_tokens` в запросе
+- **Diarization:** Whisper не поддерживает определение спикеров (diarization). Параметр `diarize` игнорируется
+- **STTEngine:** Загрузка через `mlx_audio.stt.utils.load_model()`, транскрипция через `model.generate(audio_path, language=...)`
+
+### Сравнение с VibeVoice-ASR
+
+| Возможность | VibeVoice-ASR | Whisper |
+|:------------|:--------------|:--------|
+| Diarization (спикеры) | Да | Нет |
+| Word timestamps | Нет | Да (`word_timestamps=true`) |
+| Макс. длительность | До 60 мин | ~24 мин (без max_tokens) |
+| Параметр `diarize` | Работает | Игнорируется |
+| Требуется processor | Нет | `preprocessor_config.json` обязателен |
+
+## Определение спикеров (VibeVoice)
+
+oMLX API возвращает идентификаторы спикеров (0, 1, 2+). В текстовом выводе они отображаются как:
+
+- `0`, `1`, `2+` — идентификаторы спикеров из ответа oMLX API (поле `speaker` в сегментах)
 
 ## Конфигурация
 
@@ -153,7 +278,7 @@ oMLX API возвращает идентификаторы спикеров (0, 
 | Переменная | По умолчанию | Описание |
 |------------|--------------|----------|
 | `OMLX_BASE_URL` | — | URL oMLX API (обязательно) |
-| `OMLX_MODEL` | `oMLX-ASR-4bit` | Модель транскрипции |
+| `OMLX_MODEL` | `oMLX-ASR-8bit` | Модель транскрипции |
 | `OMLX_API_KEY` | — | API ключ для аутентификации |
 | `OMLX_ENABLED` | `true` | Включён ли oMLX |
 
@@ -220,6 +345,15 @@ _split_audio_by_silence() — librosa.effects.split + группировка
 - `pydub` — работа с аудио-сегментами
 - `requests` — HTTP-клиент для oMLX API
 - `librosa` и `pydub` импортируются лениво (внутри функций), чтобы не нагружать основную транскрипцию
+
+## Внешняя документация
+
+- [oMLX API — audio_models.py](https://github.com/jundot/omlx/blob/main/omlx/api/audio_models.py) — спецификация API endpoints и моделей для аудио-транскрипции
+- [oMLX API — audio_routes.py](https://github.com/jundot/omlx/blob/main/omlx/api/audio_routes.py) — маршрутизация API endpoints для аудио-транскрипции
+- [oMLX API — stt.py](https://github.com/jundot/omlx/blob/main/omlx/engine/stt.py) — STTEngine: загрузка моделей и транскрипция через mlx-audio
+- [mlx-audio STT](https://github.com/ml-explore/mlx-audio) — бэкенд для STT/ASR в oMLX, поддерживает Whisper и VibeVoice
+- [VibeVoice-ASR на Hugging Face](https://huggingface.co/microsoft/VibeVoice-ASR) — архитектура модели, веса и документация от Microsoft
+- [VibeVoice на GitHub](https://github.com/microsoft/VibeVoice) — репозиторий Microsoft с исходным кодом и описанием архитектуры
 
 ## Лицензия
 
