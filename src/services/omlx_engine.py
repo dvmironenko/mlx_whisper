@@ -287,8 +287,6 @@ class OMLXEngine(TranscriptionEngine):
         """Транскрибировать один файл напрямую через oMLX API (без сегментации)."""
         url = f"{OMLX_BASE_URL}/audio/transcriptions"
 
-        with open(file_path, "rb") as f:
-            files = {"file": (os.path.basename(file_path), f, "audio/wav")}
         data: Dict[str, Any] = {"model": model or OMLX_MODEL, "diarize": True}
         if language:
             data["language"] = language
@@ -297,9 +295,11 @@ class OMLXEngine(TranscriptionEngine):
         if OMLX_API_KEY:
             headers["Authorization"] = f"Bearer {OMLX_API_KEY}"
 
-        response = requests.post(
-            url, files=files, data=data, headers=headers, timeout=(10, 3600)
-        )
+        with open(file_path, "rb") as f:
+            files = {"file": (os.path.basename(file_path), f, "audio/wav")}
+            response = requests.post(
+                url, files=files, data=data, headers=headers, timeout=(10, 3600)
+            )
 
         if response.status_code == 404:
             try:

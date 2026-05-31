@@ -2,7 +2,7 @@
 
 ## Обзор
 
-MLX-Transcriber — это высокопроизводительный сервис транскрибации аудио, использующий оптимизированную модель Whisper от Apple (MLX-Transcriber) и внешний oMLX API (VibeVoice-ASR) для обработки аудиофайлов на системах macOS с чипами Apple Silicon. Сервис предоставляет как веб-интерфейс, так и REST‑API для преобразования речи в текст с поддержкой нескольких языков, параллельной обработки и LLM-генерации отчётов.
+MLX-Transcriber — это высокопроизводительный сервис транскрибации аудио, использующий оптимизированную модель Whisper от Apple (MLX-Transcriber) и внешний oMLX API (oMLX-ASR) для обработки аудиофайлов на системах macOS с чипами Apple Silicon. Сервис предоставляет как веб-интерфейс, так и REST‑API для преобразования речи в текст с поддержкой нескольких языков, параллельной обработки и LLM-генерации отчётов.
 
 ## Архитектура
 
@@ -11,7 +11,7 @@ MLX-Transcriber — это высокопроизводительный серв
 1. **FastAPI Web Server**: ядро приложения, обрабатывающее HTTP‑запросы и ответы.
 2. **TranscriptionEngine ABC**: абстрактный базовый класс (паттерн Strategy), определяющий единый интерфейс `transcribe(file_path, **params) -> dict` для всех механизмов транскрипции.
 3. **WhisperEngine**: реализация через MLX Whisper с кэшированием моделей в памяти, поддержка 6 моделей.
-4. **VibeVoiceEngine**: реализация через oMLX HTTP API с автоматическим разбиением аудио по тишине (librosa), определением спикеров и парсингом JSON-сегментов.
+4. **oMLXEngine**: реализация через oMLX HTTP API с автоматическим разбиением аудио по тишине (librosa), определением спикеров и парсингом JSON-сегментов.
 5. **TranscriptionQueueManager**: синглтон с `ThreadPoolExecutor` (3 воркера, очередь до 20 заданий) для параллельной обработки.
 6. **JobManager**: синглтон для управления метаданными заданий (JSON в `data/{job_id}/{job_id}.json`).
 7. **TranscriptionService**: сервисный слой, обёртка над TranscriptionQueueManager + JobManager.
@@ -23,7 +23,7 @@ MLX-Transcriber — это высокопроизводительный серв
 
 - **Backend Framework**: FastAPI (Python 3.8+)
 - **MLX Integration**: mlx‑whisper (оптимизированная реализация Whisper от Apple)
-- **External API**: oMLX / VibeVoice-ASR (HTTP API)
+- **External API**: oMLX (HTTP API)
 - **Audio Processing**: FFmpeg, librosa, pydub для конвертации и разбиения аудио
 - **Frontend**: HTML, CSS, JavaScript с минималистичными стилями (светлая/тёмная темы)
 - **Deployment**: Uvicorn ASGI сервер
@@ -41,8 +41,8 @@ mlx-whisper/
 │   ├── services/                 # Сервисный слой
 │   │   ├── transcription_service.py   # TranscriptionService (обёртка)
 │   │   ├── transcription_queue.py     # TranscriptionQueueManager (очередь)
-│   │   ├── transcription_engines.py   # TranscriptionEngine ABC + WhisperEngine
-│   │   ├── vibevoice_engine.py        # VibeVoiceEngine (oMLX API)
+│   │   ├── whisper_engines.py        # TranscriptionEngine ABC + WhisperEngine
+│   │   ├── omlx_engine.py            # oMLXEngine (oMLX API)
 │   │   ├── job_manager.py             # JobManager (метаданные заданий)
 │   │   └── report_types.py            # Загрузка типов отчётов
 │   ├── models/                   # Бизнес-логика
@@ -83,7 +83,7 @@ mlx-whisper/
 
 - **`TranscriptionEngine` (ABC)** — определяет единый интерфейс `transcribe(file_path, **params) -> dict`
 - **`WhisperEngine`** — реализация через MLX Whisper, поддержка 6 моделей (tiny/base/small/medium/turbo/large), кэширование моделей в памяти
-- **`VibeVoiceEngine`** — реализация через oMLX HTTP API, автоматическое разбиение длинного аудио по тишине (librosa, порог 40 dB, лимит 50 мин), определение спикеров (ID из ответа oMLX), парсинг JSON сегментов (прямой массив, конкатенированные oMLX объекты, code blocks, regex fallback)
+- **`oMLXEngine`** — реализация через oMLX HTTP API, автоматическое разбиение длинного аудио по тишине (librosa, порог 40 dB, лимит 50 мин), определение спикеров (ID из ответа oMLX), парсинг JSON сегментов (прямой массив, конкатенированные oMLX объекты, code blocks, regex fallback)
 
 **Единый формат результата транскрипции:**
 
@@ -98,6 +98,142 @@ mlx-whisper/
   "raw_response": "..."
 }
 ```
+
+### Детальный формат вывода моделей
+
+Приложение поддерживает два механизма транскрипции, каждый из которых имеет свой формат сырого вывода. Ниже приведено детальное сравнение.
+
+#### Whisper (mlx-whisper) — детерминированный формат
+
+Whisper возвращает результат через `mlx_whisper.transcribe.transcribe()` — это детерминированный код, а не LLM-генерация.
+
+**Структура STTOutput:**
+
+```python
+@dataclass
+class STTOutput:
+    text: str                          # Полный текст расшифровки
+    segments: List[dict] = None        # Сегменты с временными метками
+    language: str = None               # Определённый язык
+    prompt_tokens: int = 0             # Токены промпта
+    generation_tokens: int = 0         # Сгенерированные токены
+    total_tokens: int = 0              # Общее количество токенов
+    prompt_tps: float = 0.0            # Токенов/сек (промпт)
+    generation_tps: float = 0.0        # Токенов/сек (генерация)
+    total_time: float = 0.0            # Общее время обработки (сек)
+```
+
+**Формат сегмента Whisper:**
+
+```json
+{
+  "id": 0,
+  "start": 0.0,
+  "end": 3.5,
+  "text": "Текст сегмента",
+  "words": [
+    {"word": "Текст", "start": 0.0, "end": 1.2, "probability": 0.95}
+  ],
+  "speaker_id": 0
+}
+```
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `id` | int | Порядковый номер сегмента |
+| `start` | float | Время начала (секунды) |
+| `end` | float | Время окончания (секунды) |
+| `text` | string | Текст сегмента |
+| `words` | array\* | Word-level timestamps (опционально, при `word_timestamps=true`) |
+| `words[].word` | string | Слово |
+| `words[].start` | float | Время начала слова |
+| `words[].end` | float | Время окончания слова |
+| `words[].probability` | float | Вероятность распознавания слова |
+| `speaker_id` | int\*\* | ID спикера (опционально) |
+
+\* — `words` присутствует только когда `word_timestamps=true`
+\*\* — `speaker_id` присутствует только если модель поддерживает speaker diarization
+
+**Надёжность:** 100% — сегменты генерируются детерминированным кодом, формат всегда корректен.
+
+#### VibeVoice-ASR (oMLX API) — LLM-генерируемый JSON
+
+VibeVoice-ASR-7B — это LLM-based STT модель (на базе Qwen2.5-7B) от Microsoft, работающая через oMLX HTTP API. Вывод — LLM-генерируемый JSON, который затем парсится через `parse_transcription()`.
+
+**Системный промпт модели:**
+
+```
+You are a helpful assistant that transcribes audio input into text output in JSON format.
+```
+
+**Пользовательский промпт:**
+
+```
+This is {duration} seconds audio, please transcribe it with these keys: Start time, End time, Speaker ID, Content
+```
+
+**Сырой формат (что генерирует LLM):**
+
+```json
+[
+  {"Start time": 0.0, "End time": 5.2, "Speaker ID": 0, "Content": "Привет"},
+  {"Start time": 6.1, "End time": 10.5, "Speaker ID": 1, "Content": "Добрый день"}
+]
+```
+
+Или JSON в markdown code block:
+
+```json
+```json
+[{"Start time": 0.0, "End time": 5.2, "Speaker ID": 0, "Content": "Привет"}]
+```
+```
+
+**Нормализация ключей (parse_transcription):**
+
+| Сырой ключ | Нормализованный ключ | Тип |
+|------------|---------------------|-----|
+| `"Start time"` или `"Start"` | `"start"` | float (секунды) |
+| `"End time"` или `"End"` | `"end"` | float (секунды) |
+| `"Speaker ID"` или `"Speaker"` | `"speaker_id"` | int (опционально) |
+| `"Content"` | `"text"` | string |
+
+**Формат нормализованного сегмента:**
+
+```json
+{
+  "start": 0.0,
+  "end": 5.2,
+  "speaker_id": 0,
+  "text": "Привет"
+}
+```
+
+**Извлечение JSON (parse_transcription, mlx_audio/stt/models/vibevoice_asr/vibevoice_asr.py):**
+
+1. Если есть ````json` — извлекает текст между ````json` и ````
+2. Иначе ищет `[` или `{` и использует bracket counting для определения границ JSON
+3. Парсит через `json.loads()`
+4. Если результат — dict, оборачивает в список `[result]`
+5. Применяет key mapping для нормализации
+6. При любой ошибке возвращает пустой список `[]`
+
+**Надёжность:** Ниже чем у Whisper, так как вывод LLM-генерируемый. JSON может быть некорректным, обрезанным или полностью отсутствовать. В случае неудачи `parse_transcription()` возвращает `[]`.
+
+#### Сравнение Whisper vs VibeVoice-ASR
+
+| Характеристика | Whisper | VibeVoice-ASR |
+|----------------|---------|---------------|
+| **Природа вывода** | Детерминированный код | LLM-генерация (недетерминированная) |
+| **Word-level timestamps** | Да (`words` array) | Нет |
+| **Speaker diarization** | Да (speaker_id) | Да (Speaker ID) |
+| **Языки** | Определяется моделью | 50+ языков (multilingual) |
+| **Макс. длительность** | Сегментированное | До 60 минут в один проход |
+| **Формат сырого вывода** | Python dataclass → JSON | LLM-generated JSON |
+| **Надёжность парсинга** | 100% | Может вернуть `[]` при неудачном JSON |
+| **Модели** | tiny/base/small/medium/turbo/large | oMLX-ASR-8bit (VibeVoice-ASR-7B) |
+| **Лицензия** | MIT | MIT (ICLR 2026 Oral) |
+| **Архитектура** | Standard Whisper | Acoustic + Semantic tokenizers, next-token diffusion, Qwen2.5-7B LLM |
 
 ### Цепочка обработки аудио
 
@@ -139,7 +275,7 @@ mlx-whisper/
 
 | Параметр | По умолчанию | Описание |
 |----------|--------------|----------|
-| `mechanism` | `whisper` | Механизм транскрипции (`whisper` / `vibevoice`) |
+| `mechanism` | `whisper` | Механизм транскрипции (`whisper` / `omlx`) |
 | `model` | `large` | Размер модели (tiny/base/small/medium/turbo/large) |
 | `language` | `null` | Код языка (пустая строка или null для auto-detect) |
 | `task` | `transcribe` | `transcribe` / `translate` |
@@ -152,7 +288,7 @@ mlx-whisper/
 | `silence_threshold` | `-45.0` | Порог тишины (dB) |
 | `silence_duration` | `1.0` | Мин. длительность тишины (сек) |
 
-### Параметры VibeVoice (механизм `vibevoice`)
+### Параметры oMLX (механизм `omlx`)
 
 - Автоматическое разбиение аудио по тишине (librosa, порог 40 dB)
 - Группировка интервалов с паузой < 2 секунд
@@ -164,7 +300,7 @@ mlx-whisper/
 ### Функции веб‑интерфейса
 
 - drag & drop загрузка аудиофайлов
-- выбор механизма (Whisper / VibeVoice)
+- выбор механизма (Whisper / oMLX)
 - выбор языка (авто / вручную)
 - выбор типа задачи и размера модели
 - сворачиваемая панель расширенных настроек
@@ -214,14 +350,14 @@ mlx-whisper/
 | `TRANSCRIBER_WORKERS` | `3` | Количество воркеров |
 | `QUEUE_MAX_SIZE` | `20` | Макс. размер очереди |
 
-### oMLX / VibeVoice
+### oMLX
 
 | Параметр | По умолчанию | Описание |
 |----------|--------------|----------|
 | `OMLX_BASE_URL` | — | URL oMLX API |
-| `OMLX_MODEL` | `VibeVoice-ASR-4bit` | Модель VibeVoice |
+| `OMLX_MODEL` | `oMLX-ASR-8bit` | Модель oMLX |
 | `OMLX_API_KEY` | — | API ключ oMLX |
-| `OMLX_ENABLED` | `true` | Включён ли VibeVoice |
+| `OMLX_ENABLED` | `true` | Включён ли oMLX |
 
 ### Отчёты (OpenAI)
 
@@ -259,7 +395,7 @@ mlx-whisper/
 | GET | `/api/v1/jobs/{job_id}/files/{filename}/download` | Скачивание файла из задания |
 | GET | `/api/v1/files/{filename}/download` | Общее скачивание файла |
 | GET | `/api/v1/files/{filename}/content` | Просмотр содержимого файла |
-| GET | `/api/v1/omlx/health` | Проверка oMLX API (VibeVoice) |
+| GET | `/api/v1/omlx/health` | Проверка oMLX API |
 | GET | `/api/v1/report-types` | Список типов отчётов |
 | POST | `/api/v1/report/{job_id}` | Генерация отчёта по расшифровке |
 | GET | `/api/v1/cache/models` | Статистика кэша моделей |
@@ -329,7 +465,7 @@ mlx-whisper/
 - `TranscriptionQueueManager` — синглтон с `ThreadPoolExecutor` (настраиваемое количество воркеров, по умолчанию 3)
 - Bounded `Queue` (максимум 20 заданий, по умолчанию)
 - Блокировка `_transcription_lock` для Whisper (одна модель в памяти одновременно)
-- VibeVoice не блокируется (каждый запрос — отдельный HTTP-вызов к oMLX API)
+- oMLX не блокируется (каждый запрос — отдельный HTTP-вызов к oMLX API)
 - Воркеры проверяют статус задания перед обработкой (пропуск CANCELLED)
 - Graceful shutdown: остановка воркеров, ожидание завершения (30s timeout)
 
@@ -355,7 +491,7 @@ mlx-whisper/
 
 - `{base_name}.txt` — полный текст расшифровки
 - `{base_name}_segments.json` — сегменты в формате `{"segments": [...]}`
-- `{base_name}_raw.json` — сырой ответ API (JSON для Whisper, текст для VibeVoice)
+- `{base_name}_raw.json` — сырой ответ API (JSON для Whisper, текст для oMLX)
 - `{job_id}.json` — метаданные задания
 
 ### Обработка ошибок и логирование
@@ -522,10 +658,10 @@ POST /api/v1/report/{job_id}
 5. [Фреймворк Apple MLX](https://github.com/ml-explore/mlx)
 6. [Документация FastAPI](https://fastapi.tiangolo.com/)
 7. [Документация FFmpeg](https://ffmpeg.org/documentation.html)
-8. [Microsoft VibeVoice GitHub](https://github.com/microsoft/VibeVoice)
-9. [VibeVoice-ASR на Hugging Face](https://huggingface.co/microsoft/VibeVoice-ASR)
-10. [VibeVoice-ASR Technical Report (arXiv)](https://arxiv.org/abs/2601.18184)
-11. [VibeVoice ASR Transformers Docs](https://huggingface.co/docs/transformers/main/en/model_doc/vibevoice_asr)
+8. [oMLX](https://github.com/jundot/omlx)
+9. [Документация oMLX](https://github.com/jundot/omlx/tree/main/docs)
+10. [VibeVoice: Open-Source Frontier Voice AI](https://github.com/microsoft/VibeVoice)
+11. [VibeVoice: HuggingFace](https://huggingface.co/collections/microsoft/vibevoice)
 
 ## О MLX (Apple Machine Learning Framework)
 

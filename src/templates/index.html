@@ -101,7 +101,7 @@
         }
 
         // Показать текст в модальном окне
-        function showTextView(title, content) {
+        function showTextView(title, content, fileType) {
             // Закрыть текущее окно, если открыто
             closeModal();
 
@@ -145,7 +145,12 @@
             // Body
             const body = document.createElement('div');
             body.className = 'modal-body';
-            body.innerHTML = marked.parse(content);
+            if (fileType === 'markdown') {
+                body.innerHTML = marked.parse(content);
+            } else {
+                body.textContent = content;
+                body.style.whiteSpace = 'pre-wrap';
+            }
 
             contentDiv.appendChild(body);
 
@@ -875,7 +880,9 @@
                             try {
                                 const r = await fetch('/api/v1/files/' + encodeURIComponent(fileName) + '/content');
                                 const text = await r.text();
-                                showTextView(fileName, text);
+                                const ext = '.' + fileName.split('.').pop().toLowerCase();
+                                const fileType = ext === '.md' ? 'markdown' : 'text';
+                                showTextView(fileName, text, fileType);
                             } catch (e) {
                                 alert('Ошибка загрузки: ' + e.message);
                             }
@@ -930,7 +937,7 @@
                     try {
                         const r = await fetch('/api/v1/jobs/' + encodeURIComponent(job.job_id));
                         const jobData = await r.json();
-                        showTextView(jobData.video_title || jobData.original_filename || jobData.job_id, jobData.text || 'Нет данных');
+                        showTextView(jobData.video_title || jobData.original_filename || jobData.job_id, jobData.text || 'Нет данных', 'text');
                     } catch (e) {
                         showToast('Ошибка загрузки результата');
                     }

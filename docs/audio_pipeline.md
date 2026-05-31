@@ -8,7 +8,7 @@
 Загрузка файла  →  Конвертация в WAV  →  Очередь задач  →  Транскрипция  →  Результаты
      │                  │                    │                │              │
  POST              FFmpeg             ThreadPool        Whisper /     txt,
- /api/v1          16kHz mono          Executor          VibeVoice     segments
+ /api/v1          16kHz mono          Executor          oMLX          segments
  /transcribe       16-bit PCM         + JobMgr                              .json
 ```
 
@@ -42,7 +42,7 @@
 | `word_timestamps` | Whisper | `TranscriptionEngine.transcribe()` | Возвращать таймстампы для каждого слова |
 | `condition_on_previous` | Whisper | `TranscriptionEngine.transcribe()` | Учитывать предыдущий текст при генерации |
 | `initial_prompt` | Whisper | `TranscriptionEngine.transcribe()` | Начальный промпт для улучшения качества |
-| `language` | Оба механизма | `TranscriptionEngine.transcribe()` / `VibeVoiceEngine._transcribe_segment()` | Язык аудио (None = auto-detect) |
+| `language` | Оба механизма | `TranscriptionEngine.transcribe()` / `oMLXEngine._transcribe_segment()` | Язык аудио (None = auto-detect) |
 | `no_speech_threshold` | Whisper | `TranscriptionEngine.transcribe()` | Порог для пропуска сегментов без речи |
 | `hallucination_silence_threshold` | Whisper | `TranscriptionEngine.transcribe()` | Порог для отсеивания галлюцинаций |
 | `remove_silence` | FFmpeg | `convert_to_wav()` | Удалять тишину при конвертации |
@@ -50,12 +50,13 @@
 | `silence_duration` | FFmpeg | `convert_to_wav()` | Минимальная длительность тишины для удаления (сек) |
 | `file` | — | сохранение оригинала | Аудиофайл для загрузки |
 
-**Важно:** Параметр `model` игнорируется при `mechanism=vibevoice` — VibeVoice использует модель `OMLX_MODEL` из конфигурации.
+**Важно:** Параметр `model` игнорируется при `mechanism=omlx` — oMLX использует модель `OMLX_MODEL` из конфигурации.
 
 **Файлы реализации:**
+
 - Маршрутизация: [`src/api/router.py`](../src/api/router.py) — `POST /api/v1/transcribe` (строки 219-229)
 - FFmpeg конвертация: [`src/utils/audio.py`](../src/utils/audio.py) — `convert_to_wav()`
-- Whisper-движок: [`src/services/transcription_engines.py`](../src/services/transcription_engines.py) — `WhisperEngine.transcribe()`
+- Whisper-движок: [`src/services/whisper_engines.py`](../src/services/whisper_engines.py) — `WhisperEngine.transcribe()`
 
 #### Сохранение оригинала
 
@@ -225,11 +226,11 @@ gc.collect()
 
 Это освобождает GPU память для следующих задач.
 
-### 4.2. VibeVoice (oMLX API)
+### 4.2. oMLX (oMLX API)
 
-**Файл:** [`src/services/vibevoice_engine.py`](../src/services/vibevoice_engine.py)
+**Файл:** [`src/services/omlx_engine.py`](../src/services/omlx_engine.py)
 
-`VibeVoiceEngine` транскрибирует аудио через облачный oMLX API.
+`oMLXEngine` транскрибирует аудио через HTTP API oMLX (oMLX-ASR модель).
 
 #### Разбиение аудио
 
@@ -370,6 +371,85 @@ self._meta.update_status(
 
 ---
 
+## Форматы вывода моделей
+
+### Whisper (mlx-whisper)
+
+Whisper возвращает `STTOutput` dataclass — детерминированный формат:
+
+```python
+@dataclass
+class STTOutput:
+    text: str
+    segments: List[dict] = None
+    language: str = None
+    prompt_tokens: int = 0
+    generation_tokens: int = 0
+    total_tokens: int = 0
+    prompt_tps: float = 0.0
+    generation_tps: float = 0.0
+    total_time: float = 0.0
+```
+
+**Сегмент:**
+
+```json
+{
+  "id": 0,
+  "start": 0.0,
+  "end": 3.5,
+  "text": "Текст сегмента",
+  "words": [
+    {"word": "Текст", "start": 0.0, "end": 1.2, "probability": 0.95}
+  ],
+  "speaker_id": 0
+}
+```
+
+- **Надёжность:** 100% — детерминированный код, формат всегда корректен
+- **Word-level timestamps:** Да (при `word_timestamps=true`)
+- **Speaker diarization:** Да (`speaker_id`)
+
+### VibeVoice-ASR (oMLX API)
+
+VibeVoice-ASR-7B — LLM-based STT модель (Qwen2.5-7B). Вывод — LLM-генерируемый JSON:
+
+**Сырой вывод:**
+
+```json
+[
+  {"Start time": 0.0, "End time": 5.2, "Speaker ID": 0, "Content": "Привет"}
+]
+```
+
+**Нормализованный сегмент (после parse_transcription):**
+
+```json
+{
+  "start": 0.0,
+  "end": 5.2,
+  "speaker_id": 0,
+  "text": "Привет"
+}
+```
+
+- **Надёжность:** Может вернуть `[]` при неудачном JSON
+- **Word-level timestamps:** Нет
+- **Speaker diarization:** Да (`Speaker ID`)
+- **Макс. длительность:** 60 минут в один проход
+- **Языки:** 50+ (multilingual)
+
+### Сравнение
+
+| Характеристика | Whisper | VibeVoice-ASR |
+|----------------|---------|---------------|
+| Вывод | Детерминированный код | LLM-генерация JSON |
+| Word-level timestamps | Да | Нет |
+| Speaker diarization | Да | Да |
+| Надёжность парсинга | 100% | Могут быть пустые сегменты |
+| Макс. длительность | Сегментированное | 60 мин в один проход |
+| Языки | Определяется моделью | 50+ языков |
+
 ## Расположение файлов
 
 ```
@@ -410,6 +490,6 @@ models/                                  # MODELS_DIR
 | `DEFAULT_LANGUAGE` | None | Язык по умолчанию (None = auto) |
 | `TRANSCRIBER_WORKERS` | 3 | Количество рабочих потоков |
 | `QUEUE_MAX_SIZE` | 20 | Макс. размер очереди |
-| `OMLX_ENABLED` | true | Включить VibeVoice механизм |
+| `OMLX_ENABLED` | true | Включить oMLX механизм |
 | `OMLX_BASE_URL` | | URL oMLX API |
-| `OMLX_MODEL` | VibeVoice-ASR-4bit | Модель oMLX |
+| `OMLX_MODEL` | oMLX-ASR-8bit | Модель oMLX |
